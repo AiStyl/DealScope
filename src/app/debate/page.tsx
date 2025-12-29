@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { MainLayout } from '@/components/layout'
@@ -257,9 +257,9 @@ export default function DebatePage() {
                           verdict.winner === 'against' ? 'text-red-700' :
                           'text-gray-700'
                         )}>
-                          {verdict.winner === 'for' ? '✓ PROCEED WITH ACQUISITION' :
-                           verdict.winner === 'against' ? '✗ DO NOT PROCEED' :
-                           '⚖ INSUFFICIENT EVIDENCE'}
+                          {verdict.winner === 'for' ? 'âœ“ PROCEED WITH ACQUISITION' :
+                           verdict.winner === 'against' ? 'âœ— DO NOT PROCEED' :
+                           'âš– INSUFFICIENT EVIDENCE'}
                         </h4>
                         <div className="mt-4 flex items-center justify-center gap-2">
                           <span className="text-sm text-gray-500">Confidence:</span>
@@ -348,7 +348,7 @@ function DebateTurnCard({ turn, isStreaming }: { turn: DebateTurn; isStreaming?:
             <p className="text-xs text-gray-500">Round {turn.round}</p>
           </div>
         </div>
-        <Badge variant={turn.model}>{turn.model}</Badge>
+        <Badge variant={turn.model === 'gpt-4' ? 'gpt4' : turn.model}>{turn.model}</Badge>
       </div>
       <div className="p-4">
         <p className={cn('text-sm text-gray-700 leading-relaxed whitespace-pre-wrap', isStreaming && 'streaming-cursor')}>
@@ -358,7 +358,7 @@ function DebateTurnCard({ turn, isStreaming }: { turn: DebateTurn; isStreaming?:
           <div className="mt-3 flex flex-wrap gap-2">
             {turn.evidence.map((e, i) => (
               <span key={i} className="text-xs px-2 py-1 bg-white rounded border border-gray-200 text-gray-600">
-                📎 {e}
+                ðŸ“Ž {e}
               </span>
             ))}
           </div>
@@ -367,3 +367,4 @@ function DebateTurnCard({ turn, isStreaming }: { turn: DebateTurn; isStreaming?:
     </motion.div>
   )
 }
+
