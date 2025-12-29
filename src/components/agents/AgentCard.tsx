@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { cn } from '@/lib/utils'
 import { Badge, Progress, Spinner } from '@/components/ui'
@@ -18,23 +18,12 @@ interface AgentCardProps {
   className?: string
 }
 
-function getAgentColor(model: string): string {
-  switch (model) {
-    case 'claude': return '#d97706'
-    case 'gpt-4': return '#10a37f'
-    case 'gemini': return '#4285f4'
-    default: return '#8b5cf6'
-  }
-}
-
 function getBadgeVariant(model: ModelType): 'claude' | 'gpt4' | 'gemini' {
   if (model === 'gpt-4') return 'gpt4'
   return model as 'claude' | 'gemini'
 }
 
-export function AgentCard({
-  name, role, model, status, content, confidence, tokens, latencyMs, className,
-}: AgentCardProps) {
+export function AgentCard({ name, role, model, status, content, confidence, tokens, latencyMs, className }: AgentCardProps) {
   const modelColors = {
     claude: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', accent: 'bg-amber-500' },
     'gpt-4': { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', accent: 'bg-emerald-500' },
@@ -48,7 +37,7 @@ export function AgentCard({
       animate={{ opacity: 1, y: 0 }}
       className={cn('rounded-xl border-2 overflow-hidden transition-all duration-300', colors.bg, colors.border, className)}
     >
-      <div className="px-4 py-3 border-b border-opacity-50" style={{ borderColor: getAgentColor(model) + '40' }}>
+      <div className="px-4 py-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', colors.accent)}>
@@ -96,7 +85,7 @@ export function AgentCard({
         </AnimatePresence>
       </div>
       {(status === 'complete' || status === 'responding') && (
-        <div className="px-4 py-3 bg-white/50 border-t border-opacity-50" style={{ borderColor: getAgentColor(model) + '40' }}>
+        <div className="px-4 py-3 bg-white/50 border-t border-gray-200">
           <div className="flex items-center justify-between text-xs">
             {confidence !== undefined && (
               <div className="flex items-center gap-2">
