@@ -481,11 +481,28 @@
             border-radius: 10px;
             padding: 1rem;
             transition: all 0.3s;
+            text-decoration: none;
+            display: block;
+            color: inherit;
+            cursor: pointer;
         }
 
         .screen-card:hover {
             border-color: var(--teal);
             transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(13, 148, 136, 0.2);
+        }
+
+        .screen-card .click-hint {
+            font-size: 0.65rem;
+            color: var(--teal-light);
+            margin-top: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .screen-card:hover .click-hint {
+            opacity: 1;
         }
 
         .screen-header {
@@ -951,7 +968,7 @@
             </div>
             <div class="diagram-container">
                 <div class="screens-grid">
-                    <div class="screen-card">
+                    <a href="arch/arch-01-landing-page.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">01</span>
                             <span class="screen-name">Landing Page</span>
@@ -960,9 +977,10 @@
                         <div class="screen-connects">
                             <span class="connect-badge ui">Static</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-02-multi-agent-reasoning.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">02</span>
                             <span class="screen-name">Multi-Agent Reasoning</span>
@@ -973,9 +991,10 @@
                             <span class="connect-badge ai">GPT-4</span>
                             <span class="connect-badge db">Supabase</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-03-knowledge-graph.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">03</span>
                             <span class="screen-name">Knowledge Graph</span>
@@ -985,9 +1004,10 @@
                             <span class="connect-badge ai">Gemini</span>
                             <span class="connect-badge ui">D3.js</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-04-risk-simulation.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">04</span>
                             <span class="screen-name">Risk Simulation</span>
@@ -997,9 +1017,10 @@
                             <span class="connect-badge ai">GPT-4</span>
                             <span class="connect-badge api">Yahoo Fin</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-05-anomaly-detection.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">05</span>
                             <span class="screen-name">Anomaly Detection</span>
@@ -1009,9 +1030,10 @@
                             <span class="connect-badge ai">Claude</span>
                             <span class="connect-badge api">SEC EDGAR</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-06-interrogation.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">06</span>
                             <span class="screen-name">Interrogation</span>
@@ -1021,9 +1043,10 @@
                             <span class="connect-badge ai">Claude</span>
                             <span class="connect-badge db">Supabase</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-07-deal-simulator.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">07</span>
                             <span class="screen-name">Deal Simulator</span>
@@ -1033,9 +1056,10 @@
                             <span class="connect-badge ai">GPT-4</span>
                             <span class="connect-badge ui">Recharts</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-08-dashboard.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">08</span>
                             <span class="screen-name">Dashboard</span>
@@ -1045,9 +1069,10 @@
                             <span class="connect-badge db">Supabase</span>
                             <span class="connect-badge ui">Recharts</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-09-document-analysis.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">09</span>
                             <span class="screen-name">Document Analysis</span>
@@ -1057,9 +1082,10 @@
                             <span class="connect-badge ai">Claude</span>
                             <span class="connect-badge ui">PDF.js</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-10-pricing.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">10</span>
                             <span class="screen-name">Pricing</span>
@@ -1068,9 +1094,10 @@
                         <div class="screen-connects">
                             <span class="connect-badge ui">Static</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-11-agent-debate-arena.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">11</span>
                             <span class="screen-name">Agent Debate Arena</span>
@@ -1080,9 +1107,10 @@
                             <span class="connect-badge ai">Claude</span>
                             <span class="connect-badge ai">GPT-4</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-12-sensitivity-analysis.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">12</span>
                             <span class="screen-name">Sensitivity Analysis</span>
@@ -1092,9 +1120,10 @@
                             <span class="connect-badge ai">GPT-4</span>
                             <span class="connect-badge ui">Recharts</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-13-precedent-finder.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">13</span>
                             <span class="screen-name">Precedent Finder</span>
@@ -1104,9 +1133,10 @@
                             <span class="connect-badge ai">Gemini</span>
                             <span class="connect-badge api">SEC EDGAR</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-14-agent-builder.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">14</span>
                             <span class="screen-name">Agent Builder</span>
@@ -1116,9 +1146,10 @@
                             <span class="connect-badge db">Supabase</span>
                             <span class="connect-badge ai">All Models</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-15-report-builder.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">15</span>
                             <span class="screen-name">Report Builder</span>
@@ -1128,9 +1159,10 @@
                             <span class="connect-badge ai">Claude</span>
                             <span class="connect-badge ui">PDF Export</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-16-model-orchestration.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">16</span>
                             <span class="screen-name">Model Orchestration</span>
@@ -1140,9 +1172,10 @@
                             <span class="connect-badge ai">All Models</span>
                             <span class="connect-badge api">WebSocket</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-17-confidence-calibration.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">17</span>
                             <span class="screen-name">Confidence Calibration</span>
@@ -1152,9 +1185,10 @@
                             <span class="connect-badge ai">All Models</span>
                             <span class="connect-badge ui">Recharts</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-18-audit-trail.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">18</span>
                             <span class="screen-name">Audit Trail</span>
@@ -1164,9 +1198,10 @@
                             <span class="connect-badge db">Supabase</span>
                             <span class="connect-badge ui">Timeline</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-19-team-workspace.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">19</span>
                             <span class="screen-name">Team Workspace</span>
@@ -1176,9 +1211,10 @@
                             <span class="connect-badge db">Supabase</span>
                             <span class="connect-badge api">Real-time</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-20-reasoning-streams.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">20</span>
                             <span class="screen-name">Reasoning Streams</span>
@@ -1188,9 +1224,10 @@
                             <span class="connect-badge ai">All Models</span>
                             <span class="connect-badge api">Streaming</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-21-api-console.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">21</span>
                             <span class="screen-name">API Console</span>
@@ -1200,9 +1237,10 @@
                             <span class="connect-badge api">REST API</span>
                             <span class="connect-badge db">Supabase</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
 
-                    <div class="screen-card">
+                    <a href="arch/arch-22-data-pipeline.html" class="screen-card">
                         <div class="screen-header">
                             <span class="screen-num">22</span>
                             <span class="screen-name">Data Pipeline</span>
@@ -1212,7 +1250,8 @@
                             <span class="connect-badge db">Supabase</span>
                             <span class="connect-badge ui">Queue</span>
                         </div>
-                    </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
                 </div>
             </div>
         </div>

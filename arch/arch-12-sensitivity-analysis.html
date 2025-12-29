@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture — Sensitivity Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --white: #ffffff; --gray-400: #94a3b8; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a; --gray-950: #0a0f1a; --teal: #0d9488; --teal-light: #14b8a6; --amber: #d97706; --green: #16a34a; --blue: #2563eb; --purple: #7c3aed; --red: #dc2626; }
+        body { font-family: 'Inter', sans-serif; background: var(--gray-950); color: #f1f5f9; min-height: 100vh; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; background: var(--gray-900); border-bottom: 1px solid var(--gray-800); }
+        .topbar-left { display: flex; align-items: center; gap: 1.5rem; }
+        .back-link { color: var(--gray-400); text-decoration: none; font-size: 0.9rem; }
+        .page-title { font-size: 1.1rem; font-weight: 600; color: var(--white); }
+        .screen-badge { background: var(--purple); color: white; padding: 0.4rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
+        .page-header { text-align: center; margin-bottom: 3rem; }
+        .page-header h1 { font-family: 'Fraunces', serif; font-size: 2rem; color: var(--white); margin-bottom: 0.5rem; }
+        .page-header p { color: var(--gray-400); font-size: 1rem; }
+        .section { margin-bottom: 3rem; }
+        .section-title { font-size: 1rem; font-weight: 600; color: var(--teal-light); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .diagram-container { background: var(--gray-900); border: 1px solid var(--gray-800); border-radius: 16px; padding: 2rem; }
+        .tornado-demo { display: flex; flex-direction: column; gap: 0.5rem; }
+        .tornado-row { display: flex; align-items: center; gap: 1rem; }
+        .tornado-label { width: 120px; font-size: 0.8rem; color: var(--gray-300); text-align: right; }
+        .tornado-bar { flex: 1; display: flex; justify-content: center; position: relative; height: 28px; }
+        .tornado-bar-inner { position: absolute; height: 100%; display: flex; }
+        .tornado-bar-left { background: var(--red); border-radius: 4px 0 0 4px; }
+        .tornado-bar-right { background: var(--green); border-radius: 0 4px 4px 0; }
+        .tornado-impact { width: 80px; font-size: 0.75rem; color: var(--gray-400); }
+        .viz-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .viz-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 12px; padding: 1.5rem; }
+        .viz-card h4 { font-size: 0.9rem; color: var(--teal-light); margin-bottom: 1rem; }
+        .viz-desc { font-size: 0.8rem; color: var(--gray-400); margin-bottom: 1rem; }
+        .tech-tag { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: var(--gray-700); border-radius: 4px; color: var(--teal-light); font-family: 'JetBrains Mono', monospace; margin: 0.25rem; display: inline-block; }
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .info-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 12px; padding: 1.5rem; }
+        .info-card h3 { font-size: 0.9rem; color: var(--teal-light); margin-bottom: 1rem; }
+        .info-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .info-item { display: flex; justify-content: space-between; font-size: 0.8rem; }
+        .info-item span:first-child { color: var(--gray-400); }
+        .info-item span:last-child { color: var(--white); font-family: 'JetBrains Mono', monospace; }
+        .view-screen-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="../23-architecture.html" class="back-link">← System Architecture</a>
+            <h1 class="page-title">Sensitivity Analysis</h1>
+        </div>
+        <span class="screen-badge">Screen 12</span>
+    </div>
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Sensitivity Analysis Architecture</h1>
+            <p>Tornado diagrams and data tables showing impact of variable changes on deal outcomes</p>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Tornado Diagram</h2>
+            <div class="diagram-container">
+                <div class="tornado-demo">
+                    <div class="tornado-row">
+                        <div class="tornado-label">Exit Multiple</div>
+                        <div class="tornado-bar">
+                            <div class="tornado-bar-inner" style="width: 80%;">
+                                <div class="tornado-bar-left" style="width: 50%;"></div>
+                                <div class="tornado-bar-right" style="width: 50%;"></div>
+                            </div>
+                        </div>
+                        <div class="tornado-impact">±$180M</div>
+                    </div>
+                    <div class="tornado-row">
+                        <div class="tornado-label">Revenue Growth</div>
+                        <div class="tornado-bar">
+                            <div class="tornado-bar-inner" style="width: 65%;">
+                                <div class="tornado-bar-left" style="width: 50%;"></div>
+                                <div class="tornado-bar-right" style="width: 50%;"></div>
+                            </div>
+                        </div>
+                        <div class="tornado-impact">±$145M</div>
+                    </div>
+                    <div class="tornado-row">
+                        <div class="tornado-label">EBITDA Margin</div>
+                        <div class="tornado-bar">
+                            <div class="tornado-bar-inner" style="width: 50%;">
+                                <div class="tornado-bar-left" style="width: 50%;"></div>
+                                <div class="tornado-bar-right" style="width: 50%;"></div>
+                            </div>
+                        </div>
+                        <div class="tornado-impact">±$112M</div>
+                    </div>
+                    <div class="tornado-row">
+                        <div class="tornado-label">Synergies</div>
+                        <div class="tornado-bar">
+                            <div class="tornado-bar-inner" style="width: 35%;">
+                                <div class="tornado-bar-left" style="width: 50%;"></div>
+                                <div class="tornado-bar-right" style="width: 50%;"></div>
+                            </div>
+                        </div>
+                        <div class="tornado-impact">±$78M</div>
+                    </div>
+                    <div class="tornado-row">
+                        <div class="tornado-label">Interest Rate</div>
+                        <div class="tornado-bar">
+                            <div class="tornado-bar-inner" style="width: 20%;">
+                                <div class="tornado-bar-left" style="width: 50%;"></div>
+                                <div class="tornado-bar-right" style="width: 50%;"></div>
+                            </div>
+                        </div>
+                        <div class="tornado-impact">±$45M</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Visualization Types</h2>
+            <div class="diagram-container">
+                <div class="viz-grid">
+                    <div class="viz-card">
+                        <h4>🌪️ Tornado Chart</h4>
+                        <div class="viz-desc">Horizontal bars showing impact of each variable at ±1 std dev</div>
+                        <div><span class="tech-tag">Recharts</span></div>
+                    </div>
+                    <div class="viz-card">
+                        <h4>📊 Data Tables</h4>
+                        <div class="viz-desc">Matrix showing IRR/MOIC at different variable combinations</div>
+                        <div><span class="tech-tag">TanStack Table</span></div>
+                    </div>
+                    <div class="viz-card">
+                        <h4>🎯 Spider Chart</h4>
+                        <div class="viz-desc">Multi-variable sensitivity in radar format</div>
+                        <div><span class="tech-tag">Recharts Radar</span></div>
+                    </div>
+                    <div class="viz-card">
+                        <h4>🔥 Heat Map</h4>
+                        <div class="viz-desc">2D grid showing outcomes for two-variable combinations</div>
+                        <div><span class="tech-tag">D3.js</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Technical Specifications</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>🔌 APIs & Libraries</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>Calculations</span><span>GPT-4 API</span></div>
+                        <div class="info-item"><span>Charts</span><span>Recharts</span></div>
+                        <div class="info-item"><span>Tables</span><span>TanStack Table</span></div>
+                        <div class="info-item"><span>Heat Maps</span><span>D3.js</span></div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>⚡ Analysis Parameters</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>Variables</span><span>Up to 10</span></div>
+                        <div class="info-item"><span>Deviation Range</span><span>±20%</span></div>
+                        <div class="info-item"><span>Steps</span><span>5 per variable</span></div>
+                        <div class="info-item"><span>Update Speed</span><span>&lt; 500ms</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="../12-sensitivity-analysis.html" class="view-screen-btn">View Screen Mockup →</a>
+    </main>
+</body>
+</html>

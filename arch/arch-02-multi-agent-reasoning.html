@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture — Multi-Agent Reasoning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --gray-950: #0a0f1a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+            --purple: #7c3aed;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-950);
+            color: var(--gray-100);
+            min-height: 100vh;
+        }
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--gray-900);
+            border-bottom: 1px solid var(--gray-800);
+        }
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .back-link {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .back-link:hover { color: var(--teal-light); }
+        .page-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+        .screen-badge {
+            background: var(--amber);
+            color: white;
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .page-header h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 2rem;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+        }
+        .page-header p {
+            color: var(--gray-400);
+            font-size: 1rem;
+        }
+        .section {
+            margin-bottom: 3rem;
+        }
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--teal-light);
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .diagram-container {
+            background: var(--gray-900);
+            border: 1px solid var(--gray-800);
+            border-radius: 16px;
+            padding: 2rem;
+            position: relative;
+        }
+        /* Flow Diagram */
+        .flow-vertical {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .flow-node {
+            background: var(--gray-800);
+            border: 2px solid var(--gray-700);
+            border-radius: 12px;
+            padding: 1.25rem 2rem;
+            text-align: center;
+            min-width: 280px;
+            transition: all 0.3s;
+        }
+        .flow-node:hover {
+            border-color: var(--teal);
+            transform: scale(1.02);
+        }
+        .flow-node.input { border-color: var(--blue); background: rgba(37, 99, 235, 0.1); }
+        .flow-node.process { border-color: var(--purple); background: rgba(124, 58, 237, 0.1); }
+        .flow-node.ai { border-color: var(--amber); background: rgba(217, 119, 6, 0.1); }
+        .flow-node.output { border-color: var(--green); background: rgba(22, 163, 74, 0.1); }
+        .flow-node.db { border-color: var(--teal); background: rgba(13, 148, 136, 0.1); }
+        .node-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .node-title {
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+        .node-desc {
+            font-size: 0.8rem;
+            color: var(--gray-400);
+        }
+        .node-tech {
+            margin-top: 0.75rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .tech-tag {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.5rem;
+            background: var(--gray-700);
+            border-radius: 4px;
+            color: var(--teal-light);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .flow-arrow {
+            color: var(--gray-500);
+            font-size: 1.5rem;
+        }
+        .flow-arrow::after { content: '↓'; }
+        /* Horizontal split */
+        .flow-horizontal {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        .flow-branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .branch-connector {
+            display: flex;
+            justify-content: center;
+            gap: 6rem;
+            position: relative;
+            margin: 0.5rem 0;
+        }
+        .branch-connector::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background: var(--gray-700);
+        }
+        .branch-arrow {
+            color: var(--gray-500);
+            font-size: 1.25rem;
+        }
+        .branch-arrow::after { content: '↓'; }
+        /* Component Grid */
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .component-card {
+            background: var(--gray-800);
+            border: 1px solid var(--gray-700);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+        .component-card h4 {
+            font-size: 0.85rem;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+        }
+        .component-card p {
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            line-height: 1.5;
+        }
+        /* Connections */
+        .connections-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .connection-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background: var(--gray-800);
+            border-radius: 8px;
+        }
+        .connection-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        .connection-icon.screen { background: var(--purple); }
+        .connection-icon.api { background: var(--teal); }
+        .connection-icon.db { background: var(--green); }
+        .connection-info { flex: 1; }
+        .connection-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--white);
+        }
+        .connection-desc {
+            font-size: 0.75rem;
+            color: var(--gray-400);
+        }
+        .connection-type {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: var(--gray-700);
+            color: var(--gray-300);
+        }
+        /* Two column layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        .info-card {
+            background: var(--gray-800);
+            border: 1px solid var(--gray-700);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        .info-card h3 {
+            font-size: 0.9rem;
+            color: var(--teal-light);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        .info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+        }
+        .info-item span:first-child { color: var(--gray-400); }
+        .info-item span:last-child { color: var(--white); font-family: 'JetBrains Mono', monospace; }
+        /* View Screen Button */
+        .view-screen-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 2rem;
+        }
+        .view-screen-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="23-architecture.html" class="back-link">← System Architecture</a>
+            <h1 class="page-title">Multi-Agent Reasoning</h1>
+        </div>
+        <span class="screen-badge">Screen 02</span>
+    </div>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Multi-Agent Reasoning Architecture</h1>
+            <p>How multiple AI agents collaborate to analyze M&A documents in real-time</p>
+        </div>
+
+        <!-- Data Flow -->
+        <div class="section">
+            <h2 class="section-title">Data Flow</h2>
+            <div class="diagram-container">
+                <div class="flow-vertical">
+                    <div class="flow-node input">
+                        <div class="node-icon">📄</div>
+                        <div class="node-title">User Uploads Documents</div>
+                        <div class="node-desc">PDFs, contracts, financial statements</div>
+                        <div class="node-tech">
+                            <span class="tech-tag">Supabase Storage</span>
+                            <span class="tech-tag">PDF.js</span>
+                        </div>
+                    </div>
+
+                    <div class="flow-arrow"></div>
+
+                    <div class="flow-node process">
+                        <div class="node-icon">🔄</div>
+                        <div class="node-title">Document Processing Queue</div>
+                        <div class="node-desc">Parse text, extract entities, chunk for analysis</div>
+                        <div class="node-tech">
+                            <span class="tech-tag">Unstructured.io</span>
+                            <span class="tech-tag">NER</span>
+                        </div>
+                    </div>
+
+                    <div class="flow-arrow"></div>
+
+                    <div class="flow-node ai">
+                        <div class="node-icon">🤖</div>
+                        <div class="node-title">Agent Orchestrator</div>
+                        <div class="node-desc">Assigns tasks to specialized AI agents</div>
+                        <div class="node-tech">
+                            <span class="tech-tag">Next.js API</span>
+                            <span class="tech-tag">WebSocket</span>
+                        </div>
+                    </div>
+
+                    <div class="branch-connector">
+                        <span class="branch-arrow"></span>
+                        <span class="branch-arrow"></span>
+                        <span class="branch-arrow"></span>
+                    </div>
+
+                    <div class="flow-horizontal">
+                        <div class="flow-branch">
+                            <div class="flow-node ai" style="min-width: 180px;">
+                                <div class="node-icon">📋</div>
+                                <div class="node-title">Contract Agent</div>
+                                <div class="node-desc">Legal terms, clauses</div>
+                                <div class="node-tech"><span class="tech-tag">Claude</span></div>
+                            </div>
+                        </div>
+                        <div class="flow-branch">
+                            <div class="flow-node ai" style="min-width: 180px;">
+                                <div class="node-icon">⚠️</div>
+                                <div class="node-title">Risk Agent</div>
+                                <div class="node-desc">Red flags, concerns</div>
+                                <div class="node-tech"><span class="tech-tag">Claude</span></div>
+                            </div>
+                        </div>
+                        <div class="flow-branch">
+                            <div class="flow-node ai" style="min-width: 180px;">
+                                <div class="node-icon">💰</div>
+                                <div class="node-title">Financial Agent</div>
+                                <div class="node-desc">Numbers, valuations</div>
+                                <div class="node-tech"><span class="tech-tag">GPT-4</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="branch-connector">
+                        <span class="branch-arrow"></span>
+                        <span class="branch-arrow"></span>
+                        <span class="branch-arrow"></span>
+                    </div>
+
+                    <div class="flow-node process">
+                        <div class="node-icon">🤝</div>
+                        <div class="node-title">Consensus Builder</div>
+                        <div class="node-desc">Aggregates findings, resolves conflicts, calculates confidence</div>
+                        <div class="node-tech">
+                            <span class="tech-tag">Custom Logic</span>
+                            <span class="tech-tag">Weighted Voting</span>
+                        </div>
+                    </div>
+
+                    <div class="flow-arrow"></div>
+
+                    <div class="flow-node db">
+                        <div class="node-icon">💾</div>
+                        <div class="node-title">Store Results</div>
+                        <div class="node-desc">Findings, confidence scores, audit trail</div>
+                        <div class="node-tech">
+                            <span class="tech-tag">Supabase</span>
+                            <span class="tech-tag">PostgreSQL</span>
+                        </div>
+                    </div>
+
+                    <div class="flow-arrow"></div>
+
+                    <div class="flow-node output">
+                        <div class="node-icon">🖥️</div>
+                        <div class="node-title">Real-Time UI Update</div>
+                        <div class="node-desc">Stream findings to user as agents complete</div>
+                        <div class="node-tech">
+                            <span class="tech-tag">React</span>
+                            <span class="tech-tag">WebSocket</span>
+                            <span class="tech-tag">SSE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Details -->
+        <div class="section">
+            <h2 class="section-title">Technical Specifications</h2>
+            <div class="two-col">
+                <div class="info-card">
+                    <h3>🔌 APIs Used</h3>
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span>Contract Analysis</span>
+                            <span>Claude API</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Risk Assessment</span>
+                            <span>Claude API</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Financial Analysis</span>
+                            <span>GPT-4 API</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Document Storage</span>
+                            <span>Supabase Storage</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Results Database</span>
+                            <span>Supabase PostgreSQL</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>⚡ Performance</h3>
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span>Agent Response Time</span>
+                            <span>2-5s per agent</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Parallel Processing</span>
+                            <span>3 agents concurrent</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Max Document Size</span>
+                            <span>50MB</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Real-time Updates</span>
+                            <span>WebSocket/SSE</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Confidence Threshold</span>
+                            <span>85% minimum</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- UI Components -->
+        <div class="section">
+            <h2 class="section-title">UI Components</h2>
+            <div class="component-grid">
+                <div class="component-card">
+                    <h4>📊 Agent Status Panel</h4>
+                    <p>Shows each agent's progress, current task, and completion status with animated indicators</p>
+                </div>
+                <div class="component-card">
+                    <h4>📝 Findings Feed</h4>
+                    <p>Real-time stream of discoveries as agents analyze, with severity badges and confidence scores</p>
+                </div>
+                <div class="component-card">
+                    <h4>🔗 Evidence Links</h4>
+                    <p>Clickable citations linking findings back to specific document pages and paragraphs</p>
+                </div>
+                <div class="component-card">
+                    <h4>📈 Confidence Meter</h4>
+                    <p>Visual gauge showing overall analysis confidence based on agent agreement</p>
+                </div>
+                <div class="component-card">
+                    <h4>🎯 Summary Card</h4>
+                    <p>Executive summary of key findings, risks, and recommended actions</p>
+                </div>
+                <div class="component-card">
+                    <h4>⏱️ Timeline</h4>
+                    <p>Chronological view of agent activities and milestone completions</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connections -->
+        <div class="section">
+            <h2 class="section-title">Connected Screens & Services</h2>
+            <div class="connections-list">
+                <div class="connection-item">
+                    <div class="connection-icon screen">08</div>
+                    <div class="connection-info">
+                        <div class="connection-name">Dashboard</div>
+                        <div class="connection-desc">Receives analysis results and updates deal status</div>
+                    </div>
+                    <span class="connection-type">Navigates To</span>
+                </div>
+                <div class="connection-item">
+                    <div class="connection-icon screen">09</div>
+                    <div class="connection-info">
+                        <div class="connection-name">Document Analysis</div>
+                        <div class="connection-desc">Deep dive into specific documents with AI annotations</div>
+                    </div>
+                    <span class="connection-type">Navigates To</span>
+                </div>
+                <div class="connection-item">
+                    <div class="connection-icon screen">11</div>
+                    <div class="connection-info">
+                        <div class="connection-name">Agent Debate Arena</div>
+                        <div class="connection-desc">When agents disagree, escalate to structured debate</div>
+                    </div>
+                    <span class="connection-type">Triggers</span>
+                </div>
+                <div class="connection-item">
+                    <div class="connection-icon api">🧠</div>
+                    <div class="connection-info">
+                        <div class="connection-name">Claude API</div>
+                        <div class="connection-desc">Contract and risk analysis with chain-of-thought reasoning</div>
+                    </div>
+                    <span class="connection-type">API Call</span>
+                </div>
+                <div class="connection-item">
+                    <div class="connection-icon api">🤖</div>
+                    <div class="connection-info">
+                        <div class="connection-name">GPT-4 API</div>
+                        <div class="connection-desc">Financial modeling and numerical analysis</div>
+                    </div>
+                    <span class="connection-type">API Call</span>
+                </div>
+                <div class="connection-item">
+                    <div class="connection-icon db">💾</div>
+                    <div class="connection-info">
+                        <div class="connection-name">Supabase</div>
+                        <div class="connection-desc">Document storage, analysis results, audit trail</div>
+                    </div>
+                    <span class="connection-type">Read/Write</span>
+                </div>
+            </div>
+        </div>
+
+        <a href="02-multi-agent-reasoning.html" class="view-screen-btn">
+            View Screen Mockup →
+        </a>
+    </main>
+</body>
+</html>

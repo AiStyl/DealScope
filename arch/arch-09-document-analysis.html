@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture — Document Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --white: #ffffff; --gray-400: #94a3b8; --gray-500: #64748b; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a; --gray-950: #0a0f1a; --teal: #0d9488; --teal-light: #14b8a6; --amber: #d97706; --green: #16a34a; --blue: #2563eb; --purple: #7c3aed; --red: #dc2626; }
+        body { font-family: 'Inter', sans-serif; background: var(--gray-950); color: #f1f5f9; min-height: 100vh; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; background: var(--gray-900); border-bottom: 1px solid var(--gray-800); }
+        .topbar-left { display: flex; align-items: center; gap: 1.5rem; }
+        .back-link { color: var(--gray-400); text-decoration: none; font-size: 0.9rem; }
+        .page-title { font-size: 1.1rem; font-weight: 600; color: var(--white); }
+        .screen-badge { background: var(--amber); color: white; padding: 0.4rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
+        .page-header { text-align: center; margin-bottom: 3rem; }
+        .page-header h1 { font-family: 'Fraunces', serif; font-size: 2rem; color: var(--white); margin-bottom: 0.5rem; }
+        .page-header p { color: var(--gray-400); font-size: 1rem; }
+        .section { margin-bottom: 3rem; }
+        .section-title { font-size: 1rem; font-weight: 600; color: var(--teal-light); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .diagram-container { background: var(--gray-900); border: 1px solid var(--gray-800); border-radius: 16px; padding: 2rem; }
+        .split-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .panel { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 12px; padding: 1.5rem; }
+        .panel h3 { font-size: 0.9rem; color: var(--teal-light); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .panel-content { font-size: 0.8rem; color: var(--gray-300); }
+        .annotation-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .annotation { background: var(--gray-900); border-radius: 8px; padding: 0.75rem; border-left: 3px solid var(--amber); }
+        .annotation.risk { border-left-color: var(--red); }
+        .annotation.clause { border-left-color: var(--blue); }
+        .annotation.financial { border-left-color: var(--green); }
+        .annotation-type { font-size: 0.65rem; text-transform: uppercase; color: var(--gray-500); margin-bottom: 0.25rem; }
+        .annotation-text { font-size: 0.8rem; color: var(--white); }
+        .flow-vertical { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+        .flow-node { background: var(--gray-800); border: 2px solid var(--gray-700); border-radius: 12px; padding: 1.25rem 2rem; text-align: center; min-width: 280px; }
+        .flow-node.input { border-color: var(--blue); background: rgba(37, 99, 235, 0.1); }
+        .flow-node.process { border-color: var(--purple); background: rgba(124, 58, 237, 0.1); }
+        .flow-node.ai { border-color: var(--amber); background: rgba(217, 119, 6, 0.1); }
+        .flow-node.output { border-color: var(--green); background: rgba(22, 163, 74, 0.1); }
+        .node-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .node-title { font-weight: 600; color: var(--white); }
+        .node-desc { font-size: 0.8rem; color: var(--gray-400); margin-top: 0.25rem; }
+        .tech-tag { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: var(--gray-700); border-radius: 4px; color: var(--teal-light); font-family: 'JetBrains Mono', monospace; margin: 0.25rem; display: inline-block; }
+        .flow-arrow { color: var(--gray-500); font-size: 1.5rem; }
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .info-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 12px; padding: 1.5rem; }
+        .info-card h3 { font-size: 0.9rem; color: var(--teal-light); margin-bottom: 1rem; }
+        .info-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .info-item { display: flex; justify-content: space-between; font-size: 0.8rem; }
+        .info-item span:first-child { color: var(--gray-400); }
+        .info-item span:last-child { color: var(--white); font-family: 'JetBrains Mono', monospace; }
+        .view-screen-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="../23-architecture.html" class="back-link">← System Architecture</a>
+            <h1 class="page-title">Document Analysis</h1>
+        </div>
+        <span class="screen-badge">Screen 09</span>
+    </div>
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Document Analysis Architecture</h1>
+            <p>PDF viewer with AI-powered annotations, highlighting, and clause extraction</p>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Split-View Interface</h2>
+            <div class="diagram-container">
+                <div class="split-layout">
+                    <div class="panel">
+                        <h3>📄 PDF Viewer</h3>
+                        <div class="panel-content">
+                            <p style="margin-bottom: 1rem;">Full document with highlighting overlays, page navigation, zoom controls, and text selection</p>
+                            <div><span class="tech-tag">PDF.js</span><span class="tech-tag">React-PDF</span></div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <h3>🤖 AI Annotations Panel</h3>
+                        <div class="annotation-list">
+                            <div class="annotation risk">
+                                <div class="annotation-type">⚠️ Risk Flag</div>
+                                <div class="annotation-text">Change of control clause on page 12 may trigger acceleration</div>
+                            </div>
+                            <div class="annotation clause">
+                                <div class="annotation-type">📋 Key Clause</div>
+                                <div class="annotation-text">Material Adverse Change definition in Section 4.2</div>
+                            </div>
+                            <div class="annotation financial">
+                                <div class="annotation-type">💰 Financial Term</div>
+                                <div class="annotation-text">Earnout: $50M if EBITDA exceeds $120M in Y2</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Analysis Pipeline</h2>
+            <div class="diagram-container">
+                <div class="flow-vertical">
+                    <div class="flow-node input">
+                        <div class="node-icon">📤</div>
+                        <div class="node-title">PDF Upload</div>
+                        <div class="node-desc">User uploads contract, agreement, or filing</div>
+                        <div><span class="tech-tag">Supabase Storage</span></div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-node process">
+                        <div class="node-icon">📝</div>
+                        <div class="node-title">Text Extraction</div>
+                        <div class="node-desc">OCR for scanned docs, text layer extraction</div>
+                        <div><span class="tech-tag">PDF.js</span><span class="tech-tag">Tesseract.js</span></div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-node ai">
+                        <div class="node-icon">🧠</div>
+                        <div class="node-title">Claude Analysis</div>
+                        <div class="node-desc">Identify clauses, risks, key terms, obligations</div>
+                        <div><span class="tech-tag">Claude API</span></div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-node output">
+                        <div class="node-icon">🎨</div>
+                        <div class="node-title">Render Highlights</div>
+                        <div class="node-desc">Overlay annotations on PDF at exact positions</div>
+                        <div><span class="tech-tag">Canvas API</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Technical Specifications</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>🔌 APIs & Libraries</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>PDF Rendering</span><span>PDF.js</span></div>
+                        <div class="info-item"><span>AI Analysis</span><span>Claude API</span></div>
+                        <div class="info-item"><span>OCR (fallback)</span><span>Tesseract.js</span></div>
+                        <div class="info-item"><span>Storage</span><span>Supabase</span></div>
+                        <div class="info-item"><span>Highlights</span><span>Canvas overlay</span></div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>⚡ Performance</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>PDF Load</span><span>&lt; 2s (50 pages)</span></div>
+                        <div class="info-item"><span>Analysis Time</span><span>5-15s per doc</span></div>
+                        <div class="info-item"><span>Max File Size</span><span>50MB</span></div>
+                        <div class="info-item"><span>Supported Formats</span><span>PDF, DOCX</span></div>
+                        <div class="info-item"><span>Search</span><span>Full-text indexed</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="../09-document-analysis.html" class="view-screen-btn">View Screen Mockup →</a>
+    </main>
+</body>
+</html>

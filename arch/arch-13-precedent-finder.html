@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture — Precedent Finder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --white: #ffffff; --gray-400: #94a3b8; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a; --gray-950: #0a0f1a; --teal: #0d9488; --teal-light: #14b8a6; --amber: #d97706; --green: #16a34a; --blue: #2563eb; --purple: #7c3aed; }
+        body { font-family: 'Inter', sans-serif; background: var(--gray-950); color: #f1f5f9; min-height: 100vh; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; background: var(--gray-900); border-bottom: 1px solid var(--gray-800); }
+        .topbar-left { display: flex; align-items: center; gap: 1.5rem; }
+        .back-link { color: var(--gray-400); text-decoration: none; font-size: 0.9rem; }
+        .page-title { font-size: 1.1rem; font-weight: 600; color: var(--white); }
+        .screen-badge { background: var(--teal); color: white; padding: 0.4rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
+        .page-header { text-align: center; margin-bottom: 3rem; }
+        .page-header h1 { font-family: 'Fraunces', serif; font-size: 2rem; color: var(--white); margin-bottom: 0.5rem; }
+        .page-header p { color: var(--gray-400); font-size: 1rem; }
+        .section { margin-bottom: 3rem; }
+        .section-title { font-size: 1rem; font-weight: 600; color: var(--teal-light); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .diagram-container { background: var(--gray-900); border: 1px solid var(--gray-800); border-radius: 16px; padding: 2rem; }
+        .flow-vertical { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+        .flow-node { background: var(--gray-800); border: 2px solid var(--gray-700); border-radius: 12px; padding: 1.25rem 2rem; text-align: center; min-width: 300px; }
+        .flow-node.input { border-color: var(--blue); background: rgba(37, 99, 235, 0.1); }
+        .flow-node.api { border-color: var(--teal); background: rgba(13, 148, 136, 0.1); }
+        .flow-node.ai { border-color: var(--amber); background: rgba(217, 119, 6, 0.1); }
+        .flow-node.output { border-color: var(--green); background: rgba(22, 163, 74, 0.1); }
+        .node-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .node-title { font-weight: 600; color: var(--white); }
+        .node-desc { font-size: 0.8rem; color: var(--gray-400); margin-top: 0.25rem; }
+        .tech-tag { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: var(--gray-700); border-radius: 4px; color: var(--teal-light); font-family: 'JetBrains Mono', monospace; margin: 0.25rem; display: inline-block; }
+        .flow-arrow { color: var(--gray-500); font-size: 1.5rem; }
+        .comps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .comp-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 10px; padding: 1rem; }
+        .comp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .comp-name { font-weight: 600; color: var(--white); font-size: 0.9rem; }
+        .comp-match { font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(13, 148, 136, 0.2); color: var(--teal-light); border-radius: 4px; }
+        .comp-stats { font-size: 0.75rem; color: var(--gray-400); }
+        .comp-stats div { margin-bottom: 0.25rem; }
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .info-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 12px; padding: 1.5rem; }
+        .info-card h3 { font-size: 0.9rem; color: var(--teal-light); margin-bottom: 1rem; }
+        .info-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .info-item { display: flex; justify-content: space-between; font-size: 0.8rem; }
+        .info-item span:first-child { color: var(--gray-400); }
+        .info-item span:last-child { color: var(--white); font-family: 'JetBrains Mono', monospace; }
+        .view-screen-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="../23-architecture.html" class="back-link">← System Architecture</a>
+            <h1 class="page-title">Precedent Finder</h1>
+        </div>
+        <span class="screen-badge">Screen 13</span>
+    </div>
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Precedent Finder Architecture</h1>
+            <p>Search SEC EDGAR for comparable M&A transactions with AI-powered similarity matching</p>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Search Pipeline</h2>
+            <div class="diagram-container">
+                <div class="flow-vertical">
+                    <div class="flow-node input">
+                        <div class="node-icon">🔍</div>
+                        <div class="node-title">Search Criteria</div>
+                        <div class="node-desc">Industry, deal size, transaction type, date range</div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-node api">
+                        <div class="node-icon">📑</div>
+                        <div class="node-title">SEC EDGAR Query</div>
+                        <div class="node-desc">Search 8-K, S-4, DEFM14A filings for M&A announcements</div>
+                        <div><span class="tech-tag">SEC EDGAR API</span></div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-node ai">
+                        <div class="node-icon">🧠</div>
+                        <div class="node-title">Gemini Analysis</div>
+                        <div class="node-desc">Extract deal terms, multiples, structure from filings</div>
+                        <div><span class="tech-tag">Gemini API</span></div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-node output">
+                        <div class="node-icon">📊</div>
+                        <div class="node-title">Ranked Results</div>
+                        <div class="node-desc">Comparable transactions with similarity scores</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Example Comparables</h2>
+            <div class="diagram-container">
+                <div class="comps-grid">
+                    <div class="comp-card">
+                        <div class="comp-header">
+                            <span class="comp-name">Acme Corp / TechCo</span>
+                            <span class="comp-match">94% Match</span>
+                        </div>
+                        <div class="comp-stats">
+                            <div>Deal Size: $1.2B</div>
+                            <div>EV/EBITDA: 11.2x</div>
+                            <div>Premium: 32%</div>
+                        </div>
+                    </div>
+                    <div class="comp-card">
+                        <div class="comp-header">
+                            <span class="comp-name">BigCo / SmallCo</span>
+                            <span class="comp-match">87% Match</span>
+                        </div>
+                        <div class="comp-stats">
+                            <div>Deal Size: $890M</div>
+                            <div>EV/EBITDA: 9.8x</div>
+                            <div>Premium: 28%</div>
+                        </div>
+                    </div>
+                    <div class="comp-card">
+                        <div class="comp-header">
+                            <span class="comp-name">MegaCorp / StartupX</span>
+                            <span class="comp-match">82% Match</span>
+                        </div>
+                        <div class="comp-stats">
+                            <div>Deal Size: $1.5B</div>
+                            <div>EV/EBITDA: 14.2x</div>
+                            <div>Premium: 45%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Technical Specifications</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>🔌 APIs & Services</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>Filing Search</span><span>SEC EDGAR</span></div>
+                        <div class="info-item"><span>Term Extraction</span><span>Gemini API</span></div>
+                        <div class="info-item"><span>Similarity</span><span>Custom scoring</span></div>
+                        <div class="info-item"><span>Cache</span><span>Supabase</span></div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>⚡ Search Parameters</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>Filing Types</span><span>8-K, S-4, DEFM14A</span></div>
+                        <div class="info-item"><span>Date Range</span><span>Last 5 years</span></div>
+                        <div class="info-item"><span>Max Results</span><span>50 per search</span></div>
+                        <div class="info-item"><span>Search Time</span><span>&lt; 5 seconds</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="../13-precedent-finder.html" class="view-screen-btn">View Screen Mockup →</a>
+    </main>
+</body>
+</html>

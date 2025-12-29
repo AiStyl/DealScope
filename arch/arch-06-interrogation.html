@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture — Interrogation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --white: #ffffff; --gray-400: #94a3b8; --gray-500: #64748b; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a; --gray-950: #0a0f1a; --teal: #0d9488; --teal-light: #14b8a6; --amber: #d97706; --green: #16a34a; --blue: #2563eb; --purple: #7c3aed; --red: #dc2626; }
+        body { font-family: 'Inter', sans-serif; background: var(--gray-950); color: #f1f5f9; min-height: 100vh; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; background: var(--gray-900); border-bottom: 1px solid var(--gray-800); }
+        .topbar-left { display: flex; align-items: center; gap: 1.5rem; }
+        .back-link { color: var(--gray-400); text-decoration: none; font-size: 0.9rem; }
+        .back-link:hover { color: var(--teal-light); }
+        .page-title { font-size: 1.1rem; font-weight: 600; color: var(--white); }
+        .screen-badge { background: var(--purple); color: white; padding: 0.4rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
+        .page-header { text-align: center; margin-bottom: 3rem; }
+        .page-header h1 { font-family: 'Fraunces', serif; font-size: 2rem; color: var(--white); margin-bottom: 0.5rem; }
+        .page-header p { color: var(--gray-400); font-size: 1rem; }
+        .section { margin-bottom: 3rem; }
+        .section-title { font-size: 1rem; font-weight: 600; color: var(--teal-light); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .diagram-container { background: var(--gray-900); border: 1px solid var(--gray-800); border-radius: 16px; padding: 2rem; }
+        .flow-vertical { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+        .flow-node { background: var(--gray-800); border: 2px solid var(--gray-700); border-radius: 12px; padding: 1.25rem 2rem; text-align: center; min-width: 300px; }
+        .flow-node.input { border-color: var(--blue); background: rgba(37, 99, 235, 0.1); }
+        .flow-node.process { border-color: var(--purple); background: rgba(124, 58, 237, 0.1); }
+        .flow-node.ai { border-color: var(--amber); background: rgba(217, 119, 6, 0.1); }
+        .flow-node.db { border-color: var(--teal); background: rgba(13, 148, 136, 0.1); }
+        .flow-node.output { border-color: var(--green); background: rgba(22, 163, 74, 0.1); }
+        .node-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .node-title { font-weight: 600; color: var(--white); }
+        .node-desc { font-size: 0.8rem; color: var(--gray-400); margin-top: 0.25rem; }
+        .tech-tag { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: var(--gray-700); border-radius: 4px; color: var(--teal-light); font-family: 'JetBrains Mono', monospace; margin: 0.25rem; display: inline-block; }
+        .flow-arrow { color: var(--gray-500); font-size: 1.5rem; }
+        .rag-diagram { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; align-items: start; }
+        .rag-step { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 12px; padding: 1.25rem; text-align: center; }
+        .rag-step h4 { color: var(--teal-light); font-size: 0.85rem; margin-bottom: 0.5rem; }
+        .rag-step p { font-size: 0.75rem; color: var(--gray-400); }
+        .rag-num { background: var(--teal); color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .component-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .component-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 10px; padding: 1rem; }
+        .component-card h4 { font-size: 0.85rem; color: var(--white); margin-bottom: 0.5rem; }
+        .component-card p { font-size: 0.75rem; color: var(--gray-400); line-height: 1.5; }
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .info-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 12px; padding: 1.5rem; }
+        .info-card h3 { font-size: 0.9rem; color: var(--teal-light); margin-bottom: 1rem; }
+        .info-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .info-item { display: flex; justify-content: space-between; font-size: 0.8rem; }
+        .info-item span:first-child { color: var(--gray-400); }
+        .info-item span:last-child { color: var(--white); font-family: 'JetBrains Mono', monospace; }
+        .view-screen-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="../23-architecture.html" class="back-link">← System Architecture</a>
+            <h1 class="page-title">Interrogation</h1>
+        </div>
+        <span class="screen-badge">Screen 06</span>
+    </div>
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Interrogation Architecture</h1>
+            <p>Natural language chat interface to query deal documents using RAG (Retrieval-Augmented Generation)</p>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Query Flow</h2>
+            <div class="diagram-container">
+                <div class="flow-vertical">
+                    <div class="flow-node input">
+                        <div class="node-icon">💬</div>
+                        <div class="node-title">User Question</div>
+                        <div class="node-desc">"What are the key termination triggers in the merger agreement?"</div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-node process">
+                        <div class="node-icon">🔍</div>
+                        <div class="node-title">Query Embedding</div>
+                        <div class="node-desc">Convert question to vector for semantic search</div>
+                        <div><span class="tech-tag">OpenAI Embeddings</span></div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-node db">
+                        <div class="node-icon">🗄️</div>
+                        <div class="node-title">Vector Search</div>
+                        <div class="node-desc">Find most relevant document chunks (top-k=5)</div>
+                        <div><span class="tech-tag">Supabase pgvector</span></div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-node ai">
+                        <div class="node-icon">🧠</div>
+                        <div class="node-title">Claude Analysis</div>
+                        <div class="node-desc">Generate answer using retrieved context + reasoning</div>
+                        <div><span class="tech-tag">Claude API</span><span class="tech-tag">Streaming</span></div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-node output">
+                        <div class="node-icon">✅</div>
+                        <div class="node-title">Cited Response</div>
+                        <div class="node-desc">Answer with clickable citations to source documents</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">RAG Pipeline</h2>
+            <div class="diagram-container">
+                <div class="rag-diagram">
+                    <div class="rag-step">
+                        <div class="rag-num">1</div>
+                        <h4>Document Ingestion</h4>
+                        <p>PDFs chunked into 500-token segments with overlap</p>
+                        <div style="margin-top: 0.5rem;"><span class="tech-tag">PDF.js</span></div>
+                    </div>
+                    <div class="rag-step">
+                        <div class="rag-num">2</div>
+                        <h4>Embedding Generation</h4>
+                        <p>Each chunk converted to 1536-dim vector</p>
+                        <div style="margin-top: 0.5rem;"><span class="tech-tag">text-embedding-3</span></div>
+                    </div>
+                    <div class="rag-step">
+                        <div class="rag-num">3</div>
+                        <h4>Vector Storage</h4>
+                        <p>Indexed in pgvector with HNSW for fast search</p>
+                        <div style="margin-top: 0.5rem;"><span class="tech-tag">Supabase</span></div>
+                    </div>
+                    <div class="rag-step">
+                        <div class="rag-num">4</div>
+                        <h4>Semantic Retrieval</h4>
+                        <p>Cosine similarity finds relevant chunks</p>
+                        <div style="margin-top: 0.5rem;"><span class="tech-tag">pgvector</span></div>
+                    </div>
+                    <div class="rag-step">
+                        <div class="rag-num">5</div>
+                        <h4>Context Assembly</h4>
+                        <p>Top chunks assembled into prompt context</p>
+                        <div style="margin-top: 0.5rem;"><span class="tech-tag">Custom</span></div>
+                    </div>
+                    <div class="rag-step">
+                        <div class="rag-num">6</div>
+                        <h4>LLM Generation</h4>
+                        <p>Claude generates answer with citations</p>
+                        <div style="margin-top: 0.5rem;"><span class="tech-tag">Claude</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">UI Components</h2>
+            <div class="diagram-container">
+                <div class="component-grid">
+                    <div class="component-card">
+                        <h4>💬 Chat Interface</h4>
+                        <p>Message bubbles, typing indicators, markdown rendering</p>
+                    </div>
+                    <div class="component-card">
+                        <h4>📎 Citation Cards</h4>
+                        <p>Clickable references linking to source documents</p>
+                    </div>
+                    <div class="component-card">
+                        <h4>📄 Document Preview</h4>
+                        <p>Side panel showing highlighted source text</p>
+                    </div>
+                    <div class="component-card">
+                        <h4>💡 Suggested Questions</h4>
+                        <p>AI-generated follow-up questions</p>
+                    </div>
+                    <div class="component-card">
+                        <h4>📜 Chat History</h4>
+                        <p>Previous conversations, searchable</p>
+                    </div>
+                    <div class="component-card">
+                        <h4>⚙️ Settings Panel</h4>
+                        <p>Confidence threshold, citation format</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Technical Specifications</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>🔌 APIs & Services</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>Answer Generation</span><span>Claude API</span></div>
+                        <div class="info-item"><span>Embeddings</span><span>OpenAI</span></div>
+                        <div class="info-item"><span>Vector Store</span><span>Supabase pgvector</span></div>
+                        <div class="info-item"><span>Chat History</span><span>Supabase</span></div>
+                        <div class="info-item"><span>Streaming</span><span>SSE</span></div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>⚡ Performance</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>First Token</span><span>&lt; 500ms</span></div>
+                        <div class="info-item"><span>Full Response</span><span>2-5 seconds</span></div>
+                        <div class="info-item"><span>Chunk Size</span><span>500 tokens</span></div>
+                        <div class="info-item"><span>Top-K Retrieved</span><span>5 chunks</span></div>
+                        <div class="info-item"><span>Context Window</span><span>~4K tokens</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="../06-interrogation.html" class="view-screen-btn">View Screen Mockup →</a>
+    </main>
+</body>
+</html>
