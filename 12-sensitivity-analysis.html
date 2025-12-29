@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Sensitivity Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .back-link {
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .page-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.25rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            border: 1px solid var(--gray-300);
+            color: var(--gray-700);
+        }
+
+        .btn-primary {
+            background: var(--gray-900);
+            border: none;
+            color: var(--white);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: var(--gray-500);
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .summary-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .summary-value.teal { color: var(--teal); }
+        .summary-value.green { color: var(--green); }
+        .summary-value.red { color: var(--red); }
+
+        .summary-sub {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-top: 0.25rem;
+        }
+
+        /* Main Grid */
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 1.5rem;
+        }
+
+        /* Tornado Section */
+        .tornado-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 1.75rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .section-badge {
+            font-size: 0.75rem;
+            background: var(--gray-100);
+            color: var(--gray-600);
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+        }
+
+        /* Tornado Chart */
+        .tornado-chart {
+            margin-bottom: 1.5rem;
+        }
+
+        .tornado-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0;
+        }
+
+        .tornado-label {
+            width: 160px;
+            font-size: 0.85rem;
+            color: var(--gray-700);
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .tornado-bar-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            position: relative;
+            height: 36px;
+        }
+
+        .tornado-center {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--gray-300);
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+
+        .tornado-bar-negative {
+            position: absolute;
+            right: 50%;
+            height: 28px;
+            background: linear-gradient(90deg, #ef4444, #f87171);
+            border-radius: 4px 0 0 4px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 0.5rem;
+            transition: width 0.5s ease;
+        }
+
+        .tornado-bar-positive {
+            position: absolute;
+            left: 50%;
+            height: 28px;
+            background: linear-gradient(90deg, #22c55e, #4ade80);
+            border-radius: 0 4px 4px 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.5rem;
+            transition: width 0.5s ease;
+        }
+
+        .bar-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--white);
+            white-space: nowrap;
+        }
+
+        .tornado-range {
+            width: 100px;
+            display: flex;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            flex-shrink: 0;
+        }
+
+        /* Chart Legend */
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--gray-600);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .legend-dot.negative { background: #ef4444; }
+        .legend-dot.positive { background: #22c55e; }
+        .legend-dot.base { background: var(--gray-300); }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        /* Key Drivers Card */
+        .drivers-card {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, var(--white) 100%);
+            border: 1px solid rgba(13, 148, 136, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .driver-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .driver-item:last-child {
+            border-bottom: none;
+        }
+
+        .driver-rank {
+            width: 24px;
+            height: 24px;
+            background: var(--teal);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .driver-info {
+            flex: 1;
+        }
+
+        .driver-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 0.15rem;
+        }
+
+        .driver-impact {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .driver-swing {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--red);
+        }
+
+        /* Scenario Card */
+        .scenario-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .scenario-preset {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .scenario-preset:hover {
+            background: var(--gray-100);
+        }
+
+        .preset-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .preset-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .preset-value.positive { color: var(--green); }
+        .preset-value.negative { color: var(--red); }
+        .preset-value.neutral { color: var(--gray-700); }
+
+        /* Two-Way Table */
+        .two-way-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .two-way-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .two-way-table th,
+        .two-way-table td {
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .two-way-table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .two-way-table th:first-child {
+            text-align: left;
+            border-radius: 8px 0 0 0;
+        }
+
+        .two-way-table th:last-child {
+            border-radius: 0 8px 0 0;
+        }
+
+        .two-way-table td:first-child {
+            text-align: left;
+            background: var(--gray-50);
+            font-weight: 600;
+        }
+
+        .two-way-table tbody tr:last-child td:first-child {
+            border-radius: 0 0 0 8px;
+        }
+
+        .cell-value {
+            display: inline-block;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .cell-value.very-low { background: #fee2e2; color: #b91c1c; }
+        .cell-value.low { background: #fef3c7; color: #b45309; }
+        .cell-value.base { background: var(--gray-100); color: var(--gray-700); }
+        .cell-value.high { background: #dcfce7; color: #15803d; }
+        .cell-value.very-high { background: #bbf7d0; color: #166534; }
+
+        /* AI Insight */
+        .ai-insight {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, var(--white) 100%);
+            border: 1px solid rgba(13, 148, 136, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1.5rem;
+        }
+
+        .insight-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--teal);
+            margin-bottom: 0.75rem;
+        }
+
+        .insight-text {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            line-height: 1.7;
+        }
+
+        .insight-text strong {
+            color: var(--gray-800);
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="08-dashboard.html" class="back-link">← NovaPharma Deal</a>
+            <h1 class="page-title">Sensitivity Analysis</h1>
+        </div>
+        <div class="topbar-actions">
+            <button class="btn btn-secondary">Export</button>
+            <button class="btn btn-primary">Run Analysis</button>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1>What Moves The Needle?</h1>
+            <p>Identify the variables with the greatest impact on deal value</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">Base Case Value</div>
+                <div class="summary-value teal">$847M</div>
+                <div class="summary-sub">Most likely outcome</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Maximum Upside</div>
+                <div class="summary-value green">$1.24B</div>
+                <div class="summary-sub">+$393M from base</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Maximum Downside</div>
+                <div class="summary-value red">$412M</div>
+                <div class="summary-sub">-$435M from base</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Total Swing</div>
+                <div class="summary-value">$828M</div>
+                <div class="summary-sub">98% of base value</div>
+            </div>
+        </div>
+
+        <div class="analysis-grid">
+            <!-- Tornado Chart -->
+            <div class="tornado-section">
+                <div class="section-header">
+                    <h2 class="section-title">Tornado Diagram — Value Sensitivity</h2>
+                    <span class="section-badge">Top 8 Variables</span>
+                </div>
+
+                <div class="tornado-chart">
+                    <!-- Row 1: Pfizer Consent -->
+                    <div class="tornado-row">
+                        <div class="tornado-label">Pfizer Consent Prob.</div>
+                        <div class="tornado-bar-container">
+                            <div class="tornado-center"></div>
+                            <div class="tornado-bar-negative" style="width: 38%;">
+                                <span class="bar-value">-$370M</span>
+                            </div>
+                            <div class="tornado-bar-positive" style="width: 12%;">
+                                <span class="bar-value">+$85M</span>
+                            </div>
+                        </div>
+                        <div class="tornado-range">
+                            <span>15%</span>
+                            <span>80%</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: FDA Approval -->
+                    <div class="tornado-row">
+                        <div class="tornado-label">FDA NP-201 Approval</div>
+                        <div class="tornado-bar-container">
+                            <div class="tornado-center"></div>
+                            <div class="tornado-bar-negative" style="width: 35%;">
+                                <span class="bar-value">-$340M</span>
+                            </div>
+                            <div class="tornado-bar-positive" style="width: 18%;">
+                                <span class="bar-value">+$120M</span>
+                            </div>
+                        </div>
+                        <div class="tornado-range">
+                            <span>35%</span>
+                            <span>95%</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Revenue Growth -->
+                    <div class="tornado-row">
+                        <div class="tornado-label">Revenue Growth CAGR</div>
+                        <div class="tornado-bar-container">
+                            <div class="tornado-center"></div>
+                            <div class="tornado-bar-negative" style="width: 22%;">
+                                <span class="bar-value">-$185M</span>
+                            </div>
+                            <div class="tornado-bar-positive" style="width: 26%;">
+                                <span class="bar-value">+$210M</span>
+                            </div>
+                        </div>
+                        <div class="tornado-range">
+                            <span>8%</span>
+                            <span>35%</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Exit Multiple -->
+                    <div class="tornado-row">
+                        <div class="tornado-label">Exit Multiple (EV/EBITDA)</div>
+                        <div class="tornado-bar-container">
+                            <div class="tornado-center"></div>
+                            <div class="tornado-bar-negative" style="width: 18%;">
+                                <span class="bar-value">-$145M</span>
+                            </div>
+                            <div class="tornado-bar-positive" style="width: 22%;">
+                                <span class="bar-value">+$180M</span>
+                            </div>
+                        </div>
+                        <div class="tornado-range">
+                            <span>8x</span>
+                            <span>16x</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 5: Discount Rate -->
+                    <div class="tornado-row">
+                        <div class="tornado-label">Discount Rate (WACC)</div>
+                        <div class="tornado-bar-container">
+                            <div class="tornado-center"></div>
+                            <div class="tornado-bar-negative" style="width: 15%;">
+                                <span class="bar-value">-$120M</span>
+                            </div>
+                            <div class="tornado-bar-positive" style="width: 12%;">
+                                <span class="bar-value">+$95M</span>
+                            </div>
+                        </div>
+                        <div class="tornado-range">
+                            <span>16%</span>
+                            <span>9%</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 6: Operating Margin -->
+                    <div class="tornado-row">
+                        <div class="tornado-label">Operating Margin</div>
+                        <div class="tornado-bar-container">
+                            <div class="tornado-center"></div>
+                            <div class="tornado-bar-negative" style="width: 12%;">
+                                <span class="bar-value">-$95M</span>
+                            </div>
+                            <div class="tornado-bar-positive" style="width: 10%;">
+                                <span class="bar-value">+$80M</span>
+                            </div>
+                        </div>
+                        <div class="tornado-range">
+                            <span>38%</span>
+                            <span>58%</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 7: Pipeline Success -->
+                    <div class="tornado-row">
+                        <div class="tornado-label">Pipeline Success Rate</div>
+                        <div class="tornado-bar-container">
+                            <div class="tornado-center"></div>
+                            <div class="tornado-bar-negative" style="width: 10%;">
+                                <span class="bar-value">-$75M</span>
+                            </div>
+                            <div class="tornado-bar-positive" style="width: 14%;">
+                                <span class="bar-value">+$110M</span>
+                            </div>
+                        </div>
+                        <div class="tornado-range">
+                            <span>25%</span>
+                            <span>65%</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 8: Key Person -->
+                    <div class="tornado-row">
+                        <div class="tornado-label">Key Person Retention</div>
+                        <div class="tornado-bar-container">
+                            <div class="tornado-center"></div>
+                            <div class="tornado-bar-negative" style="width: 8%;">
+                                <span class="bar-value">-$60M</span>
+                            </div>
+                            <div class="tornado-bar-positive" style="width: 5%;">
+                                <span class="bar-value">+$35M</span>
+                            </div>
+                        </div>
+                        <div class="tornado-range">
+                            <span>Low</span>
+                            <span>High</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot negative"></div>
+                        <span>Downside Impact</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot base"></div>
+                        <span>Base Case ($847M)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot positive"></div>
+                        <span>Upside Impact</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Key Drivers -->
+                <div class="drivers-card">
+                    <h3 class="card-title">🎯 Key Value Drivers</h3>
+                    
+                    <div class="driver-item">
+                        <div class="driver-rank">1</div>
+                        <div class="driver-info">
+                            <div class="driver-name">Pfizer Consent</div>
+                            <div class="driver-impact">Controls 42% of revenue</div>
+                        </div>
+                        <div class="driver-swing">±$455M</div>
+                    </div>
+                    
+                    <div class="driver-item">
+                        <div class="driver-rank">2</div>
+                        <div class="driver-info">
+                            <div class="driver-name">FDA Approval</div>
+                            <div class="driver-impact">NP-201 Phase 3 outcome</div>
+                        </div>
+                        <div class="driver-swing">±$460M</div>
+                    </div>
+                    
+                    <div class="driver-item">
+                        <div class="driver-rank">3</div>
+                        <div class="driver-info">
+                            <div class="driver-name">Revenue Growth</div>
+                            <div class="driver-impact">Commercial execution</div>
+                        </div>
+                        <div class="driver-swing">±$395M</div>
+                    </div>
+                </div>
+
+                <!-- Scenario Presets -->
+                <div class="scenario-card">
+                    <h3 class="card-title">Quick Scenarios</h3>
+                    
+                    <div class="scenario-preset">
+                        <span class="preset-name">🌟 Best Case</span>
+                        <span class="preset-value positive">$1.24B</span>
+                    </div>
+                    
+                    <div class="scenario-preset">
+                        <span class="preset-name">📊 Management Case</span>
+                        <span class="preset-value neutral">$920M</span>
+                    </div>
+                    
+                    <div class="scenario-preset">
+                        <span class="preset-name">⚡ Downside Case</span>
+                        <span class="preset-value negative">$580M</span>
+                    </div>
+                    
+                    <div class="scenario-preset">
+                        <span class="preset-name">💀 Worst Case</span>
+                        <span class="preset-value negative">$285M</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Two-Way Sensitivity Table -->
+        <div class="two-way-section">
+            <div class="section-header">
+                <h2 class="section-title">Two-Way Sensitivity: FDA Approval × Pfizer Consent</h2>
+                <span class="section-badge">Deal Value Matrix</span>
+            </div>
+            
+            <table class="two-way-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Pfizer 20%</th>
+                        <th>Pfizer 35%</th>
+                        <th>Pfizer 50%</th>
+                        <th>Pfizer 65%</th>
+                        <th>Pfizer 80%</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>FDA 40%</td>
+                        <td><span class="cell-value very-low">$285M</span></td>
+                        <td><span class="cell-value very-low">$365M</span></td>
+                        <td><span class="cell-value low">$445M</span></td>
+                        <td><span class="cell-value low">$525M</span></td>
+                        <td><span class="cell-value base">$605M</span></td>
+                    </tr>
+                    <tr>
+                        <td>FDA 55%</td>
+                        <td><span class="cell-value very-low">$380M</span></td>
+                        <td><span class="cell-value low">$480M</span></td>
+                        <td><span class="cell-value low">$580M</span></td>
+                        <td><span class="cell-value base">$680M</span></td>
+                        <td><span class="cell-value high">$780M</span></td>
+                    </tr>
+                    <tr>
+                        <td>FDA 70%</td>
+                        <td><span class="cell-value low">$475M</span></td>
+                        <td><span class="cell-value base">$595M</span></td>
+                        <td><span class="cell-value base">$715M</span></td>
+                        <td><span class="cell-value high">$835M</span></td>
+                        <td><span class="cell-value high">$955M</span></td>
+                    </tr>
+                    <tr>
+                        <td>FDA 85%</td>
+                        <td><span class="cell-value base">$570M</span></td>
+                        <td><span class="cell-value base">$710M</span></td>
+                        <td><span class="cell-value high">$850M</span></td>
+                        <td><span class="cell-value high">$990M</span></td>
+                        <td><span class="cell-value very-high">$1.13B</span></td>
+                    </tr>
+                    <tr>
+                        <td>FDA 95%</td>
+                        <td><span class="cell-value base">$640M</span></td>
+                        <td><span class="cell-value high">$800M</span></td>
+                        <td><span class="cell-value high">$960M</span></td>
+                        <td><span class="cell-value very-high">$1.12B</span></td>
+                        <td><span class="cell-value very-high">$1.24B</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- AI Insight -->
+        <div class="ai-insight">
+            <div class="insight-header">🧠 AI Insight</div>
+            <div class="insight-text">
+                <strong>Pfizer consent and FDA approval dominate value outcomes.</strong> These two variables alone explain 73% of total value variance. Critically, they are correlated (ρ = 0.67) — FDA rejection makes Pfizer denial more likely. The "diagonal" from bottom-left ($285M) to top-right ($1.24B) represents the realistic probability space. <strong>Recommendation:</strong> Focus negotiation energy on these two risks; other variables are secondary.
+            </div>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+            --purple: #7c3aed;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+
+        /* Layout */
+        .app-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--white);
+            border-right: 1px solid var(--gray-200);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-family: 'Fraunces', serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 2rem;
+        }
+
+        .logo span { color: var(--teal); }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--gray-400);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-item:hover {
+            background: var(--gray-50);
+            color: var(--gray-900);
+        }
+
+        .nav-item.active {
+            background: #f0fdfa;
+            color: var(--teal);
+            font-weight: 500;
+        }
+
+        .nav-icon {
+            font-size: 1rem;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--red);
+            color: white;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        /* User */
+        .user-section {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 10px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        /* Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+        }
+
+        .greeting {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+            margin-bottom: 0.25rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            background: var(--white);
+            border: 1px solid var(--gray-300);
+            padding: 0.6rem 1.25rem;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--gray-700);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn.primary {
+            background: var(--gray-900);
+            color: white;
+            border-color: var(--gray-900);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .stat-icon.teal { background: #ccfbf1; }
+        .stat-icon.blue { background: #dbeafe; }
+        .stat-icon.amber { background: #fef3c7; }
+        .stat-icon.red { background: #fee2e2; }
+
+        .stat-trend {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .stat-trend.up { background: #dcfce7; color: var(--green); }
+        .stat-trend.down { background: #fee2e2; color: var(--red); }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-top: 0.25rem;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 1.5rem;
+        }
+
+        /* Deals List */
+        .deals-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .card-action {
+            font-size: 0.85rem;
+            color: var(--teal);
+            cursor: pointer;
+        }
+
+        .deals-list {
+            padding: 0.5rem 0;
+        }
+
+        .deal-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .deal-item:hover {
+            background: var(--gray-50);
+        }
+
+        .deal-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--gray-100);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .deal-info {
+            flex: 1;
+        }
+
+        .deal-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+
+        .deal-meta {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+
+        .deal-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            text-align: right;
+        }
+
+        .deal-stage {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.25rem;
+            display: inline-block;
+        }
+
+        .deal-stage.analysis { background: #dbeafe; color: var(--blue); }
+        .deal-stage.review { background: #fef3c7; color: var(--amber); }
+        .deal-stage.negotiation { background: #f3e8ff; color: var(--purple); }
+
+        /* Agent Activity */
+        .agent-activity {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .activity-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        /* Agent Status */
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .agent-mini {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+        }
+
+        .agent-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .agent-dot.active { background: var(--green); }
+        .agent-dot.thinking { background: var(--amber); animation: pulse 1s infinite; }
+        .agent-dot.idle { background: var(--gray-300); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .agent-mini-info {
+            flex: 1;
+        }
+
+        .agent-mini-name {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .agent-mini-status {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+        }
+
+        /* Recent Findings */
+        .findings-list {
+            margin-top: 1rem;
+        }
+
+        .finding-item {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .finding-item:last-child {
+            border-bottom: none;
+        }
+
+        .finding-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .finding-icon.critical { background: #fee2e2; }
+        .finding-icon.warning { background: #fef3c7; }
+        .finding-icon.info { background: #dbeafe; }
+
+        .finding-content {
+            flex: 1;
+        }
+
+        .finding-text {
+            font-size: 0.85rem;
+            color: var(--gray-700);
+            line-height: 1.5;
+        }
+
+        .finding-meta {
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            margin-top: 0.25rem;
+        }
+
+        /* Intelligence Score */
+        .intelligence-card {
+            background: linear-gradient(135deg, #f0fdfa 0%, var(--white) 100%);
+            border: 1px solid var(--teal);
+        }
+
+        .score-display {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .score-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(var(--teal) 0deg 280deg, var(--gray-200) 280deg 360deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .score-inner {
+            width: 64px;
+            height: 64px;
+            background: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .score-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--teal);
+        }
+
+        .score-breakdown {
+            flex: 1;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            padding: 0.35rem 0;
+        }
+
+        .score-label {
+            color: var(--gray-600);
+        }
+
+        .score-val {
+            font-weight: 600;
+            color: var(--teal);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">DEAL<span>SCOPE</span></div>
+
+            <div class="nav-section">
+                <div class="nav-label">Main</div>
+                <div class="nav-item active">
+                    <span class="nav-icon">📊</span>
+                    Dashboard
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">📁</span>
+                    Active Deals
+                    <span class="nav-badge">4</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">📄</span>
+                    Documents
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Intelligence</div>
+                <div class="nav-item">
+                    <span class="nav-icon">🧠</span>
+                    Agent Reasoning
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">🔗</span>
+                    Knowledge Graph
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">🎲</span>
+                    Risk Simulation
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">⚠️</span>
+                    Anomalies
+                    <span class="nav-badge">7</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Tools</div>
+                <div class="nav-item">
+                    <span class="nav-icon">💬</span>
+                    Interrogation
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">📋</span>
+                    Report Builder
+                </div>
+            </div>
+
+            <div class="user-section">
+                <div class="user-card">
+                    <div class="user-avatar">JJ</div>
+                    <div class="user-info">
+                        <div class="user-name">JJ Smith</div>
+                        <div class="user-role">Managing Director</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <div class="greeting">Good morning, JJ</div>
+                    <h1 class="page-title">Deal Intelligence Dashboard</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="btn">📤 Export Report</button>
+                    <button class="btn primary">+ New Deal</button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon teal">📁</div>
+                        <span class="stat-trend up">+2 this week</span>
+                    </div>
+                    <div class="stat-value">4</div>
+                    <div class="stat-label">Active Deals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon blue">💰</div>
+                    </div>
+                    <div class="stat-value">$3.4B</div>
+                    <div class="stat-label">Total Pipeline Value</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon amber">📄</div>
+                        <span class="stat-trend up">+127 today</span>
+                    </div>
+                    <div class="stat-value">1,247</div>
+                    <div class="stat-label">Documents Analyzed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon red">⚠️</div>
+                    </div>
+                    <div class="stat-value">23</div>
+                    <div class="stat-label">Risks Identified</div>
+                </div>
+            </div>
+
+            <div class="main-grid">
+                <!-- Deals List -->
+                <div class="deals-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Active Deals</h3>
+                        <span class="card-action">View All →</span>
+                    </div>
+                    <div class="deals-list">
+                        <div class="deal-item">
+                            <div class="deal-icon">💊</div>
+                            <div class="deal-info">
+                                <div class="deal-name">NovaPharma Inc.</div>
+                                <div class="deal-meta">Healthcare / Biotech • 312 docs</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="deal-value">$890M</div>
+                                <span class="deal-stage analysis">Analysis</span>
+                            </div>
+                        </div>
+                        <div class="deal-item">
+                            <div class="deal-icon">🏦</div>
+                            <div class="deal-info">
+                                <div class="deal-name">FinServe Global</div>
+                                <div class="deal-meta">Financial Services • 456 docs</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="deal-value">$1.2B</div>
+                                <span class="deal-stage review">Review</span>
+                            </div>
+                        </div>
+                        <div class="deal-item">
+                            <div class="deal-icon">🏥</div>
+                            <div class="deal-info">
+                                <div class="deal-name">Meridian Health</div>
+                                <div class="deal-meta">Healthcare • 289 docs</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="deal-value">$320M</div>
+                                <span class="deal-stage analysis">Analysis</span>
+                            </div>
+                        </div>
+                        <div class="deal-item">
+                            <div class="deal-icon">💻</div>
+                            <div class="deal-info">
+                                <div class="deal-name">TechFlow Systems</div>
+                                <div class="deal-meta">Technology • 178 docs</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="deal-value">$180M</div>
+                                <span class="deal-stage negotiation">Negotiation</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="agent-activity">
+                    <!-- Agent Status -->
+                    <div class="activity-card">
+                        <h3 class="card-title">Agent Status</h3>
+                        <div class="agents-grid">
+                            <div class="agent-mini">
+                                <div class="agent-dot active"></div>
+                                <div class="agent-mini-info">
+                                    <div class="agent-mini-name">Orchestrator</div>
+                                    <div class="agent-mini-status">Coordinating</div>
+                                </div>
+                            </div>
+                            <div class="agent-mini">
+                                <div class="agent-dot thinking"></div>
+                                <div class="agent-mini-info">
+                                    <div class="agent-mini-name">Contract</div>
+                                    <div class="agent-mini-status">Analyzing §7.3...</div>
+                                </div>
+                            </div>
+                            <div class="agent-mini">
+                                <div class="agent-dot active"></div>
+                                <div class="agent-mini-info">
+                                    <div class="agent-mini-name">Risk</div>
+                                    <div class="agent-mini-status">Monitoring</div>
+                                </div>
+                            </div>
+                            <div class="agent-mini">
+                                <div class="agent-dot active"></div>
+                                <div class="agent-mini-info">
+                                    <div class="agent-mini-name">Financial</div>
+                                    <div class="agent-mini-status">Ready</div>
+                                </div>
+                            </div>
+                            <div class="agent-mini">
+                                <div class="agent-dot idle"></div>
+                                <div class="agent-mini-info">
+                                    <div class="agent-mini-name">Researcher</div>
+                                    <div class="agent-mini-status">Idle</div>
+                                </div>
+                            </div>
+                            <div class="agent-mini">
+                                <div class="agent-dot idle"></div>
+                                <div class="agent-mini-info">
+                                    <div class="agent-mini-name">Compliance</div>
+                                    <div class="agent-mini-status">Idle</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Findings -->
+                    <div class="activity-card">
+                        <h3 class="card-title">Recent Findings</h3>
+                        <div class="findings-list">
+                            <div class="finding-item">
+                                <div class="finding-icon critical">🚨</div>
+                                <div class="finding-content">
+                                    <div class="finding-text">Critical CoC clause found in Pfizer license — consent at sole discretion</div>
+                                    <div class="finding-meta">NovaPharma • 5 min ago</div>
+                                </div>
+                            </div>
+                            <div class="finding-item">
+                                <div class="finding-icon warning">⚠️</div>
+                                <div class="finding-content">
+                                    <div class="finding-text">Revenue discrepancy of $2.3M between presentation and audited financials</div>
+                                    <div class="finding-meta">NovaPharma • 23 min ago</div>
+                                </div>
+                            </div>
+                            <div class="finding-item">
+                                <div class="finding-icon info">ℹ️</div>
+                                <div class="finding-content">
+                                    <div class="finding-text">DCF model updated — fair value range $815M-$965M</div>
+                                    <div class="finding-meta">NovaPharma • 1 hour ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Intelligence Score -->
+                    <div class="activity-card intelligence-card">
+                        <h3 class="card-title">Deal Intelligence Score</h3>
+                        <div class="score-display">
+                            <div class="score-circle">
+                                <div class="score-inner">
+                                    <span class="score-value">78%</span>
+                                </div>
+                            </div>
+                            <div class="score-breakdown">
+                                <div class="score-item">
+                                    <span class="score-label">Documents</span>
+                                    <span class="score-val">92%</span>
+                                </div>
+                                <div class="score-item">
+                                    <span class="score-label">Risk Coverage</span>
+                                    <span class="score-val">85%</span>
+                                </div>
+                                <div class="score-item">
+                                    <span class="score-label">Outstanding Items</span>
+                                    <span class="score-val">68%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

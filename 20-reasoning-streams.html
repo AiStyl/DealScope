@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Reasoning Streams</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+            --purple: #7c3aed;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .back-link {
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .page-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .stream-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--green);
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .stream-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            min-height: calc(100vh - 65px);
+            gap: 1px;
+            background: var(--gray-200);
+        }
+
+        /* Stream Column */
+        .stream-column {
+            background: var(--white);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stream-header {
+            padding: 1rem 1.25rem;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .model-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .model-badge.claude {
+            background: rgba(217, 119, 6, 0.15);
+            color: var(--amber);
+        }
+
+        .model-badge.gpt {
+            background: rgba(16, 163, 127, 0.15);
+            color: var(--green);
+        }
+
+        .model-badge.gemini {
+            background: rgba(66, 133, 244, 0.15);
+            color: var(--blue);
+        }
+
+        .stream-info h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .stream-info span {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .stream-metrics {
+            margin-left: auto;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--teal);
+        }
+
+        .metric-label {
+            font-size: 0.6rem;
+            color: var(--gray-500);
+        }
+
+        /* Stream Content */
+        .stream-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        /* Thinking Block */
+        .thinking-block {
+            margin-bottom: 1rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .thinking-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .thinking-type {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .thinking-type.analyzing {
+            background: rgba(37, 99, 235, 0.2);
+            color: #60a5fa;
+        }
+
+        .thinking-type.reasoning {
+            background: rgba(124, 58, 237, 0.2);
+            color: #a78bfa;
+        }
+
+        .thinking-type.validating {
+            background: rgba(22, 163, 74, 0.2);
+            color: #86efac;
+        }
+
+        .thinking-type.questioning {
+            background: rgba(217, 119, 6, 0.2);
+            color: #fcd34d;
+        }
+
+        .thinking-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--gray-500);
+        }
+
+        .thinking-content {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.8rem;
+            line-height: 1.6;
+            color: var(--gray-600);
+        }
+
+        .thinking-content code {
+            background: var(--gray-100);
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--teal);
+        }
+
+        .thinking-content .highlight {
+            background: rgba(13, 148, 136, 0.1);
+            padding: 0.1rem 0.2rem;
+            border-radius: 2px;
+            color: var(--teal);
+        }
+
+        .thinking-content .warning {
+            color: var(--amber);
+        }
+
+        .thinking-content .critical {
+            color: var(--red);
+        }
+
+        /* Chain of Thought */
+        .chain-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .chain-step:last-child {
+            border-bottom: none;
+        }
+
+        .step-number {
+            width: 20px;
+            height: 20px;
+            background: var(--gray-100);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            flex-shrink: 0;
+        }
+
+        .step-number.active {
+            background: var(--teal);
+            color: white;
+        }
+
+        .step-text {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            line-height: 1.5;
+        }
+
+        .step-text.active {
+            color: var(--gray-700);
+        }
+
+        /* Cursor Animation */
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 14px;
+            background: var(--teal);
+            animation: blink 0.8s infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Evidence Reference */
+        .evidence-ref {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: var(--gray-100);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: var(--teal);
+            cursor: pointer;
+        }
+
+        .evidence-ref:hover {
+            background: var(--gray-200);
+        }
+
+        /* Stream Footer */
+        .stream-footer {
+            padding: 0.75rem 1rem;
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .confidence-meter {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .confidence-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .confidence-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .confidence-fill.high { background: var(--green); }
+        .confidence-fill.medium { background: var(--amber); }
+        .confidence-fill.low { background: var(--red); }
+
+        .confidence-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            width: 40px;
+        }
+
+        /* Convergence Panel */
+        .convergence-bar {
+            background: var(--white);
+            padding: 1rem 2rem;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3rem;
+        }
+
+        .convergence-metric {
+            text-align: center;
+        }
+
+        .convergence-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--teal);
+        }
+
+        .convergence-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .convergence-visual {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .model-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .model-dot.claude { background: var(--amber); }
+        .model-dot.gpt { background: var(--green); }
+        .model-dot.gemini { background: var(--blue); }
+
+        .convergence-line {
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--gray-300), var(--teal), var(--gray-300));
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="08-dashboard.html" class="back-link">← Dashboard</a>
+            <h1 class="page-title">Real-Time Reasoning Streams</h1>
+        </div>
+        <div class="stream-status">
+            <div class="stream-dot"></div>
+            3 Models Streaming
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <!-- Claude Stream -->
+        <div class="stream-column">
+            <div class="stream-header">
+                <div class="model-badge claude">C</div>
+                <div class="stream-info">
+                    <h3>Claude Opus</h3>
+                    <span>Contract & Risk Analysis</span>
+                </div>
+                <div class="stream-metrics">
+                    <div class="metric">
+                        <div class="metric-value">2.3s</div>
+                        <div class="metric-label">Latency</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">847</div>
+                        <div class="metric-label">Tokens</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stream-content">
+                <div class="thinking-block">
+                    <div class="thinking-header">
+                        <span class="thinking-type analyzing">Analyzing</span>
+                        <span class="thinking-time">00:02.341</span>
+                    </div>
+                    <div class="thinking-content">
+                        Scanning <code>Pfizer_License_Agreement.pdf</code> for change-of-control provisions...
+                        <br><br>
+                        Found relevant clause at <span class="highlight">Section 7.3</span>. Key language: <span class="warning">"sole discretion"</span> — this is a red flag pattern I've seen in 23 similar agreements.
+                    </div>
+                </div>
+
+                <div class="thinking-block">
+                    <div class="thinking-header">
+                        <span class="thinking-type reasoning">Reasoning</span>
+                        <span class="thinking-time">00:04.127</span>
+                    </div>
+                    <div class="thinking-content">
+                        <div class="chain-step">
+                            <div class="step-number">1</div>
+                            <div class="step-text">The clause grants Pfizer unilateral consent rights</div>
+                        </div>
+                        <div class="chain-step">
+                            <div class="step-number">2</div>
+                            <div class="step-text">No cure period or appeal mechanism exists</div>
+                        </div>
+                        <div class="chain-step">
+                            <div class="step-number">3</div>
+                            <div class="step-text">License represents 42% of NovaPharma revenue</div>
+                        </div>
+                        <div class="chain-step">
+                            <div class="step-number active">4</div>
+                            <div class="step-text active">Therefore: deal value is materially dependent on Pfizer consent<span class="typing-cursor"></span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="thinking-block">
+                    <div class="thinking-header">
+                        <span class="thinking-type questioning">Questioning</span>
+                        <span class="thinking-time">00:05.892</span>
+                    </div>
+                    <div class="thinking-content">
+                        Cross-checking with <evidence-ref class="evidence-ref">📄 10-K Filing</evidence-ref>...
+                        <br><br>
+                        <span class="critical">ANOMALY DETECTED:</span> Pfizer relationship described as "strategic partnership" in 10-K but contract language suggests adversarial optionality. Requesting GPT-4 validation.
+                    </div>
+                </div>
+            </div>
+
+            <div class="stream-footer">
+                <div class="confidence-meter">
+                    <span class="confidence-label">Confidence</span>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill high" style="width: 94%;"></div>
+                    </div>
+                    <span class="confidence-value">94%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- GPT-4 Stream -->
+        <div class="stream-column">
+            <div class="stream-header">
+                <div class="model-badge gpt">G</div>
+                <div class="stream-info">
+                    <h3>GPT-4 Turbo</h3>
+                    <span>Financial Modeling</span>
+                </div>
+                <div class="stream-metrics">
+                    <div class="metric">
+                        <div class="metric-value">1.8s</div>
+                        <div class="metric-label">Latency</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">623</div>
+                        <div class="metric-label">Tokens</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stream-content">
+                <div class="thinking-block">
+                    <div class="thinking-header">
+                        <span class="thinking-type analyzing">Analyzing</span>
+                        <span class="thinking-time">00:01.234</span>
+                    </div>
+                    <div class="thinking-content">
+                        Received cross-validation request from Claude regarding Pfizer revenue dependency.
+                        <br><br>
+                        Extracting revenue breakdown from <code>Audited_Financials_2023.pdf</code>...
+                    </div>
+                </div>
+
+                <div class="thinking-block">
+                    <div class="thinking-header">
+                        <span class="thinking-type reasoning">Calculating</span>
+                        <span class="thinking-time">00:02.891</span>
+                    </div>
+                    <div class="thinking-content">
+                        Revenue breakdown confirmed:
+                        <br><br>
+                        • Pfizer-licensed products: <span class="highlight">$58.7M (41.8%)</span><br>
+                        • Proprietary products: $64.2M (45.7%)<br>
+                        • Services: $17.6M (12.5%)
+                        <br><br>
+                        <span class="warning">Claude's 42% estimate validated.</span> Proceeding with sensitivity analysis.
+                    </div>
+                </div>
+
+                <div class="thinking-block">
+                    <div class="thinking-header">
+                        <span class="thinking-type validating">Simulating</span>
+                        <span class="thinking-time">00:04.567</span>
+                    </div>
+                    <div class="thinking-content">
+                        Running Monte Carlo with Pfizer consent as binary variable:
+                        <br><br>
+                        <div class="chain-step">
+                            <div class="step-number">1</div>
+                            <div class="step-text">Consent granted (p=0.65): EV = $847M</div>
+                        </div>
+                        <div class="chain-step">
+                            <div class="step-number">2</div>
+                            <div class="step-text">Consent denied (p=0.35): EV = $412M</div>
+                        </div>
+                        <div class="chain-step">
+                            <div class="step-number active">3</div>
+                            <div class="step-text active">Expected value: $695M (weighted)<span class="typing-cursor"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stream-footer">
+                <div class="confidence-meter">
+                    <span class="confidence-label">Confidence</span>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill high" style="width: 91%;"></div>
+                    </div>
+                    <span class="confidence-value">91%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gemini Stream -->
+        <div class="stream-column">
+            <div class="stream-header">
+                <div class="model-badge gemini">G</div>
+                <div class="stream-info">
+                    <h3>Gemini Pro</h3>
+                    <span>Document Search & Cross-Reference</span>
+                </div>
+                <div class="stream-metrics">
+                    <div class="metric">
+                        <div class="metric-value">1.2s</div>
+                        <div class="metric-label">Latency</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">412</div>
+                        <div class="metric-label">Tokens</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stream-content">
+                <div class="thinking-block">
+                    <div class="thinking-header">
+                        <span class="thinking-type analyzing">Searching</span>
+                        <span class="thinking-time">00:00.892</span>
+                    </div>
+                    <div class="thinking-content">
+                        Searching 312 documents for "Pfizer" mentions...
+                        <br><br>
+                        Found <span class="highlight">47 references</span> across 12 documents. Building relationship graph.
+                    </div>
+                </div>
+
+                <div class="thinking-block">
+                    <div class="thinking-header">
+                        <span class="thinking-type reasoning">Cross-Referencing</span>
+                        <span class="thinking-time">00:02.134</span>
+                    </div>
+                    <div class="thinking-content">
+                        Checking for precedent consent events:
+                        <br><br>
+                        <evidence-ref class="evidence-ref">📄 Board_Minutes_2022Q3.pdf</evidence-ref>
+                        <br><br>
+                        <span class="highlight">FOUND:</span> Previous M&A attempt in 2022 was abandoned citing "licensor consent challenges." This supports Claude's risk assessment.
+                    </div>
+                </div>
+
+                <div class="thinking-block">
+                    <div class="thinking-header">
+                        <span class="thinking-type validating">Validating</span>
+                        <span class="thinking-time">00:03.456</span>
+                    </div>
+                    <div class="thinking-content">
+                        Consensus check:
+                        <br><br>
+                        <div class="chain-step">
+                            <div class="step-number active">✓</div>
+                            <div class="step-text active">Claude: Pfizer consent is critical risk</div>
+                        </div>
+                        <div class="chain-step">
+                            <div class="step-number active">✓</div>
+                            <div class="step-text active">GPT-4: Revenue dependency confirmed (41.8%)</div>
+                        </div>
+                        <div class="chain-step">
+                            <div class="step-number active">✓</div>
+                            <div class="step-text active">Gemini: Historical precedent supports concern<span class="typing-cursor"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stream-footer">
+                <div class="confidence-meter">
+                    <span class="confidence-label">Confidence</span>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill high" style="width: 89%;"></div>
+                    </div>
+                    <span class="confidence-value">89%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Convergence Bar -->
+    <div class="convergence-bar">
+        <div class="convergence-metric">
+            <div class="convergence-value">91%</div>
+            <div class="convergence-label">Cross-Model Agreement</div>
+        </div>
+        <div class="convergence-visual">
+            <div class="model-dot claude"></div>
+            <div class="convergence-line"></div>
+            <div class="model-dot gpt"></div>
+            <div class="convergence-line"></div>
+            <div class="model-dot gemini"></div>
+        </div>
+        <div class="convergence-metric">
+            <div class="convergence-value">3/3</div>
+            <div class="convergence-label">Models Agree</div>
+        </div>
+        <div class="convergence-metric">
+            <div class="convergence-value">CRITICAL</div>
+            <div class="convergence-label">Consensus Finding</div>
+        </div>
+    </div>
+</body>
+</html>

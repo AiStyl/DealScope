@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Audit Trail</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+            --purple: #7c3aed;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .back-link {
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .page-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.25rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            border: 1px solid var(--gray-300);
+            color: var(--gray-700);
+        }
+
+        .btn-primary {
+            background: var(--gray-900);
+            border: none;
+            color: var(--white);
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr 340px;
+            min-height: calc(100vh - 65px);
+        }
+
+        /* Left: Filters */
+        .filters-panel {
+            background: var(--white);
+            border-right: 1px solid var(--gray-200);
+            padding: 1.5rem;
+        }
+
+        .panel-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 0.85rem;
+            outline: none;
+            color: var(--gray-700);
+        }
+
+        .filter-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 0.75rem;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+
+        .filter-option:hover {
+            background: var(--gray-100);
+        }
+
+        .filter-option.active {
+            background: rgba(13, 148, 136, 0.1);
+            border-color: var(--teal);
+            color: var(--teal);
+        }
+
+        .filter-count {
+            margin-left: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--gray-400);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 1.5rem 2rem;
+            overflow-y: auto;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .content-header h2 {
+            font-family: 'Fraunces', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .event-count {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--gray-200);
+        }
+
+        .timeline-group {
+            margin-bottom: 2rem;
+        }
+
+        .timeline-date {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            padding-left: 48px;
+        }
+
+        .timeline-event {
+            position: relative;
+            padding-left: 48px;
+            padding-bottom: 1.25rem;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 12px;
+            top: 4px;
+            width: 18px;
+            height: 18px;
+            background: var(--white);
+            border: 3px solid var(--gray-300);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .timeline-dot.agent { border-color: var(--teal); background: var(--teal); }
+        .timeline-dot.user { border-color: var(--blue); background: var(--blue); }
+        .timeline-dot.system { border-color: var(--purple); background: var(--purple); }
+        .timeline-dot.alert { border-color: var(--amber); background: var(--amber); }
+
+        .event-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            padding: 1rem;
+            transition: all 0.2s;
+        }
+
+        .event-card:hover {
+            border-color: var(--gray-300);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .event-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .event-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--gray-400);
+        }
+
+        .event-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .event-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .event-badge.agent {
+            background: rgba(13, 148, 136, 0.1);
+            color: var(--teal);
+        }
+
+        .event-badge.user {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--blue);
+        }
+
+        .event-badge.system {
+            background: rgba(124, 58, 237, 0.1);
+            color: var(--purple);
+        }
+
+        .event-actor {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+
+        .event-description {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+        }
+
+        .event-details {
+            background: var(--gray-50);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--gray-600);
+        }
+
+        .event-details code {
+            color: var(--teal);
+        }
+
+        .event-expand {
+            font-size: 0.8rem;
+            color: var(--teal);
+            cursor: pointer;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        /* Right: Details Panel */
+        .details-panel {
+            background: var(--white);
+            border-left: 1px solid var(--gray-200);
+            padding: 1.5rem;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--gray-50);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            margin-top: 0.25rem;
+        }
+
+        /* Compliance Card */
+        .compliance-card {
+            background: linear-gradient(135deg, rgba(22, 163, 74, 0.08) 0%, var(--white) 100%);
+            border: 1px solid rgba(22, 163, 74, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .compliance-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .compliance-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--green);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .compliance-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .compliance-status {
+            font-size: 0.8rem;
+            color: var(--green);
+        }
+
+        .compliance-checks {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .compliance-check {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--gray-600);
+        }
+
+        .check-icon {
+            color: var(--green);
+        }
+
+        /* Activity by Agent */
+        .agent-activity {
+            margin-bottom: 1.5rem;
+        }
+
+        .agent-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .agent-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .agent-info {
+            flex: 1;
+        }
+
+        .agent-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .agent-count {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .agent-bar {
+            width: 60px;
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .agent-bar-fill {
+            height: 100%;
+            background: var(--teal);
+            border-radius: 3px;
+        }
+
+        /* Export Options */
+        .export-section {
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .export-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.5rem;
+        }
+
+        .export-btn:hover {
+            background: var(--gray-100);
+            border-color: var(--gray-300);
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="08-dashboard.html" class="back-link">← NovaPharma Deal</a>
+            <h1 class="page-title">Audit Trail</h1>
+        </div>
+        <div class="topbar-actions">
+            <button class="btn btn-secondary">Filter</button>
+            <button class="btn btn-primary">Export Log</button>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <!-- Filters Panel -->
+        <aside class="filters-panel">
+            <div class="panel-title">Filters</div>
+            
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" placeholder="Search events...">
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-label">Event Type</div>
+                <div class="filter-options">
+                    <div class="filter-option active">
+                        <span>📊</span> All Events
+                        <span class="filter-count">1,247</span>
+                    </div>
+                    <div class="filter-option">
+                        <span>🧠</span> Agent Actions
+                        <span class="filter-count">847</span>
+                    </div>
+                    <div class="filter-option">
+                        <span>👤</span> User Actions
+                        <span class="filter-count">124</span>
+                    </div>
+                    <div class="filter-option">
+                        <span>⚙️</span> System Events
+                        <span class="filter-count">276</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-label">Agent</div>
+                <div class="filter-options">
+                    <div class="filter-option">
+                        <span>📄</span> Contract Analyst
+                        <span class="filter-count">312</span>
+                    </div>
+                    <div class="filter-option">
+                        <span>⚠️</span> Risk Assessor
+                        <span class="filter-count">245</span>
+                    </div>
+                    <div class="filter-option">
+                        <span>💰</span> Financial Modeler
+                        <span class="filter-count">198</span>
+                    </div>
+                    <div class="filter-option">
+                        <span>🎯</span> Orchestrator
+                        <span class="filter-count">92</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-label">Severity</div>
+                <div class="filter-options">
+                    <div class="filter-option">
+                        <span style="color: var(--red);">●</span> Critical
+                        <span class="filter-count">3</span>
+                    </div>
+                    <div class="filter-option">
+                        <span style="color: var(--amber);">●</span> Warning
+                        <span class="filter-count">12</span>
+                    </div>
+                    <div class="filter-option">
+                        <span style="color: var(--green);">●</span> Info
+                        <span class="filter-count">1,232</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Timeline -->
+        <main class="main-content">
+            <div class="content-header">
+                <h2>Activity Log</h2>
+                <span class="event-count">1,247 events</span>
+            </div>
+
+            <div class="timeline">
+                <div class="timeline-group">
+                    <div class="timeline-date">Today — December 29, 2024</div>
+                    
+                    <div class="timeline-event">
+                        <div class="timeline-dot agent"></div>
+                        <div class="event-card">
+                            <div class="event-header">
+                                <span class="event-title">Critical Risk Identified</span>
+                                <span class="event-time">14:32:18</span>
+                            </div>
+                            <div class="event-meta">
+                                <span class="event-badge agent">Agent</span>
+                                <span class="event-actor">Contract Analyst</span>
+                            </div>
+                            <div class="event-description">
+                                Identified "sole discretion" language in Pfizer License Agreement §7.3, indicating material consent risk for change-of-control.
+                            </div>
+                            <div class="event-details">
+                                <code>source:</code> Pfizer_License_Agreement.pdf<br>
+                                <code>page:</code> 23<br>
+                                <code>confidence:</code> 0.94<br>
+                                <code>reasoning_chain:</code> 4 steps
+                            </div>
+                            <span class="event-expand">View full reasoning →</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event">
+                        <div class="timeline-dot system"></div>
+                        <div class="event-card">
+                            <div class="event-header">
+                                <span class="event-title">Multi-Model Consensus Triggered</span>
+                                <span class="event-time">14:32:19</span>
+                            </div>
+                            <div class="event-meta">
+                                <span class="event-badge system">System</span>
+                                <span class="event-actor">Orchestrator</span>
+                            </div>
+                            <div class="event-description">
+                                Critical finding routed to all 3 models for consensus validation. Claude, GPT-4, and Gemini will independently verify.
+                            </div>
+                            <div class="event-details">
+                                <code>trigger:</code> critical_risk_detected<br>
+                                <code>models:</code> ["claude-opus", "gpt-4-turbo", "gemini-pro"]<br>
+                                <code>timeout:</code> 30s
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event">
+                        <div class="timeline-dot agent"></div>
+                        <div class="event-card">
+                            <div class="event-header">
+                                <span class="event-title">Risk Quantification Complete</span>
+                                <span class="event-time">14:32:45</span>
+                            </div>
+                            <div class="event-meta">
+                                <span class="event-badge agent">Agent</span>
+                                <span class="event-actor">Risk Assessor</span>
+                            </div>
+                            <div class="event-description">
+                                Monte Carlo simulation completed. Pfizer consent denial could reduce deal value by $370M (worst case scenario).
+                            </div>
+                            <div class="event-details">
+                                <code>simulations:</code> 10,000<br>
+                                <code>base_value:</code> $847M<br>
+                                <code>worst_case:</code> $285M<br>
+                                <code>probability:</code> 0.12
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event">
+                        <div class="timeline-dot user"></div>
+                        <div class="event-card">
+                            <div class="event-header">
+                                <span class="event-title">User Approved Finding</span>
+                                <span class="event-time">14:45:12</span>
+                            </div>
+                            <div class="event-meta">
+                                <span class="event-badge user">User</span>
+                                <span class="event-actor">Sarah Chen (Deal Lead)</span>
+                            </div>
+                            <div class="event-description">
+                                Pfizer consent risk approved and escalated to IC memo. Added note: "Recommend pre-LOI approach to Pfizer."
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-event">
+                        <div class="timeline-dot alert"></div>
+                        <div class="event-card">
+                            <div class="event-header">
+                                <span class="event-title">Anomaly Detected</span>
+                                <span class="event-time">15:02:33</span>
+                            </div>
+                            <div class="event-meta">
+                                <span class="event-badge" style="background: rgba(217, 119, 6, 0.1); color: var(--amber);">Alert</span>
+                                <span class="event-actor">Financial Modeler</span>
+                            </div>
+                            <div class="event-description">
+                                Revenue discrepancy detected: Management presentation shows $142.0M, but audited financials report $139.7M. Delta: $2.3M (1.6%).
+                            </div>
+                            <div class="event-details">
+                                <code>doc_1:</code> Management_Presentation.pptx (slide 14)<br>
+                                <code>doc_2:</code> Audited_Financials_2023.pdf (page 8)<br>
+                                <code>delta:</code> $2,300,000
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-group">
+                    <div class="timeline-date">Yesterday — December 28, 2024</div>
+                    
+                    <div class="timeline-event">
+                        <div class="timeline-dot system"></div>
+                        <div class="event-card">
+                            <div class="event-header">
+                                <span class="event-title">Document Ingestion Complete</span>
+                                <span class="event-time">16:45:00</span>
+                            </div>
+                            <div class="event-meta">
+                                <span class="event-badge system">System</span>
+                                <span class="event-actor">Data Pipeline</span>
+                            </div>
+                            <div class="event-description">
+                                312 documents processed and indexed. 48,672 entity pairs extracted. Ready for analysis.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Details Panel -->
+        <aside class="details-panel">
+            <div class="panel-title">Session Summary</div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">1,247</div>
+                    <div class="stat-label">Total Events</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">847</div>
+                    <div class="stat-label">Agent Actions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Critical Alerts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">124</div>
+                    <div class="stat-label">User Reviews</div>
+                </div>
+            </div>
+
+            <!-- Compliance -->
+            <div class="compliance-card">
+                <div class="compliance-header">
+                    <div class="compliance-icon">🔒</div>
+                    <div>
+                        <div class="compliance-title">Audit Compliance</div>
+                        <div class="compliance-status">All checks passed</div>
+                    </div>
+                </div>
+                <div class="compliance-checks">
+                    <div class="compliance-check">
+                        <span class="check-icon">✓</span>
+                        <span>All AI decisions logged</span>
+                    </div>
+                    <div class="compliance-check">
+                        <span class="check-icon">✓</span>
+                        <span>Source documents linked</span>
+                    </div>
+                    <div class="compliance-check">
+                        <span class="check-icon">✓</span>
+                        <span>User approvals tracked</span>
+                    </div>
+                    <div class="compliance-check">
+                        <span class="check-icon">✓</span>
+                        <span>Reasoning chains preserved</span>
+                    </div>
+                    <div class="compliance-check">
+                        <span class="check-icon">✓</span>
+                        <span>Immutable audit log</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Activity -->
+            <div class="agent-activity">
+                <div class="panel-title">Activity by Agent</div>
+                
+                <div class="agent-row">
+                    <div class="agent-avatar" style="background: #dbeafe;">📄</div>
+                    <div class="agent-info">
+                        <div class="agent-name">Contract Analyst</div>
+                        <div class="agent-count">312 actions</div>
+                    </div>
+                    <div class="agent-bar">
+                        <div class="agent-bar-fill" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="agent-row">
+                    <div class="agent-avatar" style="background: #fef3c7;">⚠️</div>
+                    <div class="agent-info">
+                        <div class="agent-name">Risk Assessor</div>
+                        <div class="agent-count">245 actions</div>
+                    </div>
+                    <div class="agent-bar">
+                        <div class="agent-bar-fill" style="width: 78%;"></div>
+                    </div>
+                </div>
+
+                <div class="agent-row">
+                    <div class="agent-avatar" style="background: #dcfce7;">💰</div>
+                    <div class="agent-info">
+                        <div class="agent-name">Financial Modeler</div>
+                        <div class="agent-count">198 actions</div>
+                    </div>
+                    <div class="agent-bar">
+                        <div class="agent-bar-fill" style="width: 63%;"></div>
+                    </div>
+                </div>
+
+                <div class="agent-row">
+                    <div class="agent-avatar" style="background: linear-gradient(135deg, #0d9488, #14b8a6);">🎯</div>
+                    <div class="agent-info">
+                        <div class="agent-name">Orchestrator</div>
+                        <div class="agent-count">92 actions</div>
+                    </div>
+                    <div class="agent-bar">
+                        <div class="agent-bar-fill" style="width: 29%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export -->
+            <div class="export-section">
+                <div class="panel-title">Export Options</div>
+                <button class="export-btn">📄 Export as PDF</button>
+                <button class="export-btn">📊 Export as CSV</button>
+                <button class="export-btn">🔗 Generate Share Link</button>
+            </div>
+        </aside>
+    </div>
+</body>
+</html>

@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Risk Simulation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+        }
+
+        .breadcrumb {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-bottom: 0.5rem;
+        }
+
+        .breadcrumb a {
+            color: var(--teal);
+            text-decoration: none;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-desc {
+            color: var(--gray-500);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .btn {
+            background: var(--white);
+            border: 1px solid var(--gray-300);
+            padding: 0.6rem 1.25rem;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--gray-700);
+            font-weight: 500;
+        }
+
+        .btn.primary {
+            background: var(--teal);
+            color: white;
+            border-color: var(--teal);
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .summary-card.highlight {
+            background: linear-gradient(135deg, #f0fdfa 0%, var(--white) 100%);
+            border-color: var(--teal);
+        }
+
+        .summary-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .summary-value.teal { color: var(--teal); }
+        .summary-value.red { color: var(--red); }
+        .summary-value.green { color: var(--green); }
+
+        .summary-sub {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-top: 0.25rem;
+        }
+
+        /* Main Content */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+        }
+
+        /* Distribution Chart */
+        .chart-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .chart-badge {
+            font-size: 0.75rem;
+            background: var(--gray-100);
+            color: var(--gray-600);
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+        }
+
+        /* Monte Carlo Distribution */
+        .distribution-chart {
+            height: 280px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            padding: 1.5rem;
+        }
+
+        /* Histogram Bars */
+        .histogram {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 3px;
+            height: 200px;
+            padding: 0 1rem;
+        }
+
+        .hist-bar {
+            width: 12px;
+            background: var(--gray-300);
+            border-radius: 2px 2px 0 0;
+            transition: all 0.3s;
+        }
+
+        .hist-bar:hover {
+            background: var(--teal);
+        }
+
+        .hist-bar.highlighted {
+            background: var(--teal);
+        }
+
+        .hist-bar.danger {
+            background: var(--red);
+        }
+
+        .hist-bar.warning {
+            background: var(--amber);
+        }
+
+        /* Axis Labels */
+        .chart-axis {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.75rem;
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Percentile Markers */
+        .percentile-markers {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .percentile {
+            text-align: center;
+        }
+
+        .percentile-label {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            margin-bottom: 0.25rem;
+        }
+
+        .percentile-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .percentile-value.low { color: var(--red); }
+        .percentile-value.mid { color: var(--teal); }
+        .percentile-value.high { color: var(--green); }
+
+        /* Scenario Table */
+        .scenario-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .scenario-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--gray-50);
+        }
+
+        .scenario-table td {
+            padding: 1rem;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .scenario-table tr:hover {
+            background: var(--gray-50);
+        }
+
+        .scenario-name {
+            font-weight: 500;
+        }
+
+        .scenario-prob {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .scenario-impact {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .scenario-impact.negative { color: var(--red); }
+        .scenario-impact.positive { color: var(--green); }
+
+        .scenario-bar {
+            width: 80px;
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .scenario-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+        }
+
+        /* Right Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Variables Card */
+        .variables-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .variable-item {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .variable-item:last-child {
+            border-bottom: none;
+        }
+
+        .variable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .variable-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .variable-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--teal);
+        }
+
+        .variable-range {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .range-slider {
+            flex: 1;
+            height: 4px;
+            background: var(--gray-200);
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .range-fill {
+            position: absolute;
+            height: 100%;
+            background: var(--teal);
+            border-radius: 2px;
+        }
+
+        .range-thumb {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: var(--teal);
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--gray-400);
+            margin-top: 0.25rem;
+        }
+
+        /* Run Button */
+        .run-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--gray-900);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .run-btn:hover {
+            background: var(--gray-700);
+            transform: translateY(-2px);
+        }
+
+        /* Key Insights */
+        .insights-card {
+            background: linear-gradient(135deg, #f0fdfa 0%, var(--white) 100%);
+            border: 1px solid var(--teal);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .insight-item {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(13, 148, 136, 0.2);
+        }
+
+        .insight-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .insight-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--white);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .insight-content {
+            flex: 1;
+        }
+
+        .insight-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 0.2rem;
+        }
+
+        .insight-desc {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            line-height: 1.5;
+        }
+
+        /* Correlation Matrix Mini */
+        .correlation-matrix {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            margin-top: 1rem;
+        }
+
+        .matrix-cell {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .matrix-cell.high-pos { background: #dcfce7; color: var(--green); }
+        .matrix-cell.med-pos { background: #d1fae5; color: var(--teal); }
+        .matrix-cell.neutral { background: var(--gray-100); color: var(--gray-500); }
+        .matrix-cell.med-neg { background: #fef3c7; color: var(--amber); }
+        .matrix-cell.high-neg { background: #fee2e2; color: var(--red); }
+        .matrix-cell.header { background: none; color: var(--gray-500); font-size: 0.6rem; }
+
+        .matrix-labels {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 0.5rem;
+            font-size: 0.65rem;
+            color: var(--gray-500);
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <div>
+            <div class="breadcrumb"><a href="#">NovaPharma Deal</a> / Risk Simulation</div>
+            <h1 class="header-title">Monte Carlo Risk Simulation</h1>
+            <p class="header-desc">10,000 scenarios analyzed • Last run: 2 minutes ago</p>
+        </div>
+        <button class="btn primary">🔄 Re-run Simulation</button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+        <div class="summary-card highlight">
+            <div class="summary-label">Expected Value</div>
+            <div class="summary-value teal">$847M</div>
+            <div class="summary-sub">Mean across all scenarios</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Downside (5th %ile)</div>
+            <div class="summary-value red">$412M</div>
+            <div class="summary-sub">Worst 5% of outcomes</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Upside (95th %ile)</div>
+            <div class="summary-value green">$1.24B</div>
+            <div class="summary-sub">Best 5% of outcomes</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">P(Below Asking)</div>
+            <div class="summary-value">62%</div>
+            <div class="summary-sub">Prob. value < $890M</div>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        <div class="main-content">
+            <!-- Distribution Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Value Distribution (10,000 simulations)</h3>
+                    <span class="chart-badge">Monte Carlo</span>
+                </div>
+                <div class="distribution-chart">
+                    <div class="histogram">
+                        <!-- Generate histogram bars -->
+                        <div class="hist-bar danger" style="height: 15px;"></div>
+                        <div class="hist-bar danger" style="height: 22px;"></div>
+                        <div class="hist-bar danger" style="height: 35px;"></div>
+                        <div class="hist-bar warning" style="height: 48px;"></div>
+                        <div class="hist-bar warning" style="height: 62px;"></div>
+                        <div class="hist-bar warning" style="height: 78px;"></div>
+                        <div class="hist-bar" style="height: 95px;"></div>
+                        <div class="hist-bar" style="height: 112px;"></div>
+                        <div class="hist-bar" style="height: 135px;"></div>
+                        <div class="hist-bar highlighted" style="height: 158px;"></div>
+                        <div class="hist-bar highlighted" style="height: 175px;"></div>
+                        <div class="hist-bar highlighted" style="height: 168px;"></div>
+                        <div class="hist-bar highlighted" style="height: 145px;"></div>
+                        <div class="hist-bar" style="height: 128px;"></div>
+                        <div class="hist-bar" style="height: 108px;"></div>
+                        <div class="hist-bar" style="height: 88px;"></div>
+                        <div class="hist-bar" style="height: 72px;"></div>
+                        <div class="hist-bar" style="height: 58px;"></div>
+                        <div class="hist-bar" style="height: 45px;"></div>
+                        <div class="hist-bar" style="height: 35px;"></div>
+                        <div class="hist-bar" style="height: 28px;"></div>
+                        <div class="hist-bar" style="height: 22px;"></div>
+                        <div class="hist-bar" style="height: 18px;"></div>
+                        <div class="hist-bar" style="height: 12px;"></div>
+                        <div class="hist-bar" style="height: 8px;"></div>
+                    </div>
+                    <div class="chart-axis">
+                        <span>$300M</span>
+                        <span>$500M</span>
+                        <span>$700M</span>
+                        <span>$900M</span>
+                        <span>$1.1B</span>
+                        <span>$1.3B</span>
+                    </div>
+                </div>
+                <div class="percentile-markers">
+                    <div class="percentile">
+                        <div class="percentile-label">5th Percentile</div>
+                        <div class="percentile-value low">$412M</div>
+                    </div>
+                    <div class="percentile">
+                        <div class="percentile-label">25th Percentile</div>
+                        <div class="percentile-value low">$628M</div>
+                    </div>
+                    <div class="percentile">
+                        <div class="percentile-label">Median (50th)</div>
+                        <div class="percentile-value mid">$823M</div>
+                    </div>
+                    <div class="percentile">
+                        <div class="percentile-label">75th Percentile</div>
+                        <div class="percentile-value high">$1.02B</div>
+                    </div>
+                    <div class="percentile">
+                        <div class="percentile-label">95th Percentile</div>
+                        <div class="percentile-value high">$1.24B</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scenario Analysis -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Key Risk Scenarios</h3>
+                    <span class="chart-badge">Impact Analysis</span>
+                </div>
+                <table class="scenario-table">
+                    <thead>
+                        <tr>
+                            <th>Scenario</th>
+                            <th>Probability</th>
+                            <th>Impact</th>
+                            <th>Adjusted Value</th>
+                            <th>Distribution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="scenario-name">FDA rejects NP-201</td>
+                            <td class="scenario-prob">28%</td>
+                            <td class="scenario-impact negative">-$340M</td>
+                            <td>$550M</td>
+                            <td>
+                                <div class="scenario-bar">
+                                    <div class="scenario-bar-fill" style="width: 28%; background: var(--red);"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="scenario-name">Pfizer denies consent</td>
+                            <td class="scenario-prob">35%</td>
+                            <td class="scenario-impact negative">-$370M</td>
+                            <td>$520M</td>
+                            <td>
+                                <div class="scenario-bar">
+                                    <div class="scenario-bar-fill" style="width: 35%; background: var(--red);"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="scenario-name">Both FDA reject + Pfizer deny</td>
+                            <td class="scenario-prob">12%</td>
+                            <td class="scenario-impact negative">-$590M</td>
+                            <td>$300M</td>
+                            <td>
+                                <div class="scenario-bar">
+                                    <div class="scenario-bar-fill" style="width: 12%; background: var(--red);"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="scenario-name">FDA approves + Pfizer consents</td>
+                            <td class="scenario-prob">42%</td>
+                            <td class="scenario-impact positive">+$210M</td>
+                            <td>$1.1B</td>
+                            <td>
+                                <div class="scenario-bar">
+                                    <div class="scenario-bar-fill" style="width: 42%; background: var(--green);"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="scenario-name">FDA fast-track approval</td>
+                            <td class="scenario-prob">15%</td>
+                            <td class="scenario-impact positive">+$380M</td>
+                            <td>$1.27B</td>
+                            <td>
+                                <div class="scenario-bar">
+                                    <div class="scenario-bar-fill" style="width: 15%; background: var(--green);"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Variables -->
+            <div class="variables-card">
+                <h3 class="card-title">Simulation Variables</h3>
+                
+                <div class="variable-item">
+                    <div class="variable-header">
+                        <span class="variable-name">FDA Approval Prob.</span>
+                        <span class="variable-value">72%</span>
+                    </div>
+                    <div class="variable-range">
+                        <div class="range-slider">
+                            <div class="range-fill" style="left: 20%; width: 52%;"></div>
+                            <div class="range-thumb" style="left: 72%;"></div>
+                        </div>
+                    </div>
+                    <div class="range-labels">
+                        <span>20%</span>
+                        <span>90%</span>
+                    </div>
+                </div>
+
+                <div class="variable-item">
+                    <div class="variable-header">
+                        <span class="variable-name">Pfizer Consent Prob.</span>
+                        <span class="variable-value">45%</span>
+                    </div>
+                    <div class="variable-range">
+                        <div class="range-slider">
+                            <div class="range-fill" style="left: 10%; width: 35%;"></div>
+                            <div class="range-thumb" style="left: 45%;"></div>
+                        </div>
+                    </div>
+                    <div class="range-labels">
+                        <span>10%</span>
+                        <span>80%</span>
+                    </div>
+                </div>
+
+                <div class="variable-item">
+                    <div class="variable-header">
+                        <span class="variable-name">Revenue Growth CAGR</span>
+                        <span class="variable-value">22%</span>
+                    </div>
+                    <div class="variable-range">
+                        <div class="range-slider">
+                            <div class="range-fill" style="left: 15%; width: 40%;"></div>
+                            <div class="range-thumb" style="left: 55%;"></div>
+                        </div>
+                    </div>
+                    <div class="range-labels">
+                        <span>5%</span>
+                        <span>35%</span>
+                    </div>
+                </div>
+
+                <div class="variable-item">
+                    <div class="variable-header">
+                        <span class="variable-name">Discount Rate (WACC)</span>
+                        <span class="variable-value">12.5%</span>
+                    </div>
+                    <div class="variable-range">
+                        <div class="range-slider">
+                            <div class="range-fill" style="left: 30%; width: 35%;"></div>
+                            <div class="range-thumb" style="left: 65%;"></div>
+                        </div>
+                    </div>
+                    <div class="range-labels">
+                        <span>8%</span>
+                        <span>18%</span>
+                    </div>
+                </div>
+
+                <button class="run-btn">
+                    🎲 Run 10,000 Simulations
+                </button>
+            </div>
+
+            <!-- Key Insights -->
+            <div class="insights-card">
+                <h3 class="card-title">AI Insights</h3>
+                
+                <div class="insight-item">
+                    <div class="insight-icon">🎯</div>
+                    <div class="insight-content">
+                        <div class="insight-title">Asking Price Analysis</div>
+                        <div class="insight-desc">62% of simulations result in value below $890M asking price. Consider negotiating down to $750M-$800M.</div>
+                    </div>
+                </div>
+
+                <div class="insight-item">
+                    <div class="insight-icon">⚠️</div>
+                    <div class="insight-content">
+                        <div class="insight-title">Correlated Risks</div>
+                        <div class="insight-desc">FDA rejection and Pfizer consent denial have 0.67 correlation — if one fails, other likely fails too.</div>
+                    </div>
+                </div>
+
+                <div class="insight-item">
+                    <div class="insight-icon">💡</div>
+                    <div class="insight-content">
+                        <div class="insight-title">Optimal Structure</div>
+                        <div class="insight-desc">Milestone earnout with 50% at close, 50% on FDA approval minimizes downside while preserving upside.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Correlation Matrix -->
+            <div class="correlation-matrix">
+                <h3 class="card-title">Risk Correlations</h3>
+                <div class="matrix-grid">
+                    <div class="matrix-cell header"></div>
+                    <div class="matrix-cell header">FDA</div>
+                    <div class="matrix-cell header">Pfiz</div>
+                    <div class="matrix-cell header">Rev</div>
+                    
+                    <div class="matrix-cell header">FDA</div>
+                    <div class="matrix-cell neutral">1.0</div>
+                    <div class="matrix-cell high-neg">0.67</div>
+                    <div class="matrix-cell med-pos">0.42</div>
+                    
+                    <div class="matrix-cell header">Pfiz</div>
+                    <div class="matrix-cell high-neg">0.67</div>
+                    <div class="matrix-cell neutral">1.0</div>
+                    <div class="matrix-cell med-neg">0.31</div>
+                    
+                    <div class="matrix-cell header">Rev</div>
+                    <div class="matrix-cell med-pos">0.42</div>
+                    <div class="matrix-cell med-neg">0.31</div>
+                    <div class="matrix-cell neutral">1.0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Agent Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+            --purple: #7c3aed;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .back-link {
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .page-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.25rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            border: 1px solid var(--gray-300);
+            color: var(--gray-700);
+        }
+
+        .btn-primary {
+            background: var(--gray-900);
+            border: none;
+            color: var(--white);
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr 380px;
+            min-height: calc(100vh - 65px);
+        }
+
+        /* Left: Template Library */
+        .template-library {
+            background: var(--white);
+            border-right: 1px solid var(--gray-200);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .panel-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 0.85rem;
+            outline: none;
+            color: var(--gray-700);
+        }
+
+        .search-icon {
+            color: var(--gray-400);
+        }
+
+        /* Template Cards */
+        .template-category {
+            margin-bottom: 1.5rem;
+        }
+
+        .category-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.75rem;
+        }
+
+        .template-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .template-card:hover {
+            background: var(--gray-100);
+            border-color: var(--gray-300);
+        }
+
+        .template-card.selected {
+            background: rgba(13, 148, 136, 0.08);
+            border-color: var(--teal);
+        }
+
+        .template-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .template-info {
+            flex: 1;
+        }
+
+        .template-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .template-desc {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .template-badge {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: var(--gray-200);
+            color: var(--gray-600);
+        }
+
+        .template-badge.custom {
+            background: rgba(13, 148, 136, 0.15);
+            color: var(--teal);
+        }
+
+        /* Center: Builder Canvas */
+        .builder-canvas {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .agent-name-input {
+            font-family: 'Fraunces', serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            border: none;
+            background: none;
+            outline: none;
+            color: var(--gray-900);
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+
+        .agent-name-input::placeholder {
+            color: var(--gray-300);
+        }
+
+        /* Builder Sections */
+        .builder-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .section-badge {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.6rem;
+            background: var(--gray-100);
+            border-radius: 20px;
+            color: var(--gray-600);
+        }
+
+        /* Persona Textarea */
+        .persona-textarea {
+            width: 100%;
+            min-height: 140px;
+            padding: 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+            color: var(--gray-700);
+        }
+
+        .persona-textarea:focus {
+            border-color: var(--teal);
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            margin-top: 0.5rem;
+        }
+
+        /* Capabilities Grid */
+        .capabilities-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .capability-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .capability-item:hover {
+            background: var(--gray-100);
+        }
+
+        .capability-item.active {
+            background: rgba(13, 148, 136, 0.08);
+            border-color: var(--teal);
+        }
+
+        .capability-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--gray-300);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: transparent;
+        }
+
+        .capability-item.active .capability-checkbox {
+            background: var(--teal);
+            border-color: var(--teal);
+            color: white;
+        }
+
+        .capability-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        /* Knowledge Sources */
+        .source-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .source-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+        }
+
+        .source-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .source-info {
+            flex: 1;
+        }
+
+        .source-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .source-desc {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .source-toggle {
+            width: 44px;
+            height: 24px;
+            background: var(--gray-300);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .source-toggle.on {
+            background: var(--teal);
+        }
+
+        .source-toggle::after {
+            content: '';
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .source-toggle.on::after {
+            transform: translateX(20px);
+        }
+
+        .add-source-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border: 2px dashed var(--gray-300);
+            border-radius: 8px;
+            color: var(--gray-500);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-source-btn:hover {
+            border-color: var(--teal);
+            color: var(--teal);
+            background: rgba(13, 148, 136, 0.05);
+        }
+
+        /* Right: Preview & Test */
+        .preview-panel {
+            background: var(--gray-900);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            color: var(--gray-100);
+        }
+
+        .preview-panel .panel-title {
+            color: var(--gray-400);
+        }
+
+        /* Agent Preview Card */
+        .agent-preview {
+            background: var(--gray-800);
+            border: 1px solid var(--gray-700);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .preview-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--purple), #a78bfa);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .preview-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .preview-info span {
+            font-size: 0.8rem;
+            color: var(--gray-400);
+        }
+
+        .preview-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .preview-stat {
+            text-align: center;
+            padding: 0.75rem;
+            background: var(--gray-700);
+            border-radius: 8px;
+        }
+
+        .preview-stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--teal-light);
+        }
+
+        .preview-stat-label {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            margin-top: 0.25rem;
+        }
+
+        /* Test Chat */
+        .test-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .test-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        .test-message {
+            margin-bottom: 0.75rem;
+        }
+
+        .test-message.user {
+            text-align: right;
+        }
+
+        .test-message .bubble {
+            display: inline-block;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            max-width: 90%;
+            line-height: 1.5;
+        }
+
+        .test-message.user .bubble {
+            background: var(--teal);
+            color: white;
+        }
+
+        .test-message.agent .bubble {
+            background: var(--gray-700);
+            color: var(--gray-200);
+            text-align: left;
+        }
+
+        .test-input {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .test-input input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: var(--gray-700);
+            border: 1px solid var(--gray-600);
+            border-radius: 8px;
+            color: var(--white);
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .test-input input::placeholder {
+            color: var(--gray-500);
+        }
+
+        .test-input button {
+            padding: 0.75rem 1rem;
+            background: var(--teal);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        /* Deploy Button */
+        .deploy-section {
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-700);
+            margin-top: auto;
+        }
+
+        .deploy-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .deploy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(13, 148, 136, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="08-dashboard.html" class="back-link">← Back to Dashboard</a>
+            <h1 class="page-title">Agent Builder</h1>
+        </div>
+        <div class="topbar-actions">
+            <button class="btn btn-secondary">Save Draft</button>
+            <button class="btn btn-primary">Deploy Agent</button>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <!-- Template Library -->
+        <aside class="template-library">
+            <div class="panel-title">Agent Templates</div>
+            
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" placeholder="Search templates...">
+            </div>
+
+            <div class="template-category">
+                <div class="category-title">Core Agents</div>
+                
+                <div class="template-card">
+                    <div class="template-icon" style="background: #dbeafe;">📄</div>
+                    <div class="template-info">
+                        <div class="template-name">Contract Analyst</div>
+                        <div class="template-desc">Clause extraction & risk flagging</div>
+                    </div>
+                    <span class="template-badge">Built-in</span>
+                </div>
+
+                <div class="template-card">
+                    <div class="template-icon" style="background: #fef3c7;">⚠️</div>
+                    <div class="template-info">
+                        <div class="template-name">Risk Assessor</div>
+                        <div class="template-desc">Risk scoring & quantification</div>
+                    </div>
+                    <span class="template-badge">Built-in</span>
+                </div>
+
+                <div class="template-card">
+                    <div class="template-icon" style="background: #dcfce7;">💰</div>
+                    <div class="template-info">
+                        <div class="template-name">Financial Modeler</div>
+                        <div class="template-desc">DCF, scenarios, simulations</div>
+                    </div>
+                    <span class="template-badge">Built-in</span>
+                </div>
+            </div>
+
+            <div class="template-category">
+                <div class="category-title">Specialized</div>
+                
+                <div class="template-card selected">
+                    <div class="template-icon" style="background: #ede9fe;">🧬</div>
+                    <div class="template-info">
+                        <div class="template-name">Pharma Specialist</div>
+                        <div class="template-desc">FDA, IP, clinical trial expertise</div>
+                    </div>
+                    <span class="template-badge custom">Custom</span>
+                </div>
+
+                <div class="template-card">
+                    <div class="template-icon" style="background: #fce7f3;">🏛️</div>
+                    <div class="template-info">
+                        <div class="template-name">Regulatory Expert</div>
+                        <div class="template-desc">Compliance & regulatory analysis</div>
+                    </div>
+                    <span class="template-badge custom">Custom</span>
+                </div>
+
+                <div class="template-card">
+                    <div class="template-icon" style="background: #cffafe;">🌍</div>
+                    <div class="template-info">
+                        <div class="template-name">ESG Analyst</div>
+                        <div class="template-desc">Environmental & social assessment</div>
+                    </div>
+                    <span class="template-badge custom">Custom</span>
+                </div>
+            </div>
+
+            <div class="template-category">
+                <div class="category-title">Your Agents</div>
+                
+                <div class="template-card">
+                    <div class="template-icon" style="background: linear-gradient(135deg, #7c3aed, #a78bfa);">🎯</div>
+                    <div class="template-info">
+                        <div class="template-name">Healthcare DD Expert</div>
+                        <div class="template-desc">Created 2 weeks ago</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Builder Canvas -->
+        <main class="builder-canvas">
+            <input type="text" class="agent-name-input" placeholder="Name your agent..." value="Pharma Regulatory Specialist">
+
+            <!-- Persona -->
+            <div class="builder-section">
+                <div class="section-header">
+                    <h2 class="section-title">Agent Persona</h2>
+                    <span class="section-badge">Required</span>
+                </div>
+                <textarea class="persona-textarea" placeholder="Describe the agent's role, expertise, and how it should approach problems...">You are a pharmaceutical regulatory specialist with 20+ years of experience in FDA submissions, clinical trial design, and drug approval processes. You focus on:
+
+1. FDA regulatory pathway analysis (NDA, BLA, 505(b)(2))
+2. Clinical trial phase assessment and success probability
+3. IP landscape analysis for pharmaceutical patents
+4. CMC (Chemistry, Manufacturing, Controls) risk assessment
+5. Post-market surveillance requirements
+
+When analyzing documents, prioritize identifying regulatory risks that could delay approval or require additional studies. Always cite specific FDA guidance documents when making recommendations.</textarea>
+                <div class="char-count">847 / 2000 characters</div>
+            </div>
+
+            <!-- Capabilities -->
+            <div class="builder-section">
+                <div class="section-header">
+                    <h2 class="section-title">Capabilities</h2>
+                    <span class="section-badge">Select what this agent can do</span>
+                </div>
+                <div class="capabilities-grid">
+                    <div class="capability-item active">
+                        <div class="capability-checkbox">✓</div>
+                        <span class="capability-name">Document Analysis</span>
+                    </div>
+                    <div class="capability-item active">
+                        <div class="capability-checkbox">✓</div>
+                        <span class="capability-name">Risk Flagging</span>
+                    </div>
+                    <div class="capability-item active">
+                        <div class="capability-checkbox">✓</div>
+                        <span class="capability-name">Cross-Reference</span>
+                    </div>
+                    <div class="capability-item">
+                        <div class="capability-checkbox"></div>
+                        <span class="capability-name">Financial Modeling</span>
+                    </div>
+                    <div class="capability-item active">
+                        <div class="capability-checkbox">✓</div>
+                        <span class="capability-name">Web Research</span>
+                    </div>
+                    <div class="capability-item active">
+                        <div class="capability-checkbox">✓</div>
+                        <span class="capability-name">Debate & Argue</span>
+                    </div>
+                    <div class="capability-item">
+                        <div class="capability-checkbox"></div>
+                        <span class="capability-name">Code Execution</span>
+                    </div>
+                    <div class="capability-item active">
+                        <div class="capability-checkbox">✓</div>
+                        <span class="capability-name">Report Generation</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Knowledge Sources -->
+            <div class="builder-section">
+                <div class="section-header">
+                    <h2 class="section-title">Knowledge Sources</h2>
+                    <span class="section-badge">Connect data sources</span>
+                </div>
+                <div class="source-list">
+                    <div class="source-item">
+                        <div class="source-icon">📚</div>
+                        <div class="source-info">
+                            <div class="source-name">FDA Guidance Documents</div>
+                            <div class="source-desc">4,200+ official FDA guidances</div>
+                        </div>
+                        <div class="source-toggle on"></div>
+                    </div>
+                    <div class="source-item">
+                        <div class="source-icon">🔬</div>
+                        <div class="source-info">
+                            <div class="source-name">ClinicalTrials.gov</div>
+                            <div class="source-desc">450,000+ clinical trial records</div>
+                        </div>
+                        <div class="source-toggle on"></div>
+                    </div>
+                    <div class="source-item">
+                        <div class="source-icon">📄</div>
+                        <div class="source-info">
+                            <div class="source-name">Deal Documents</div>
+                            <div class="source-desc">Current deal data room</div>
+                        </div>
+                        <div class="source-toggle on"></div>
+                    </div>
+                    <div class="source-item">
+                        <div class="source-icon">🏛️</div>
+                        <div class="source-info">
+                            <div class="source-name">SEC EDGAR</div>
+                            <div class="source-desc">Public company filings</div>
+                        </div>
+                        <div class="source-toggle"></div>
+                    </div>
+                    <div class="add-source-btn">
+                        <span>+</span> Add Knowledge Source
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Preview Panel -->
+        <aside class="preview-panel">
+            <div class="panel-title">Live Preview</div>
+            
+            <div class="agent-preview">
+                <div class="preview-header">
+                    <div class="preview-avatar">🧬</div>
+                    <div class="preview-info">
+                        <h3>Pharma Regulatory Specialist</h3>
+                        <span>Custom Agent</span>
+                    </div>
+                </div>
+                <div class="preview-stats">
+                    <div class="preview-stat">
+                        <div class="preview-stat-value">6</div>
+                        <div class="preview-stat-label">Capabilities</div>
+                    </div>
+                    <div class="preview-stat">
+                        <div class="preview-stat-value">3</div>
+                        <div class="preview-stat-label">Data Sources</div>
+                    </div>
+                    <div class="preview-stat">
+                        <div class="preview-stat-value">847</div>
+                        <div class="preview-stat-label">Persona Tokens</div>
+                    </div>
+                    <div class="preview-stat">
+                        <div class="preview-stat-value">Ready</div>
+                        <div class="preview-stat-label">Status</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <div class="panel-title">Test Your Agent</div>
+                
+                <div class="test-messages">
+                    <div class="test-message user">
+                        <div class="bubble">What's the typical FDA review timeline for a Phase 3 oncology drug?</div>
+                    </div>
+                    <div class="test-message agent">
+                        <div class="bubble">Based on FDA guidance and historical data, Phase 3 oncology NDAs typically follow these timelines:
+
+• Standard Review: 10-12 months
+• Priority Review: 6 months (if breakthrough therapy)
+• Accelerated Approval: 4-6 months (surrogate endpoints)
+
+For NovaPharma's NP-201, I recommend targeting Breakthrough Therapy designation given the unmet need.</div>
+                    </div>
+                </div>
+
+                <div class="test-input">
+                    <input type="text" placeholder="Test a question...">
+                    <button>→</button>
+                </div>
+            </div>
+
+            <div class="deploy-section">
+                <button class="deploy-btn">🚀 Deploy to Deal</button>
+            </div>
+        </aside>
+    </div>
+</body>
+</html>

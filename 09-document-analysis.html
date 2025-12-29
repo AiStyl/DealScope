@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Document Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.5rem;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .back-btn {
+            width: 32px;
+            height: 32px;
+            background: var(--gray-100);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .doc-info h1 {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .doc-info span {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+
+        .topbar-right {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            background: var(--white);
+            border: 1px solid var(--gray-300);
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr 380px;
+            height: calc(100vh - 53px);
+        }
+
+        /* Left: Outline */
+        .outline-panel {
+            background: var(--white);
+            border-right: 1px solid var(--gray-200);
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .panel-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--gray-400);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .outline-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-bottom: 0.25rem;
+            transition: all 0.2s;
+        }
+
+        .outline-item:hover {
+            background: var(--gray-50);
+        }
+
+        .outline-item.active {
+            background: #f0fdfa;
+            color: var(--teal);
+        }
+
+        .outline-item.has-issue {
+            border-left: 3px solid var(--red);
+            padding-left: calc(0.75rem - 3px);
+        }
+
+        .outline-item.has-warning {
+            border-left: 3px solid var(--amber);
+            padding-left: calc(0.75rem - 3px);
+        }
+
+        .outline-badge {
+            margin-left: auto;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .outline-badge.critical { background: #fee2e2; color: var(--red); }
+        .outline-badge.warning { background: #fef3c7; color: var(--amber); }
+
+        /* Center: Document Viewer */
+        .document-viewer {
+            background: var(--gray-200);
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        .document-page {
+            background: var(--white);
+            width: 680px;
+            min-height: 900px;
+            padding: 3rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            font-family: 'Crimson Pro', serif;
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--gray-800);
+        }
+
+        .doc-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .doc-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .doc-header p {
+            color: var(--gray-500);
+            font-size: 13px;
+        }
+
+        .doc-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .doc-section h2 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--gray-700);
+        }
+
+        /* Highlights */
+        .highlight {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .highlight-critical {
+            background: linear-gradient(180deg, transparent 60%, #fecaca 60%);
+        }
+
+        .highlight-warning {
+            background: linear-gradient(180deg, transparent 60%, #fef3c7 60%);
+        }
+
+        .highlight-positive {
+            background: linear-gradient(180deg, transparent 60%, #bbf7d0 60%);
+        }
+
+        .highlight-marker {
+            position: absolute;
+            right: -30px;
+            top: 0;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            color: white;
+        }
+
+        .highlight-marker.critical { background: var(--red); }
+        .highlight-marker.warning { background: var(--amber); }
+        .highlight-marker.positive { background: var(--green); }
+
+        /* Right: Analysis Panel */
+        .analysis-panel {
+            background: var(--white);
+            border-left: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .analysis-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .analysis-header h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .analysis-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.75rem;
+        }
+
+        .analysis-tab {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            cursor: pointer;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid transparent;
+        }
+
+        .analysis-tab.active {
+            color: var(--teal);
+            border-bottom-color: var(--teal);
+        }
+
+        /* Summary Stats */
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .summary-stat {
+            text-align: center;
+        }
+
+        .summary-stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .summary-stat-value.red { color: var(--red); }
+        .summary-stat-value.amber { color: var(--amber); }
+        .summary-stat-value.green { color: var(--green); }
+
+        .summary-stat-label {
+            font-size: 0.65rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+        }
+
+        /* Findings List */
+        .findings-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 1.25rem;
+        }
+
+        .finding-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .finding-card.critical {
+            border-left: 4px solid var(--red);
+            background: #fef2f2;
+        }
+
+        .finding-card.warning {
+            border-left: 4px solid var(--amber);
+            background: #fffbeb;
+        }
+
+        .finding-card.positive {
+            border-left: 4px solid var(--green);
+            background: #f0fdf4;
+        }
+
+        .finding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .finding-type {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .finding-card.critical .finding-type { color: var(--red); }
+        .finding-card.warning .finding-type { color: var(--amber); }
+        .finding-card.positive .finding-type { color: var(--green); }
+
+        .finding-marker {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .finding-marker.critical { background: var(--red); }
+        .finding-marker.warning { background: var(--amber); }
+        .finding-marker.positive { background: var(--green); }
+
+        .finding-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .finding-desc {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+        }
+
+        .finding-source {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        /* Cross References */
+        .cross-ref-section {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--gray-100);
+            background: #f0fdfa;
+        }
+
+        .cross-ref-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--teal);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cross-ref-item {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--white);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .cross-ref-icon {
+            font-size: 1rem;
+        }
+
+        .cross-ref-content {
+            flex: 1;
+        }
+
+        .cross-ref-doc {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--teal);
+            margin-bottom: 0.2rem;
+        }
+
+        .cross-ref-text {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+        }
+
+        /* AI Summary */
+        .ai-summary {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .ai-summary-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.75rem;
+        }
+
+        .ai-summary-text {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="back-btn">←</button>
+            <div class="doc-info">
+                <h1>Pfizer_License_Agreement.pdf</h1>
+                <span>89 pages • NovaPharma Deal</span>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <button class="btn">Download</button>
+            <button class="btn">Share</button>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <!-- Left: Outline -->
+        <aside class="outline-panel">
+            <div class="panel-title">Document Outline</div>
+            
+            <div class="outline-item">1. Definitions</div>
+            <div class="outline-item">2. Grant of License</div>
+            <div class="outline-item">3. Development</div>
+            <div class="outline-item">4. Commercialization</div>
+            <div class="outline-item">5. Payments</div>
+            <div class="outline-item">6. Intellectual Property</div>
+            <div class="outline-item has-issue active">
+                7. Term and Termination
+                <span class="outline-badge critical">2</span>
+            </div>
+            <div class="outline-item has-warning">
+                8. Representations
+                <span class="outline-badge warning">1</span>
+            </div>
+            <div class="outline-item">9. Indemnification</div>
+            <div class="outline-item">10. Confidentiality</div>
+            <div class="outline-item">11. Governing Law</div>
+            <div class="outline-item">12. Miscellaneous</div>
+            <div class="outline-item">Exhibit A: Territory</div>
+            <div class="outline-item has-issue">
+                Exhibit B: Competitors
+                <span class="outline-badge critical">1</span>
+            </div>
+            <div class="outline-item">Exhibit C: Patents</div>
+        </aside>
+
+        <!-- Center: Document -->
+        <main class="document-viewer">
+            <div class="document-page">
+                <div class="doc-header">
+                    <h1>LICENSE AGREEMENT</h1>
+                    <p>Effective Date: March 15, 2021</p>
+                </div>
+
+                <div class="doc-section">
+                    <h2>SECTION 7: TERM AND TERMINATION</h2>
+                    
+                    <p><strong>7.1 Term.</strong> This Agreement shall commence on the Effective Date and shall continue in effect until the expiration of the last to expire Royalty Term, unless earlier terminated in accordance with this Section 7.</p>
+
+                    <p><strong>7.2 Termination for Breach.</strong> Either Party may terminate this Agreement upon written notice to the other Party if such other Party materially breaches this Agreement and fails to cure such breach within sixty (60) days after receipt of written notice thereof.</p>
+
+                    <p><strong>7.3 Change of Control.</strong> <span class="highlight highlight-critical">In the event of a Change of Control of Licensee, this Agreement and all rights and licenses granted hereunder shall automatically terminate unless Licensor provides its prior written consent to such Change of Control, which consent may be withheld in Licensor's sole discretion<span class="highlight-marker critical">1</span></span>. For purposes of this Section, "Change of Control" means (a) the acquisition by any person or entity of beneficial ownership of more than fifty percent (50%) of the voting power of the outstanding securities of Licensee; or (b) a merger, consolidation, or similar transaction.</p>
+
+                    <p><strong>7.4 Competing Acquirer.</strong> <span class="highlight highlight-critical">Notwithstanding Section 7.3, in the event of a Change of Control in which the acquiring party is listed on Exhibit B (Competing Companies), Licensor may terminate this Agreement immediately without liability upon written notice<span class="highlight-marker critical">2</span></span>.</p>
+
+                    <p><strong>7.5 Termination for Convenience.</strong> <span class="highlight highlight-positive">Licensee may terminate this Agreement for convenience upon ninety (90) days' prior written notice to Licensor<span class="highlight-marker positive">3</span></span>.</p>
+
+                    <p><strong>7.6 Effect of Termination.</strong> Upon termination of this Agreement for any reason:</p>
+                    <p style="padding-left: 1.5rem;">(a) all rights and licenses granted to Licensee hereunder shall immediately terminate;</p>
+                    <p style="padding-left: 1.5rem;">(b) Licensee shall return or destroy all Confidential Information of Licensor;</p>
+                    <p style="padding-left: 1.5rem;"><span class="highlight highlight-warning">(c) Licensee shall cease all development, manufacture, and commercialization of Licensed Products within thirty (30) days<span class="highlight-marker warning">4</span></span>.</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right: Analysis -->
+        <aside class="analysis-panel">
+            <div class="analysis-header">
+                <h3>AI Analysis</h3>
+                <div class="analysis-tabs">
+                    <span class="analysis-tab active">Findings</span>
+                    <span class="analysis-tab">Key Terms</span>
+                    <span class="analysis-tab">Cross-Refs</span>
+                </div>
+            </div>
+
+            <div class="summary-stats">
+                <div class="summary-stat">
+                    <div class="summary-stat-value red">2</div>
+                    <div class="summary-stat-label">Critical</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value amber">1</div>
+                    <div class="summary-stat-label">Warning</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value green">1</div>
+                    <div class="summary-stat-label">Favorable</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value">12</div>
+                    <div class="summary-stat-label">Key Terms</div>
+                </div>
+            </div>
+
+            <div class="findings-list">
+                <div class="finding-card critical">
+                    <div class="finding-header">
+                        <span class="finding-type">Critical Risk</span>
+                        <span class="finding-marker critical">1</span>
+                    </div>
+                    <div class="finding-title">Change of Control — Sole Discretion</div>
+                    <div class="finding-desc">Pfizer can deny consent "in its sole discretion" — the most restrictive consent standard. No obligation to act reasonably or in good faith.</div>
+                    <div class="finding-source">§7.3 • Page 34</div>
+                </div>
+
+                <div class="finding-card critical">
+                    <div class="finding-header">
+                        <span class="finding-type">Critical Risk</span>
+                        <span class="finding-marker critical">2</span>
+                    </div>
+                    <div class="finding-title">Automatic Termination — Competitors</div>
+                    <div class="finding-desc">If acquirer is on Exhibit B (47 major pharma companies), Pfizer can terminate immediately without liability. Most strategic acquirers are listed.</div>
+                    <div class="finding-source">§7.4 • Page 34</div>
+                </div>
+
+                <div class="finding-card warning">
+                    <div class="finding-header">
+                        <span class="finding-type">Warning</span>
+                        <span class="finding-marker warning">4</span>
+                    </div>
+                    <div class="finding-title">30-Day Wind-Down</div>
+                    <div class="finding-desc">Only 30 days to cease all operations upon termination — may not be sufficient for orderly wind-down of clinical trials.</div>
+                    <div class="finding-source">§7.6(c) • Page 35</div>
+                </div>
+
+                <div class="finding-card positive">
+                    <div class="finding-header">
+                        <span class="finding-type">Favorable</span>
+                        <span class="finding-marker positive">3</span>
+                    </div>
+                    <div class="finding-title">Termination for Convenience</div>
+                    <div class="finding-desc">NovaPharma can exit the agreement with 90 days notice if deal terms become unfavorable.</div>
+                    <div class="finding-source">§7.5 • Page 34</div>
+                </div>
+            </div>
+
+            <div class="cross-ref-section">
+                <div class="cross-ref-title">🔗 Cross-References Found</div>
+                <div class="cross-ref-item">
+                    <span class="cross-ref-icon">📄</span>
+                    <div class="cross-ref-content">
+                        <div class="cross-ref-doc">Audited_Financials_2023.pdf</div>
+                        <div class="cross-ref-text">$180M annual royalty revenue tied to this agreement (42% of total)</div>
+                    </div>
+                </div>
+                <div class="cross-ref-item">
+                    <span class="cross-ref-icon">📄</span>
+                    <div class="cross-ref-content">
+                        <div class="cross-ref-doc">Board_Resolution_2023-04.pdf</div>
+                        <div class="cross-ref-text">Board approved CoC notification requirement — may conflict with §7.3</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-summary">
+                <div class="ai-summary-header">
+                    🧠 AI Summary
+                </div>
+                <div class="ai-summary-text">
+                    This section contains <strong>deal-critical provisions</strong>. The "sole discretion" consent standard in §7.3 combined with the competitor list in Exhibit B creates significant execution risk. Recommend obtaining informal Pfizer indication before signing LOI.
+                </div>
+            </div>
+        </aside>
+    </div>
+</body>
+</html>

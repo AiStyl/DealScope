@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Agent Debate Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+            --purple: #7c3aed;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .back-link {
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .deal-badge {
+            background: var(--gray-100);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--gray-700);
+        }
+
+        .debate-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--red);
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .debate-status::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #f87171;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr 340px;
+            min-height: calc(100vh - 65px);
+        }
+
+        /* Left: Participating Agents */
+        .agents-panel {
+            background: var(--white);
+            border-right: 1px solid var(--gray-200);
+            padding: 1.5rem;
+        }
+
+        .panel-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .agent-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 10px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .agent-card:hover {
+            background: var(--gray-100);
+        }
+
+        .agent-card.position-for {
+            border-left-color: var(--green);
+        }
+
+        .agent-card.position-against {
+            border-left-color: var(--red);
+        }
+
+        .agent-card.position-neutral {
+            border-left-color: var(--gray-500);
+        }
+
+        .agent-card.speaking {
+            background: rgba(217, 119, 6, 0.1);
+            border-left-color: var(--amber);
+        }
+
+        .agent-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .agent-avatar.contract { background: #dbeafe; }
+        .agent-avatar.risk { background: #fef3c7; }
+        .agent-avatar.financial { background: #dcfce7; }
+        .agent-avatar.researcher { background: #ede9fe; }
+
+        .agent-info {
+            flex: 1;
+        }
+
+        .agent-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .agent-stance {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .agent-stance.for { color: var(--green); }
+        .agent-stance.against { color: var(--red); }
+
+        .speaking-indicator {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .speaking-indicator span {
+            width: 3px;
+            background: var(--amber);
+            border-radius: 2px;
+            animation: wave 0.8s ease-in-out infinite;
+        }
+
+        .speaking-indicator span:nth-child(1) { height: 8px; animation-delay: 0s; }
+        .speaking-indicator span:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+        .speaking-indicator span:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1); }
+        }
+
+        /* Debate Stats */
+        .debate-stats {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        /* Center: Debate Arena */
+        .debate-arena {
+            padding: 2rem;
+            overflow-y: auto;
+            background: var(--gray-50);
+        }
+
+        .debate-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .debate-question {
+            font-family: 'Fraunces', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .debate-context {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+        }
+
+        /* Position Meter */
+        .position-meter {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            padding: 1rem 1.5rem;
+            background: var(--white);
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .meter-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            width: 80px;
+        }
+
+        .meter-label.proceed { color: var(--green); }
+        .meter-label.caution { color: var(--red); text-align: right; }
+
+        .meter-track {
+            flex: 1;
+            height: 10px;
+            background: var(--gray-200);
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .meter-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: linear-gradient(90deg, var(--green) 0%, var(--green) 58%, var(--gray-300) 58%, var(--gray-300) 100%);
+            width: 100%;
+            border-radius: 5px;
+        }
+
+        .meter-marker {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 3px;
+            height: 18px;
+            background: var(--gray-600);
+            border-radius: 2px;
+        }
+
+        /* Debate Thread */
+        .debate-thread {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .debate-turn {
+            margin-bottom: 1.5rem;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .turn-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .turn-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .turn-meta {
+            flex: 1;
+        }
+
+        .turn-agent {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--gray-800);
+        }
+
+        .turn-timestamp {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .turn-stance {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .turn-stance.for {
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--green);
+        }
+
+        .turn-stance.against {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--red);
+        }
+
+        .turn-stance.synthesis {
+            background: rgba(13, 148, 136, 0.1);
+            color: var(--teal);
+        }
+
+        .turn-content {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-left: 52px;
+        }
+
+        .turn-content.for {
+            border-left: 3px solid var(--green);
+        }
+
+        .turn-content.against {
+            border-left: 3px solid var(--red);
+        }
+
+        .turn-content.synthesis {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.05) 0%, var(--white) 100%);
+            border-left: 3px solid var(--teal);
+        }
+
+        .turn-text {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--gray-600);
+        }
+
+        .turn-text strong {
+            color: var(--gray-800);
+        }
+
+        .turn-evidence {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+        }
+
+        .evidence-header {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .evidence-source {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--teal);
+        }
+
+        /* Rebuttal Connector */
+        .rebuttal-connector {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-left: 52px;
+            margin-bottom: 1rem;
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .rebuttal-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--gray-300), transparent);
+        }
+
+        /* Right: Consensus Panel */
+        .consensus-panel {
+            background: var(--white);
+            border-left: 1px solid var(--gray-200);
+            padding: 1.5rem;
+        }
+
+        .consensus-card {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, var(--white) 100%);
+            border: 1px solid rgba(13, 148, 136, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .consensus-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .consensus-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .consensus-title {
+            font-weight: 600;
+            color: var(--teal);
+            font-size: 0.9rem;
+        }
+
+        .consensus-status {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .consensus-progress {
+            margin-bottom: 1rem;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-value {
+            color: var(--teal);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--teal) 0%, var(--teal-light) 100%);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .consensus-text {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--gray-600);
+        }
+
+        /* Key Points */
+        .key-points {
+            margin-top: 1.5rem;
+        }
+
+        .key-point {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .point-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            flex-shrink: 0;
+        }
+
+        .point-icon.agreed {
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--green);
+        }
+
+        .point-icon.disputed {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--amber);
+        }
+
+        .point-text {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            line-height: 1.5;
+        }
+
+        /* Evidence Sidebar */
+        .evidence-sidebar {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .evidence-item {
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        .evidence-item-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .evidence-doc {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--teal);
+        }
+
+        .evidence-cited {
+            font-size: 0.65rem;
+            background: var(--gray-100);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            color: var(--gray-500);
+        }
+
+        .evidence-excerpt {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            font-style: italic;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="08-dashboard.html" class="back-link">← Dashboard</a>
+            <span class="deal-badge">NovaPharma Acquisition • $890M</span>
+        </div>
+        <div class="debate-status">Debate Active</div>
+    </div>
+
+    <div class="main-layout">
+        <!-- Left: Participating Agents -->
+        <aside class="agents-panel">
+            <div class="panel-title">Participating Agents</div>
+            
+            <div class="agent-card position-for">
+                <div class="agent-avatar financial">💰</div>
+                <div class="agent-info">
+                    <div class="agent-name">Financial Modeler</div>
+                    <div class="agent-stance for">FOR: Proceed with earnout</div>
+                </div>
+            </div>
+
+            <div class="agent-card position-against speaking">
+                <div class="agent-avatar risk">⚠️</div>
+                <div class="agent-info">
+                    <div class="agent-name">Risk Assessor</div>
+                    <div class="agent-stance against">AGAINST: Too risky</div>
+                </div>
+                <div class="speaking-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+
+            <div class="agent-card position-for">
+                <div class="agent-avatar contract">📄</div>
+                <div class="agent-info">
+                    <div class="agent-name">Contract Analyst</div>
+                    <div class="agent-stance for">FOR: Mitigable with terms</div>
+                </div>
+            </div>
+
+            <div class="agent-card position-neutral">
+                <div class="agent-avatar researcher">🔍</div>
+                <div class="agent-info">
+                    <div class="agent-name">Researcher</div>
+                    <div class="agent-stance">NEUTRAL: Gathering data</div>
+                </div>
+            </div>
+
+            <div class="debate-stats">
+                <div class="panel-title">Debate Metrics</div>
+                <div class="stat-row">
+                    <span class="stat-label">Duration</span>
+                    <span class="stat-value">4m 32s</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Arguments</span>
+                    <span class="stat-value">12</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Evidence Cited</span>
+                    <span class="stat-value">8 docs</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Rebuttals</span>
+                    <span class="stat-value">4</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center: Debate Arena -->
+        <main class="debate-arena">
+            <div class="debate-header">
+                <h1 class="debate-question">"Should we proceed with the NovaPharma acquisition given the Pfizer consent risk?"</h1>
+                <p class="debate-context">Triggered by: Contract Analyst discovery of §7.3 sole discretion clause</p>
+            </div>
+
+            <div class="position-meter">
+                <span class="meter-label proceed">Proceed</span>
+                <div class="meter-track">
+                    <div class="meter-fill"></div>
+                    <div class="meter-marker"></div>
+                </div>
+                <span class="meter-label caution">Caution</span>
+            </div>
+
+            <div class="debate-thread">
+                <!-- Turn 1: Financial Modeler -->
+                <div class="debate-turn">
+                    <div class="turn-header">
+                        <div class="turn-avatar" style="background: #dcfce7;">💰</div>
+                        <div class="turn-meta">
+                            <div class="turn-agent">Financial Modeler</div>
+                            <div class="turn-timestamp">4 minutes ago</div>
+                        </div>
+                        <span class="turn-stance for">For Proceeding</span>
+                    </div>
+                    <div class="turn-content for">
+                        <div class="turn-text">
+                            <strong>Opening argument:</strong> The deal fundamentals remain strong even with the Pfizer risk. I recommend proceeding with a <strong>milestone-based earnout structure</strong> that allocates 50% of purchase price ($445M) contingent on obtaining Pfizer consent post-close.
+                            <br><br>
+                            This approach limits downside exposure while preserving upside. Even in the worst case where Pfizer denies consent, the $445M at close still represents a reasonable valuation for the remaining business.
+                        </div>
+                        <div class="turn-evidence">
+                            <div class="evidence-header">📊 Supporting Analysis</div>
+                            <div class="evidence-source">DCF_Model_v3.xlsx — Scenario 4: Post-Pfizer Residual Value = $412M</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rebuttal-connector">
+                    <span>↳ Rebuttal</span>
+                    <div class="rebuttal-line"></div>
+                </div>
+
+                <!-- Turn 2: Risk Assessor -->
+                <div class="debate-turn">
+                    <div class="turn-header">
+                        <div class="turn-avatar" style="background: #fef3c7;">⚠️</div>
+                        <div class="turn-meta">
+                            <div class="turn-agent">Risk Assessor</div>
+                            <div class="turn-timestamp">3 minutes ago</div>
+                        </div>
+                        <span class="turn-stance against">Against Proceeding</span>
+                    </div>
+                    <div class="turn-content against">
+                        <div class="turn-text">
+                            <strong>I disagree with the earnout approach.</strong> The Financial Modeler's analysis assumes the risks are independent. They are not.
+                            <br><br>
+                            My Monte Carlo simulation shows FDA approval and Pfizer consent are <strong>correlated at ρ = 0.67</strong>. If FDA rejects NP-201, Pfizer becomes significantly more likely to deny consent because NovaPharma's value to them decreases.
+                            <br><br>
+                            The <strong>compound probability of both failing is 12%</strong>, which would result in a deal value of only $285M — well below the $445M at-close payment. This creates a <strong>significant negative expected value scenario</strong>.
+                        </div>
+                        <div class="turn-evidence">
+                            <div class="evidence-header">📊 Supporting Analysis</div>
+                            <div class="evidence-source">Monte_Carlo_Risk_Sim.py — 10,000 iterations, correlation matrix applied</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rebuttal-connector">
+                    <span>↳ Rebuttal</span>
+                    <div class="rebuttal-line"></div>
+                </div>
+
+                <!-- Turn 3: Contract Analyst -->
+                <div class="debate-turn">
+                    <div class="turn-header">
+                        <div class="turn-avatar" style="background: #dbeafe;">📄</div>
+                        <div class="turn-meta">
+                            <div class="turn-agent">Contract Analyst</div>
+                            <div class="turn-timestamp">2 minutes ago</div>
+                        </div>
+                        <span class="turn-stance for">For with Conditions</span>
+                    </div>
+                    <div class="turn-content for">
+                        <div class="turn-text">
+                            <strong>There may be a middle path.</strong> I've reviewed similar "sole discretion" clauses in 47 comparable transactions from 2019-2024.
+                            <br><br>
+                            In <strong>73% of cases</strong>, licensors granted consent when approached <em>before</em> the definitive agreement was signed. The key is informal pre-approach.
+                            <br><br>
+                            <strong>My recommendation:</strong> Make the deal contingent on obtaining Pfizer's written indication of consent before signing the LOI. This eliminates execution risk entirely without requiring earnout structures.
+                        </div>
+                        <div class="turn-evidence">
+                            <div class="evidence-header">📊 Supporting Analysis</div>
+                            <div class="evidence-source">Precedent_CoC_Analysis.xlsx — 47 deals with similar clause language</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Turn 4: Orchestrator Synthesis -->
+                <div class="debate-turn">
+                    <div class="turn-header">
+                        <div class="turn-avatar" style="background: linear-gradient(135deg, #0d9488, #14b8a6);">🎯</div>
+                        <div class="turn-meta">
+                            <div class="turn-agent">Orchestrator</div>
+                            <div class="turn-timestamp">Just now</div>
+                        </div>
+                        <span class="turn-stance synthesis">Synthesis</span>
+                    </div>
+                    <div class="turn-content synthesis">
+                        <div class="turn-text">
+                            <strong>EMERGING CONSENSUS:</strong>
+                            <br><br>
+                            All agents agree the Pfizer risk is material and must be addressed before proceeding. The debate centers on <em>how</em> to address it:
+                            <br><br>
+                            • <strong>Financial Modeler:</strong> Earnout structure (accepted as backup plan)<br>
+                            • <strong>Risk Assessor:</strong> Correlated risk concern (validated, incorporated into analysis)<br>
+                            • <strong>Contract Analyst:</strong> Pre-LOI consent approach (preferred path forward)
+                            <br><br>
+                            <strong>RECOMMENDED ACTION:</strong> Approach Pfizer informally for consent indication before signing LOI. If indication is negative, switch to earnout structure with 50% contingency. Do not proceed to definitive agreement without either (a) written Pfizer indication or (b) seller acceptance of earnout terms.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right: Consensus Panel -->
+        <aside class="consensus-panel">
+            <div class="consensus-card">
+                <div class="consensus-header">
+                    <div class="consensus-icon">🎯</div>
+                    <div>
+                        <div class="consensus-title">Consensus Status</div>
+                        <div class="consensus-status">Building alignment...</div>
+                    </div>
+                </div>
+                <div class="consensus-progress">
+                    <div class="progress-label">
+                        <span>Agreement Level</span>
+                        <span class="progress-value">78%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 78%;"></div>
+                    </div>
+                </div>
+                <div class="consensus-text">
+                    3 of 4 agents support conditional proceeding. Risk Assessor's correlation concern has been incorporated but does not block the recommended path.
+                </div>
+            </div>
+
+            <div class="key-points">
+                <div class="panel-title">Key Points</div>
+                
+                <div class="key-point">
+                    <div class="point-icon agreed">✓</div>
+                    <div class="point-text">Pfizer consent is deal-critical (100% agreement)</div>
+                </div>
+                
+                <div class="key-point">
+                    <div class="point-icon agreed">✓</div>
+                    <div class="point-text">Pre-LOI approach preferred over earnout (75% agreement)</div>
+                </div>
+                
+                <div class="key-point">
+                    <div class="point-icon disputed">?</div>
+                    <div class="point-text">Correlation impact on earnout terms (under discussion)</div>
+                </div>
+                
+                <div class="key-point">
+                    <div class="point-icon agreed">✓</div>
+                    <div class="point-text">Do not sign DA without consent indication (100% agreement)</div>
+                </div>
+            </div>
+
+            <div class="evidence-sidebar">
+                <div class="panel-title">Evidence Cited</div>
+                
+                <div class="evidence-item">
+                    <div class="evidence-item-header">
+                        <span class="evidence-doc">📄 Pfizer_License_Agreement.pdf</span>
+                        <span class="evidence-cited">3×</span>
+                    </div>
+                    <div class="evidence-excerpt">"...consent may be withheld in Licensor's sole discretion..."</div>
+                </div>
+                
+                <div class="evidence-item">
+                    <div class="evidence-item-header">
+                        <span class="evidence-doc">📊 Monte_Carlo_Risk_Sim.py</span>
+                        <span class="evidence-cited">2×</span>
+                    </div>
+                    <div class="evidence-excerpt">Correlation matrix: ρ = 0.67 between FDA and Pfizer risks</div>
+                </div>
+                
+                <div class="evidence-item">
+                    <div class="evidence-item-header">
+                        <span class="evidence-doc">📊 Precedent_CoC_Analysis.xlsx</span>
+                        <span class="evidence-cited">1×</span>
+                    </div>
+                    <div class="evidence-excerpt">73% consent rate when approached pre-LOI (n=47)</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</body>
+</html>

@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Model Orchestration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+            --purple: #7c3aed;
+            --claude: #d97706;
+            --gpt: #10a37f;
+            --gemini: #4285f4;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .back-link {
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .page-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--green);
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .live-indicator::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.9); }
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            min-height: calc(100vh - 65px);
+        }
+
+        /* Center: Orchestration View */
+        .orchestration-view {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .view-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .view-header h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 1.5rem;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .view-header p {
+            color: var(--gray-500);
+            font-size: 0.9rem;
+        }
+
+        /* Orchestration Diagram */
+        .orchestration-diagram {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .diagram-title {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        /* Pipeline Visualization */
+        .pipeline {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 2rem;
+        }
+
+        .pipeline-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stage-box {
+            padding: 1rem 1.5rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            text-align: center;
+            min-width: 140px;
+        }
+
+        .stage-box.active {
+            border-color: var(--teal);
+            background: rgba(13, 148, 136, 0.05);
+        }
+
+        .stage-icon {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .stage-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .stage-status {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+        }
+
+        .pipeline-arrow {
+            color: var(--gray-300);
+            font-size: 1.5rem;
+            margin: 0 0.5rem;
+        }
+
+        .pipeline-arrow.active {
+            color: var(--teal);
+        }
+
+        /* Model Routing Section */
+        .model-routing {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .model-card {
+            background: var(--white);
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.25rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .model-card.claude {
+            border-color: var(--claude);
+        }
+
+        .model-card.gpt {
+            border-color: var(--gpt);
+        }
+
+        .model-card.gemini {
+            border-color: var(--gemini);
+        }
+
+        .model-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .model-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .model-logo.claude {
+            background: rgba(217, 119, 6, 0.2);
+            color: var(--claude);
+        }
+
+        .model-logo.gpt {
+            background: rgba(16, 163, 127, 0.2);
+            color: var(--gpt);
+        }
+
+        .model-logo.gemini {
+            background: rgba(66, 133, 244, 0.2);
+            color: var(--gemini);
+        }
+
+        .model-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .model-version {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .model-tasks {
+            margin-bottom: 1rem;
+        }
+
+        .task-label {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .task-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .task-tag {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        .model-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--gray-500);
+        }
+
+        /* Activity Stream */
+        .activity-stream {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .stream-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stream-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .stream-live {
+            font-size: 0.75rem;
+            color: var(--teal);
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .activity-model {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-action {
+            font-size: 0.8rem;
+            color: var(--gray-700);
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-time {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+        }
+
+        /* Right Panel: Metrics */
+        .metrics-panel {
+            background: var(--white);
+            border-left: 1px solid var(--gray-200);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .panel-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        /* Consensus Meter */
+        .consensus-card {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.1) 0%, var(--white) 100%);
+            border: 1px solid rgba(13, 148, 136, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .consensus-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--teal);
+            line-height: 1;
+        }
+
+        .consensus-label {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-top: 0.5rem;
+        }
+
+        .consensus-bar {
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .consensus-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--teal), var(--teal-light));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Model Performance */
+        .performance-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .perf-card {
+            background: var(--gray-50);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .perf-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .perf-model {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .perf-badge {
+            width: 24px;
+            height: 24px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+
+        .perf-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .perf-score {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .perf-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+
+        .perf-metric {
+            text-align: center;
+            padding: 0.5rem;
+            background: var(--white);
+            border-radius: 6px;
+        }
+
+        .perf-metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .perf-metric-label {
+            font-size: 0.6rem;
+            color: var(--gray-500);
+        }
+
+        /* Cost Tracker */
+        .cost-card {
+            background: var(--gray-50);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .cost-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .cost-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .cost-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--teal);
+        }
+
+        .cost-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .cost-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+        }
+
+        .cost-row-model {
+            color: var(--gray-500);
+        }
+
+        .cost-row-value {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--gray-700);
+        }
+
+        /* Routing Rules */
+        .rules-section {
+            margin-top: 1.5rem;
+        }
+
+        .rule-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .rule-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--white);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            flex-shrink: 0;
+        }
+
+        .rule-text {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            line-height: 1.4;
+        }
+
+        .rule-text strong {
+            color: var(--gray-800);
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="08-dashboard.html" class="back-link">← Dashboard</a>
+            <h1 class="page-title">Model Orchestration</h1>
+        </div>
+        <div class="live-indicator">Processing Active</div>
+    </div>
+
+    <div class="main-layout">
+        <!-- Orchestration View -->
+        <main class="orchestration-view">
+            <div class="view-header">
+                <h1>Multi-Model Intelligence Pipeline</h1>
+                <p>Real-time orchestration across Claude, GPT-4, and Gemini Pro</p>
+            </div>
+
+            <!-- Pipeline Diagram -->
+            <div class="orchestration-diagram">
+                <div class="diagram-title">Active Processing Pipeline</div>
+                
+                <div class="pipeline">
+                    <div class="pipeline-stage">
+                        <div class="stage-box">
+                            <div class="stage-icon">📄</div>
+                            <div class="stage-name">Document Ingestion</div>
+                            <div class="stage-status">312 docs processed</div>
+                        </div>
+                    </div>
+                    <span class="pipeline-arrow active">→</span>
+                    <div class="pipeline-stage">
+                        <div class="stage-box active">
+                            <div class="stage-icon">🧠</div>
+                            <div class="stage-name">Multi-Model Analysis</div>
+                            <div class="stage-status">3 models active</div>
+                        </div>
+                    </div>
+                    <span class="pipeline-arrow active">→</span>
+                    <div class="pipeline-stage">
+                        <div class="stage-box">
+                            <div class="stage-icon">⚖️</div>
+                            <div class="stage-name">Consensus Engine</div>
+                            <div class="stage-status">Aggregating...</div>
+                        </div>
+                    </div>
+                    <span class="pipeline-arrow">→</span>
+                    <div class="pipeline-stage">
+                        <div class="stage-box">
+                            <div class="stage-icon">✅</div>
+                            <div class="stage-name">Validated Output</div>
+                            <div class="stage-status">Pending</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Cards -->
+                <div class="model-routing">
+                    <div class="model-card claude">
+                        <div class="model-header">
+                            <div class="model-logo claude">C</div>
+                            <div>
+                                <div class="model-name">Claude Opus</div>
+                                <div class="model-version">claude-3-opus-20240229</div>
+                            </div>
+                        </div>
+                        <div class="model-tasks">
+                            <div class="task-label">Assigned Tasks</div>
+                            <div class="task-list">
+                                <span class="task-tag">Contract Analysis</span>
+                                <span class="task-tag">Risk Assessment</span>
+                                <span class="task-tag">Reasoning Chains</span>
+                            </div>
+                        </div>
+                        <div class="model-stats">
+                            <div class="stat">
+                                <div class="stat-value">847</div>
+                                <div class="stat-label">Requests</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">2.3s</div>
+                                <div class="stat-label">Avg Latency</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">94%</div>
+                                <div class="stat-label">Accuracy</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">$12.40</div>
+                                <div class="stat-label">Cost Today</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card gpt">
+                        <div class="model-header">
+                            <div class="model-logo gpt">G</div>
+                            <div>
+                                <div class="model-name">GPT-4 Turbo</div>
+                                <div class="model-version">gpt-4-turbo-2024-04-09</div>
+                            </div>
+                        </div>
+                        <div class="model-tasks">
+                            <div class="task-label">Assigned Tasks</div>
+                            <div class="task-list">
+                                <span class="task-tag">Financial Modeling</span>
+                                <span class="task-tag">Data Extraction</span>
+                                <span class="task-tag">Calculations</span>
+                            </div>
+                        </div>
+                        <div class="model-stats">
+                            <div class="stat">
+                                <div class="stat-value">623</div>
+                                <div class="stat-label">Requests</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">1.8s</div>
+                                <div class="stat-label">Avg Latency</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">91%</div>
+                                <div class="stat-label">Accuracy</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">$8.70</div>
+                                <div class="stat-label">Cost Today</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card gemini">
+                        <div class="model-header">
+                            <div class="model-logo gemini">G</div>
+                            <div>
+                                <div class="model-name">Gemini Pro</div>
+                                <div class="model-version">gemini-1.5-pro-latest</div>
+                            </div>
+                        </div>
+                        <div class="model-tasks">
+                            <div class="task-label">Assigned Tasks</div>
+                            <div class="task-list">
+                                <span class="task-tag">Document Search</span>
+                                <span class="task-tag">Cross-Reference</span>
+                                <span class="task-tag">Summarization</span>
+                            </div>
+                        </div>
+                        <div class="model-stats">
+                            <div class="stat">
+                                <div class="stat-value">412</div>
+                                <div class="stat-label">Requests</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">1.2s</div>
+                                <div class="stat-label">Avg Latency</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">89%</div>
+                                <div class="stat-label">Accuracy</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">$3.20</div>
+                                <div class="stat-label">Cost Today</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Stream -->
+            <div class="activity-stream">
+                <div class="stream-header">
+                    <span class="stream-title">Live Activity Stream</span>
+                    <span class="stream-live">● Streaming</span>
+                </div>
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-model model-logo claude">C</div>
+                        <div class="activity-content">
+                            <div class="activity-action"><strong>Claude</strong> identified change-of-control clause in Pfizer_License.pdf §7.3</div>
+                            <div class="activity-time">2 seconds ago</div>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-model model-logo gpt">G</div>
+                        <div class="activity-content">
+                            <div class="activity-action"><strong>GPT-4</strong> calculated DCF sensitivity: ±$145M on WACC variance</div>
+                            <div class="activity-time">5 seconds ago</div>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-model model-logo gemini">G</div>
+                        <div class="activity-content">
+                            <div class="activity-action"><strong>Gemini</strong> cross-referenced 47 documents mentioning "NP-201"</div>
+                            <div class="activity-time">8 seconds ago</div>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-model model-logo claude">C</div>
+                        <div class="activity-content">
+                            <div class="activity-action"><strong>Claude</strong> flagged revenue discrepancy: $142M vs $139.7M (2.3M delta)</div>
+                            <div class="activity-time">12 seconds ago</div>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-model model-logo gpt">G</div>
+                        <div class="activity-content">
+                            <div class="activity-action"><strong>GPT-4</strong> completed Monte Carlo simulation: 10,000 iterations</div>
+                            <div class="activity-time">18 seconds ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Metrics Panel -->
+        <aside class="metrics-panel">
+            <div class="panel-title">Orchestration Metrics</div>
+
+            <div class="consensus-card">
+                <div class="consensus-value">87%</div>
+                <div class="consensus-label">Cross-Model Agreement</div>
+                <div class="consensus-bar">
+                    <div class="consensus-fill" style="width: 87%;"></div>
+                </div>
+            </div>
+
+            <div class="performance-section">
+                <div class="panel-title">Model Performance</div>
+                
+                <div class="perf-card">
+                    <div class="perf-header">
+                        <div class="perf-model">
+                            <div class="perf-badge model-logo claude">C</div>
+                            <span class="perf-name">Claude Opus</span>
+                        </div>
+                        <span class="perf-score" style="color: var(--claude);">94%</span>
+                    </div>
+                    <div class="perf-metrics">
+                        <div class="perf-metric">
+                            <div class="perf-metric-value">847</div>
+                            <div class="perf-metric-label">Calls</div>
+                        </div>
+                        <div class="perf-metric">
+                            <div class="perf-metric-value">2.3s</div>
+                            <div class="perf-metric-label">Latency</div>
+                        </div>
+                        <div class="perf-metric">
+                            <div class="perf-metric-value">0.2%</div>
+                            <div class="perf-metric-label">Error Rate</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="perf-card">
+                    <div class="perf-header">
+                        <div class="perf-model">
+                            <div class="perf-badge model-logo gpt">G</div>
+                            <span class="perf-name">GPT-4 Turbo</span>
+                        </div>
+                        <span class="perf-score" style="color: var(--gpt);">91%</span>
+                    </div>
+                    <div class="perf-metrics">
+                        <div class="perf-metric">
+                            <div class="perf-metric-value">623</div>
+                            <div class="perf-metric-label">Calls</div>
+                        </div>
+                        <div class="perf-metric">
+                            <div class="perf-metric-value">1.8s</div>
+                            <div class="perf-metric-label">Latency</div>
+                        </div>
+                        <div class="perf-metric">
+                            <div class="perf-metric-value">0.5%</div>
+                            <div class="perf-metric-label">Error Rate</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="perf-card">
+                    <div class="perf-header">
+                        <div class="perf-model">
+                            <div class="perf-badge model-logo gemini">G</div>
+                            <span class="perf-name">Gemini Pro</span>
+                        </div>
+                        <span class="perf-score" style="color: var(--gemini);">89%</span>
+                    </div>
+                    <div class="perf-metrics">
+                        <div class="perf-metric">
+                            <div class="perf-metric-value">412</div>
+                            <div class="perf-metric-label">Calls</div>
+                        </div>
+                        <div class="perf-metric">
+                            <div class="perf-metric-value">1.2s</div>
+                            <div class="perf-metric-label">Latency</div>
+                        </div>
+                        <div class="perf-metric">
+                            <div class="perf-metric-value">0.8%</div>
+                            <div class="perf-metric-label">Error Rate</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cost Tracker -->
+            <div class="cost-card">
+                <div class="cost-header">
+                    <span class="cost-title">Today's API Cost</span>
+                    <span class="cost-value">$24.30</span>
+                </div>
+                <div class="cost-breakdown">
+                    <div class="cost-row">
+                        <span class="cost-row-model">Claude Opus</span>
+                        <span class="cost-row-value">$12.40</span>
+                    </div>
+                    <div class="cost-row">
+                        <span class="cost-row-model">GPT-4 Turbo</span>
+                        <span class="cost-row-value">$8.70</span>
+                    </div>
+                    <div class="cost-row">
+                        <span class="cost-row-model">Gemini Pro</span>
+                        <span class="cost-row-value">$3.20</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Routing Rules -->
+            <div class="rules-section">
+                <div class="panel-title">Active Routing Rules</div>
+                
+                <div class="rule-item">
+                    <div class="rule-icon">📄</div>
+                    <div class="rule-text"><strong>Contracts</strong> → Claude (highest legal accuracy)</div>
+                </div>
+                
+                <div class="rule-item">
+                    <div class="rule-icon">📊</div>
+                    <div class="rule-text"><strong>Financials</strong> → GPT-4 (best numerical reasoning)</div>
+                </div>
+                
+                <div class="rule-item">
+                    <div class="rule-icon">🔍</div>
+                    <div class="rule-text"><strong>Search</strong> → Gemini (fastest retrieval)</div>
+                </div>
+                
+                <div class="rule-item">
+                    <div class="rule-icon">⚖️</div>
+                    <div class="rule-text"><strong>Consensus</strong> → All 3 models vote on critical findings</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</body>
+</html>

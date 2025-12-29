@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Pricing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --green: #16a34a;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--white);
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 4rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .logo {
+            font-family: 'Fraunces', serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .logo span { color: var(--teal); }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+        }
+
+        .nav-links a {
+            color: var(--gray-600);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover { color: var(--gray-900); }
+        .nav-links a.active { color: var(--teal); }
+
+        .nav-cta {
+            background: var(--gray-900);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* Hero */
+        .pricing-hero {
+            text-align: center;
+            padding: 5rem 4rem 3rem;
+            background: linear-gradient(180deg, var(--gray-50) 0%, var(--white) 100%);
+        }
+
+        .pricing-hero h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 2.75rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+        }
+
+        .pricing-hero p {
+            font-size: 1.15rem;
+            color: var(--gray-500);
+            max-width: 550px;
+            margin: 0 auto;
+        }
+
+        /* Toggle */
+        .billing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .billing-option {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+            cursor: pointer;
+        }
+
+        .billing-option.active {
+            color: var(--gray-900);
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            width: 48px;
+            height: 26px;
+            background: var(--teal);
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            transition: transform 0.2s;
+        }
+
+        .save-badge {
+            background: #dcfce7;
+            color: var(--green);
+            font-size: 0.75rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* Pricing Cards */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            max-width: 1100px;
+            margin: 3rem auto;
+            padding: 0 4rem;
+        }
+
+        .pricing-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 2.5rem;
+            transition: all 0.3s;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        }
+
+        .pricing-card.featured {
+            background: var(--gray-900);
+            color: var(--white);
+            transform: scale(1.05);
+            position: relative;
+        }
+
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-4px);
+        }
+
+        .featured-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--teal);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .plan-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-desc {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-card.featured .plan-desc {
+            color: var(--gray-400);
+        }
+
+        .plan-price {
+            margin-bottom: 1.5rem;
+        }
+
+        .price-amount {
+            font-family: 'Fraunces', serif;
+            font-size: 2.75rem;
+            font-weight: 700;
+        }
+
+        .price-period {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+        }
+
+        .pricing-card.featured .price-period {
+            color: var(--gray-400);
+        }
+
+        .plan-includes {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-bottom: 0.75rem;
+        }
+
+        .pricing-card.featured .plan-includes {
+            color: var(--gray-400);
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .plan-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .plan-features li::before {
+            content: '✓';
+            color: var(--teal);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .pricing-card.featured .plan-features li::before {
+            color: var(--teal-light);
+        }
+
+        .plan-features li.highlight {
+            font-weight: 500;
+        }
+
+        .plan-cta {
+            width: 100%;
+            padding: 0.9rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .plan-cta.outline {
+            background: transparent;
+            border: 1px solid var(--gray-300);
+            color: var(--gray-700);
+        }
+
+        .plan-cta.outline:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        .plan-cta.filled {
+            background: var(--teal);
+            border: none;
+            color: white;
+        }
+
+        .plan-cta.filled:hover {
+            background: var(--teal-light);
+        }
+
+        /* Enterprise */
+        .enterprise-section {
+            max-width: 1100px;
+            margin: 4rem auto;
+            padding: 0 4rem;
+        }
+
+        .enterprise-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .enterprise-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .enterprise-content p {
+            color: var(--gray-500);
+        }
+
+        .enterprise-features {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1.25rem;
+        }
+
+        .enterprise-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--gray-600);
+        }
+
+        .enterprise-feature::before {
+            content: '✓';
+            color: var(--teal);
+            font-weight: 600;
+        }
+
+        .enterprise-cta {
+            background: var(--white);
+            border: 1px solid var(--gray-300);
+            padding: 0.9rem 2rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        /* FAQ */
+        .faq-section {
+            max-width: 700px;
+            margin: 5rem auto;
+            padding: 0 4rem;
+        }
+
+        .faq-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .faq-header h2 {
+            font-family: 'Fraunces', serif;
+            font-size: 2rem;
+            color: var(--gray-900);
+        }
+
+        .faq-item {
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1.25rem 0;
+        }
+
+        .faq-question {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .faq-toggle {
+            color: var(--gray-400);
+            font-size: 1.25rem;
+        }
+
+        .faq-answer {
+            padding-top: 1rem;
+            font-size: 0.95rem;
+            color: var(--gray-600);
+            line-height: 1.7;
+        }
+
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            padding: 5rem 4rem;
+            background: var(--gray-900);
+        }
+
+        .cta-section h2 {
+            font-family: 'Fraunces', serif;
+            font-size: 2.25rem;
+            color: var(--white);
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.1rem;
+            color: var(--gray-400);
+            margin-bottom: 2rem;
+        }
+
+        .cta-section .btn {
+            background: var(--teal);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        /* Footer */
+        footer {
+            padding: 2rem 4rem;
+            border-top: 1px solid var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-logo {
+            font-family: 'Fraunces', serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .footer-links a {
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .footer-copy {
+            color: var(--gray-400);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">DEAL<span>SCOPE</span></div>
+        <div class="nav-links">
+            <a href="#">Platform</a>
+            <a href="#">Capabilities</a>
+            <a href="#" class="active">Pricing</a>
+            <a href="#">Resources</a>
+        </div>
+        <button class="nav-cta">Request Demo</button>
+    </nav>
+
+    <section class="pricing-hero">
+        <h1>Pricing That Scales With You</h1>
+        <p>From single deals to enterprise deployment. All plans include our full 8-agent AI suite.</p>
+        <div class="billing-toggle">
+            <span class="billing-option">Monthly</span>
+            <div class="toggle-switch"></div>
+            <span class="billing-option active">Annual</span>
+            <span class="save-badge">Save 20%</span>
+        </div>
+    </section>
+
+    <div class="pricing-grid">
+        <div class="pricing-card">
+            <div class="plan-name">Starter</div>
+            <p class="plan-desc">For boutique firms and family offices</p>
+            <div class="plan-price">
+                <span class="price-amount">$2,500</span>
+                <span class="price-period">/ month</span>
+            </div>
+            <p class="plan-includes">Includes:</p>
+            <ul class="plan-features">
+                <li>Up to 3 active deals</li>
+                <li>500 documents / month</li>
+                <li>5 AI agents</li>
+                <li>Basic reasoning view</li>
+                <li>Email support</li>
+            </ul>
+            <button class="plan-cta outline">Start 14-Day Trial</button>
+        </div>
+
+        <div class="pricing-card featured">
+            <div class="featured-badge">Most Popular</div>
+            <div class="plan-name">Professional</div>
+            <p class="plan-desc">For mid-market PE and M&A advisors</p>
+            <div class="plan-price">
+                <span class="price-amount">$7,500</span>
+                <span class="price-period">/ month</span>
+            </div>
+            <p class="plan-includes">Everything in Starter, plus:</p>
+            <ul class="plan-features">
+                <li>Up to 15 active deals</li>
+                <li>2,500 documents / month</li>
+                <li class="highlight">All 8 AI agents</li>
+                <li class="highlight">Full reasoning & debate view</li>
+                <li>Knowledge graph</li>
+                <li>Monte Carlo simulation</li>
+                <li>Priority support</li>
+            </ul>
+            <button class="plan-cta filled">Start 14-Day Trial</button>
+        </div>
+
+        <div class="pricing-card">
+            <div class="plan-name">Growth</div>
+            <p class="plan-desc">For active deal teams</p>
+            <div class="plan-price">
+                <span class="price-amount">$15,000</span>
+                <span class="price-period">/ month</span>
+            </div>
+            <p class="plan-includes">Everything in Professional, plus:</p>
+            <ul class="plan-features">
+                <li>Unlimited active deals</li>
+                <li>10,000 documents / month</li>
+                <li>Custom agent training</li>
+                <li>API access</li>
+                <li>White-label reports</li>
+                <li>Dedicated success manager</li>
+            </ul>
+            <button class="plan-cta outline">Contact Sales</button>
+        </div>
+    </div>
+
+    <section class="enterprise-section">
+        <div class="enterprise-card">
+            <div class="enterprise-content">
+                <h3>Enterprise</h3>
+                <p>Custom deployment for large institutions with complex requirements.</p>
+                <div class="enterprise-features">
+                    <span class="enterprise-feature">Unlimited everything</span>
+                    <span class="enterprise-feature">On-premise option</span>
+                    <span class="enterprise-feature">Custom integrations</span>
+                    <span class="enterprise-feature">24/7 support</span>
+                </div>
+            </div>
+            <button class="enterprise-cta">Contact Sales</button>
+        </div>
+    </section>
+
+    <section class="faq-section">
+        <div class="faq-header">
+            <h2>Frequently Asked Questions</h2>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>What's included in the 14-day trial?</span>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                Full access to all 8 AI agents with Professional plan features. Analyze up to 100 documents. No credit card required to start.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>How does document counting work?</span>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                Each file you upload for AI analysis counts as one document, regardless of page count. Documents stored but not actively analyzed don't count.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>What makes your AI agents different?</span>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                Unlike single-model tools, our 8 specialized agents debate findings, cross-reference documents, and reach consensus. You see the full reasoning chain — not just conclusions.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>Is my data secure?</span>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                SOC 2 Type II certified. All data encrypted at rest and in transit. Enterprise customers can deploy on-premise. We never train on your data.
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <h2>See Multi-Agent AI in Action</h2>
+        <p>Watch our agents analyze a real deal — debating, reasoning, finding risks humans miss.</p>
+        <button class="btn">Schedule Live Demo</button>
+    </section>
+
+    <footer>
+        <div class="footer-logo">DEALSCOPE</div>
+        <div class="footer-links">
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">Security</a>
+            <a href="#">Contact</a>
+        </div>
+        <div class="footer-copy">© 2024 DEALSCOPE</div>
+    </footer>
+</body>
+</html>

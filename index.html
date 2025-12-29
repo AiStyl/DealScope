@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Mockups Index</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+            padding: 4rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .logo {
+            font-family: 'Fraunces', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+        }
+
+        .logo span {
+            color: var(--teal);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--gray-600);
+            margin-bottom: 0.5rem;
+        }
+
+        .version {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+        }
+
+        .version strong {
+            color: var(--teal);
+        }
+
+        /* Section Headers */
+        .section-title {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 3rem 0 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--gray-200);
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section-title:first-of-type {
+            margin-top: 0;
+        }
+
+        /* Grid */
+        .mockups-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .mockup-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .mockup-card:hover {
+            border-color: var(--teal);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-number {
+            width: 32px;
+            height: 32px;
+            background: var(--teal);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            line-height: 1.5;
+        }
+
+        .card-badge {
+            display: inline-block;
+            font-size: 0.65rem;
+            background: rgba(13, 148, 136, 0.2);
+            color: var(--teal-light);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .card-badge.new {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .card-badge.core {
+            background: rgba(13, 148, 136, 0.3);
+            color: var(--teal-light);
+        }
+
+        .card-badge.enterprise {
+            background: rgba(124, 58, 237, 0.2);
+            color: #a78bfa;
+        }
+
+        /* Footer */
+        .footer-info {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-200);
+            color: var(--gray-500);
+            font-size: 0.9rem;
+        }
+
+        .tech-stack {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .tech-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gray-500);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">DEAL<span>SCOPE</span></div>
+        <p class="subtitle">Multi-Agent AI Due Diligence Platform</p>
+        <p class="version">Mockups v4 — <strong>22 Screens</strong> — Ready for Development</p>
+    </div>
+
+    <h2 class="section-title">Core Platform</h2>
+    <div class="mockups-grid">
+        <a href="01-landing-page.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">01</div>
+                <h3 class="card-title">Landing Page</h3>
+            </div>
+            <p class="card-desc">Marketing page with live agent demo, value props, and comparison</p>
+            <span class="card-badge">Marketing</span>
+        </a>
+
+        <a href="08-dashboard.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">08</div>
+                <h3 class="card-title">Dashboard</h3>
+            </div>
+            <p class="card-desc">Main dashboard with active deals, agent status, recent findings</p>
+            <span class="card-badge core">Core</span>
+        </a>
+
+        <a href="10-pricing.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">10</div>
+                <h3 class="card-title">Pricing</h3>
+            </div>
+            <p class="card-desc">Tiered pricing with feature comparison and enterprise option</p>
+            <span class="card-badge">Marketing</span>
+        </a>
+    </div>
+
+    <h2 class="section-title">Multi-Agent Intelligence — The Differentiator</h2>
+    <div class="mockups-grid">
+        <a href="02-multi-agent-reasoning.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">02</div>
+                <h3 class="card-title">Multi-Agent Reasoning</h3>
+            </div>
+            <p class="card-desc">Live reasoning thread showing agents collaborating and consensus</p>
+            <span class="card-badge core">Core Differentiator</span>
+        </a>
+
+        <a href="11-agent-debate-arena.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">11</div>
+                <h3 class="card-title">Agent Debate Arena</h3>
+            </div>
+            <p class="card-desc">Watch agents argue FOR vs AGAINST with evidence citations</p>
+            <span class="card-badge new">NEW</span>
+        </a>
+
+        <a href="14-agent-builder.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">14</div>
+                <h3 class="card-title">Agent Builder</h3>
+            </div>
+            <p class="card-desc">Create custom agents with persona, capabilities, knowledge</p>
+            <span class="card-badge new">NEW</span>
+        </a>
+
+        <a href="16-model-orchestration.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">16</div>
+                <h3 class="card-title">Model Orchestration</h3>
+            </div>
+            <p class="card-desc">Multi-model pipeline: Claude + GPT-4 + Gemini working together</p>
+            <span class="card-badge new">NEW — WOW FACTOR</span>
+        </a>
+    </div>
+
+    <h2 class="section-title">Advanced Analytics & Simulation</h2>
+    <div class="mockups-grid">
+        <a href="03-knowledge-graph.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">03</div>
+                <h3 class="card-title">Knowledge Graph</h3>
+            </div>
+            <p class="card-desc">Entity relationship visualization with conflict detection</p>
+            <span class="card-badge">Analytics</span>
+        </a>
+
+        <a href="04-risk-simulation.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">04</div>
+                <h3 class="card-title">Monte Carlo Simulation</h3>
+            </div>
+            <p class="card-desc">10,000 scenario simulation with probability distributions</p>
+            <span class="card-badge">Analytics</span>
+        </a>
+
+        <a href="12-sensitivity-analysis.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">12</div>
+                <h3 class="card-title">Sensitivity Analysis</h3>
+            </div>
+            <p class="card-desc">Tornado diagrams showing which variables drive value</p>
+            <span class="card-badge new">NEW</span>
+        </a>
+
+        <a href="07-deal-simulator.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">07</div>
+                <h3 class="card-title">Deal Simulator</h3>
+            </div>
+            <p class="card-desc">What-if scenarios with cascading effects visualization</p>
+            <span class="card-badge">Analytics</span>
+        </a>
+
+        <a href="13-precedent-finder.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">13</div>
+                <h3 class="card-title">Precedent Finder</h3>
+            </div>
+            <p class="card-desc">Find similar M&A transactions with AI-powered matching</p>
+            <span class="card-badge new">NEW</span>
+        </a>
+    </div>
+
+    <h2 class="section-title">Document Intelligence</h2>
+    <div class="mockups-grid">
+        <a href="09-document-analysis.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">09</div>
+                <h3 class="card-title">Document Analysis</h3>
+            </div>
+            <p class="card-desc">PDF viewer with inline AI highlights and cross-references</p>
+            <span class="card-badge">Intelligence</span>
+        </a>
+
+        <a href="05-anomaly-detection.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">05</div>
+                <h3 class="card-title">Anomaly Detection</h3>
+            </div>
+            <p class="card-desc">Cross-document inconsistency finder with AI analysis</p>
+            <span class="card-badge">Intelligence</span>
+        </a>
+
+        <a href="06-interrogation.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">06</div>
+                <h3 class="card-title">Deal Interrogation</h3>
+            </div>
+            <p class="card-desc">Natural language Q&A with complex hypotheticals</p>
+            <span class="card-badge">Intelligence</span>
+        </a>
+
+        <a href="15-report-builder.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">15</div>
+                <h3 class="card-title">Report Builder</h3>
+            </div>
+            <p class="card-desc">Auto-generate IC memos and due diligence reports</p>
+            <span class="card-badge new">NEW</span>
+        </a>
+    </div>
+
+    <h2 class="section-title">Trust & Transparency — Enterprise Grade</h2>
+    <div class="mockups-grid">
+        <a href="17-confidence-calibration.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">17</div>
+                <h3 class="card-title">Confidence Calibration</h3>
+            </div>
+            <p class="card-desc">How sure is the AI? Uncertainty quantification and validation</p>
+            <span class="card-badge new">NEW — PhD LEVEL</span>
+        </a>
+
+        <a href="18-audit-trail.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">18</div>
+                <h3 class="card-title">Audit Trail</h3>
+            </div>
+            <p class="card-desc">Complete transparency into every AI decision with compliance</p>
+            <span class="card-badge enterprise">Enterprise</span>
+        </a>
+
+        <a href="19-team-workspace.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">19</div>
+                <h3 class="card-title">Team Workspace</h3>
+            </div>
+            <p class="card-desc">Collaboration with comments, approvals, and assignments</p>
+            <span class="card-badge enterprise">Enterprise</span>
+        </a>
+    </div>
+
+    <h2 class="section-title">Platform Infrastructure — What Makes This Different</h2>
+    <div class="mockups-grid">
+        <a href="20-reasoning-streams.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">20</div>
+                <h3 class="card-title">Reasoning Streams</h3>
+            </div>
+            <p class="card-desc">Watch 3 AI models think in real-time with live token streaming</p>
+            <span class="card-badge new">NEW — WOW FACTOR</span>
+        </a>
+
+        <a href="21-api-console.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">21</div>
+                <h3 class="card-title">API Console</h3>
+            </div>
+            <p class="card-desc">Developer playground with live API testing and documentation</p>
+            <span class="card-badge enterprise">Platform</span>
+        </a>
+
+        <a href="22-data-pipeline.html" class="mockup-card">
+            <div class="card-header">
+                <div class="card-number">22</div>
+                <h3 class="card-title">Data Pipeline</h3>
+            </div>
+            <p class="card-desc">Document processing architecture with real-time status</p>
+            <span class="card-badge enterprise">Infrastructure</span>
+        </a>
+    </div>
+
+    <div class="footer-info">
+        <p>DEALSCOPE Mockups v4 — Ready for Development</p>
+        <div class="tech-stack">
+            <span class="tech-item">📦 22 Screens</span>
+            <span class="tech-item">🎨 Consistent Design System</span>
+            <span class="tech-item">🔤 Inter + Fraunces</span>
+            <span class="tech-item">🧠 Multi-Model Architecture</span>
+            <span class="tech-item">✨ PhD-Level UX</span>
+        </div>
+    </div>
+</body>
+</html>

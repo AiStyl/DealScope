@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Team Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+            --purple: #7c3aed;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .back-link {
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .page-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .online-users {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-avatar-stack {
+            display: flex;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--white);
+            margin-left: -8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .user-avatar:first-child {
+            margin-left: 0;
+        }
+
+        .online-count {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-left: 0.5rem;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr 340px;
+            min-height: calc(100vh - 65px);
+        }
+
+        /* Left: Team Panel */
+        .team-panel {
+            background: var(--white);
+            border-right: 1px solid var(--gray-200);
+            padding: 1.5rem;
+        }
+
+        .panel-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        /* Team Members */
+        .team-list {
+            margin-bottom: 2rem;
+        }
+
+        .team-member {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.25rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .team-member:hover {
+            background: var(--gray-50);
+        }
+
+        .member-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--white);
+            position: relative;
+        }
+
+        .member-status {
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--white);
+        }
+
+        .member-status.online { background: var(--green); }
+        .member-status.away { background: var(--amber); }
+        .member-status.offline { background: var(--gray-400); }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .member-role {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        /* Pending Approvals */
+        .approvals-section {
+            margin-bottom: 2rem;
+        }
+
+        .approval-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .approval-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .approval-type {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--amber);
+            font-weight: 500;
+        }
+
+        .approval-time {
+            font-size: 0.7rem;
+            color: var(--gray-400);
+        }
+
+        .approval-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-800);
+            margin-bottom: 0.5rem;
+        }
+
+        .approval-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .approval-btn {
+            flex: 1;
+            padding: 0.4rem;
+            font-size: 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .approval-btn.approve {
+            background: var(--green);
+            color: white;
+            border: none;
+        }
+
+        .approval-btn.reject {
+            background: var(--white);
+            color: var(--gray-600);
+            border: 1px solid var(--gray-300);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 1.5rem 2rem;
+            overflow-y: auto;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .content-header h2 {
+            font-family: 'Fraunces', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .view-toggle {
+            display: flex;
+            background: var(--gray-100);
+            border-radius: 8px;
+            padding: 0.25rem;
+        }
+
+        .toggle-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            border: none;
+            background: none;
+            color: var(--gray-600);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: var(--white);
+            color: var(--gray-900);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Task Board */
+        .task-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .task-column {
+            background: var(--gray-100);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .column-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .column-count {
+            font-size: 0.75rem;
+            background: var(--gray-300);
+            color: var(--gray-700);
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .task-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .task-card:hover {
+            border-color: var(--teal);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .task-priority {
+            display: inline-block;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .task-priority.critical {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--red);
+        }
+
+        .task-priority.high {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--amber);
+        }
+
+        .task-priority.medium {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--blue);
+        }
+
+        .task-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-800);
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .task-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 0.75rem;
+        }
+
+        .task-assignee {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .task-due {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .task-comments {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            color: var(--gray-400);
+        }
+
+        /* Right Panel: Activity & Comments */
+        .activity-panel {
+            background: var(--white);
+            border-left: 1px solid var(--gray-200);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Comments Section */
+        .comments-section {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        .comment-thread {
+            margin-bottom: 1.5rem;
+        }
+
+        .thread-context {
+            background: var(--gray-50);
+            border-left: 3px solid var(--teal);
+            padding: 0.75rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 0.75rem;
+        }
+
+        .thread-label {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            margin-bottom: 0.25rem;
+        }
+
+        .thread-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .comment {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .comment-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--white);
+            flex-shrink: 0;
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .comment-author {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .comment-time {
+            font-size: 0.7rem;
+            color: var(--gray-400);
+        }
+
+        .comment-text {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            line-height: 1.5;
+        }
+
+        .comment-text .mention {
+            color: var(--teal);
+            font-weight: 500;
+        }
+
+        /* Comment Input */
+        .comment-input-section {
+            border-top: 1px solid var(--gray-200);
+            padding-top: 1rem;
+        }
+
+        .comment-input {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .comment-input textarea {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            resize: none;
+            outline: none;
+            min-height: 80px;
+        }
+
+        .comment-input textarea:focus {
+            border-color: var(--teal);
+        }
+
+        .input-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.75rem;
+        }
+
+        .input-tools {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .tool-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--gray-100);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .tool-btn:hover {
+            background: var(--gray-200);
+        }
+
+        .send-btn {
+            padding: 0.5rem 1rem;
+            background: var(--teal);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .send-btn:hover {
+            background: var(--teal-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="08-dashboard.html" class="back-link">← NovaPharma Deal</a>
+            <h1 class="page-title">Team Workspace</h1>
+        </div>
+        <div class="online-users">
+            <div class="online-dot"></div>
+            <div class="user-avatar-stack">
+                <div class="user-avatar" style="background: var(--blue);">SC</div>
+                <div class="user-avatar" style="background: var(--purple);">MK</div>
+                <div class="user-avatar" style="background: var(--teal);">JR</div>
+            </div>
+            <span class="online-count">3 online</span>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <!-- Team Panel -->
+        <aside class="team-panel">
+            <div class="panel-title">Deal Team</div>
+            
+            <div class="team-list">
+                <div class="team-member">
+                    <div class="member-avatar" style="background: var(--blue);">
+                        SC
+                        <div class="member-status online"></div>
+                    </div>
+                    <div class="member-info">
+                        <div class="member-name">Sarah Chen</div>
+                        <div class="member-role">Deal Lead</div>
+                    </div>
+                </div>
+
+                <div class="team-member">
+                    <div class="member-avatar" style="background: var(--purple);">
+                        MK
+                        <div class="member-status online"></div>
+                    </div>
+                    <div class="member-info">
+                        <div class="member-name">Michael Kim</div>
+                        <div class="member-role">Financial Analyst</div>
+                    </div>
+                </div>
+
+                <div class="team-member">
+                    <div class="member-avatar" style="background: var(--teal);">
+                        JR
+                        <div class="member-status online"></div>
+                    </div>
+                    <div class="member-info">
+                        <div class="member-name">Jennifer Rodriguez</div>
+                        <div class="member-role">Legal Counsel</div>
+                    </div>
+                </div>
+
+                <div class="team-member">
+                    <div class="member-avatar" style="background: var(--amber);">
+                        DW
+                        <div class="member-status away"></div>
+                    </div>
+                    <div class="member-info">
+                        <div class="member-name">David Wong</div>
+                        <div class="member-role">Partner</div>
+                    </div>
+                </div>
+
+                <div class="team-member">
+                    <div class="member-avatar" style="background: var(--gray-500);">
+                        AP
+                        <div class="member-status offline"></div>
+                    </div>
+                    <div class="member-info">
+                        <div class="member-name">Amanda Park</div>
+                        <div class="member-role">Technical DD</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="approvals-section">
+                <div class="panel-title">Pending Approvals</div>
+                
+                <div class="approval-card">
+                    <div class="approval-header">
+                        <span class="approval-type">Risk Finding</span>
+                        <span class="approval-time">2h ago</span>
+                    </div>
+                    <div class="approval-title">Pfizer consent risk flagged as Critical</div>
+                    <div class="approval-actions">
+                        <button class="approval-btn approve">Approve</button>
+                        <button class="approval-btn reject">Reject</button>
+                    </div>
+                </div>
+
+                <div class="approval-card">
+                    <div class="approval-header">
+                        <span class="approval-type">Report Draft</span>
+                        <span class="approval-time">5h ago</span>
+                    </div>
+                    <div class="approval-title">IC Memo v2 ready for review</div>
+                    <div class="approval-actions">
+                        <button class="approval-btn approve">Review</button>
+                        <button class="approval-btn reject">Later</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Task Board -->
+        <main class="main-content">
+            <div class="content-header">
+                <h2>Work Items</h2>
+                <div class="view-toggle">
+                    <button class="toggle-btn active">Board</button>
+                    <button class="toggle-btn">List</button>
+                    <button class="toggle-btn">Timeline</button>
+                </div>
+            </div>
+
+            <div class="task-board">
+                <!-- To Review -->
+                <div class="task-column">
+                    <div class="column-header">
+                        <span class="column-title">
+                            📋 To Review
+                            <span class="column-count">4</span>
+                        </span>
+                    </div>
+                    <div class="task-list">
+                        <div class="task-card">
+                            <span class="task-priority critical">CRITICAL</span>
+                            <div class="task-title">Review Pfizer consent risk analysis</div>
+                            <div class="task-meta">
+                                <div class="task-assignee" style="background: var(--blue);">SC</div>
+                                <span class="task-due">Due today</span>
+                                <span class="task-comments">💬 3</span>
+                            </div>
+                        </div>
+
+                        <div class="task-card">
+                            <span class="task-priority high">HIGH</span>
+                            <div class="task-title">Validate revenue discrepancy finding</div>
+                            <div class="task-meta">
+                                <div class="task-assignee" style="background: var(--purple);">MK</div>
+                                <span class="task-due">Due tomorrow</span>
+                                <span class="task-comments">💬 1</span>
+                            </div>
+                        </div>
+
+                        <div class="task-card">
+                            <span class="task-priority medium">MEDIUM</span>
+                            <div class="task-title">Check FDA approval timeline assumptions</div>
+                            <div class="task-meta">
+                                <div class="task-assignee" style="background: var(--teal);">JR</div>
+                                <span class="task-due">Dec 31</span>
+                                <span class="task-comments">💬 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- In Progress -->
+                <div class="task-column">
+                    <div class="column-header">
+                        <span class="column-title">
+                            🔄 In Progress
+                            <span class="column-count">3</span>
+                        </span>
+                    </div>
+                    <div class="task-list">
+                        <div class="task-card">
+                            <span class="task-priority high">HIGH</span>
+                            <div class="task-title">Draft IC memo executive summary</div>
+                            <div class="task-meta">
+                                <div class="task-assignee" style="background: var(--blue);">SC</div>
+                                <span class="task-due">Dec 30</span>
+                                <span class="task-comments">💬 5</span>
+                            </div>
+                        </div>
+
+                        <div class="task-card">
+                            <span class="task-priority medium">MEDIUM</span>
+                            <div class="task-title">Finalize Monte Carlo parameters</div>
+                            <div class="task-meta">
+                                <div class="task-assignee" style="background: var(--purple);">MK</div>
+                                <span class="task-due">Dec 30</span>
+                                <span class="task-comments">💬 2</span>
+                            </div>
+                        </div>
+
+                        <div class="task-card">
+                            <span class="task-priority medium">MEDIUM</span>
+                            <div class="task-title">Review employment agreements</div>
+                            <div class="task-meta">
+                                <div class="task-assignee" style="background: var(--teal);">JR</div>
+                                <span class="task-due">Jan 2</span>
+                                <span class="task-comments">💬 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Completed -->
+                <div class="task-column">
+                    <div class="column-header">
+                        <span class="column-title">
+                            ✅ Completed
+                            <span class="column-count">6</span>
+                        </span>
+                    </div>
+                    <div class="task-list">
+                        <div class="task-card" style="opacity: 0.7;">
+                            <div class="task-title">Initial document ingestion</div>
+                            <div class="task-meta">
+                                <div class="task-assignee" style="background: var(--gray-400);">SYS</div>
+                                <span class="task-due">Completed</span>
+                            </div>
+                        </div>
+
+                        <div class="task-card" style="opacity: 0.7;">
+                            <div class="task-title">Identify key contracts</div>
+                            <div class="task-meta">
+                                <div class="task-assignee" style="background: var(--teal);">JR</div>
+                                <span class="task-due">Completed</span>
+                            </div>
+                        </div>
+
+                        <div class="task-card" style="opacity: 0.7;">
+                            <div class="task-title">Financial model setup</div>
+                            <div class="task-meta">
+                                <div class="task-assignee" style="background: var(--purple);">MK</div>
+                                <span class="task-due">Completed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Activity Panel -->
+        <aside class="activity-panel">
+            <div class="panel-title">Discussion</div>
+            
+            <div class="comments-section">
+                <div class="comment-thread">
+                    <div class="thread-context">
+                        <div class="thread-label">Re: Finding</div>
+                        <div class="thread-title">Pfizer Consent Risk — §7.3 Sole Discretion</div>
+                    </div>
+
+                    <div class="comment">
+                        <div class="comment-avatar" style="background: var(--blue);">SC</div>
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <span class="comment-author">Sarah Chen</span>
+                                <span class="comment-time">2 hours ago</span>
+                            </div>
+                            <div class="comment-text">
+                                The AI analysis is correct. This is a major red flag. <span class="mention">@Jennifer</span>, have you seen similar clauses before?
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="comment">
+                        <div class="comment-avatar" style="background: var(--teal);">JR</div>
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <span class="comment-author">Jennifer Rodriguez</span>
+                                <span class="comment-time">1 hour ago</span>
+                            </div>
+                            <div class="comment-text">
+                                Yes, seen this in 3 deals last year. The AI's recommendation to approach Pfizer pre-LOI is spot-on. I'd add that we should consider a specific carve-out in the purchase agreement.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="comment">
+                        <div class="comment-avatar" style="background: var(--purple);">MK</div>
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <span class="comment-author">Michael Kim</span>
+                                <span class="comment-time">45 min ago</span>
+                            </div>
+                            <div class="comment-text">
+                                I ran the numbers with the earnout structure the AI suggested. If we do 50% contingent, downside exposure drops to $445M. That's actually workable.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="comment">
+                        <div class="comment-avatar" style="background: var(--amber);">DW</div>
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <span class="comment-author">David Wong</span>
+                                <span class="comment-time">30 min ago</span>
+                            </div>
+                            <div class="comment-text">
+                                Good work team. Let's present both options at IC — the pre-LOI approach as Plan A, earnout as Plan B. <span class="mention">@Sarah</span> can you update the memo?
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="comment-input-section">
+                <textarea placeholder="Add a comment... Use @ to mention teammates"></textarea>
+                <div class="input-actions">
+                    <div class="input-tools">
+                        <button class="tool-btn">📎</button>
+                        <button class="tool-btn">@</button>
+                        <button class="tool-btn">📊</button>
+                    </div>
+                    <button class="send-btn">Send</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+</body>
+</html>

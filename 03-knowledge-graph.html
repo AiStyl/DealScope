@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Knowledge Graph</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+            --purple: #7c3aed;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .back-link {
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .page-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .topbar-right {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            background: var(--white);
+            border: 1px solid var(--gray-300);
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--gray-600);
+        }
+
+        .btn.primary {
+            background: var(--gray-900);
+            color: white;
+            border-color: var(--gray-900);
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr 360px;
+            min-height: calc(100vh - 65px);
+        }
+
+        /* Left Panel - Entity Types */
+        .entity-panel {
+            background: var(--white);
+            border-right: 1px solid var(--gray-200);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .panel-section {
+            margin-bottom: 2rem;
+        }
+
+        .panel-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        /* Entity Type Toggles */
+        .entity-type {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .entity-type:hover {
+            background: var(--gray-100);
+        }
+
+        .entity-type.active {
+            background: #f0fdfa;
+            border: 1px solid var(--teal);
+        }
+
+        .entity-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .entity-dot.person { background: var(--blue); }
+        .entity-dot.company { background: var(--purple); }
+        .entity-dot.contract { background: var(--teal); }
+        .entity-dot.financial { background: var(--green); }
+        .entity-dot.risk { background: var(--red); }
+        .entity-dot.ip { background: var(--amber); }
+
+        .entity-info {
+            flex: 1;
+        }
+
+        .entity-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .entity-count {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .entity-toggle {
+            width: 40px;
+            height: 22px;
+            background: var(--gray-300);
+            border-radius: 11px;
+            position: relative;
+            transition: background 0.2s;
+        }
+
+        .entity-toggle.on {
+            background: var(--teal);
+        }
+
+        .entity-toggle::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.2s;
+        }
+
+        .entity-toggle.on::after {
+            transform: translateX(18px);
+        }
+
+        /* Search */
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        /* Stats */
+        .graph-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .stat-card {
+            background: var(--gray-50);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+        }
+
+        /* Center - Graph Canvas */
+        .graph-canvas {
+            background: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* SVG Graph Visualization */
+        .graph-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Graph Nodes */
+        .node {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .node:hover {
+            transform: scale(1.1);
+        }
+
+        .node-circle {
+            stroke-width: 2;
+            stroke: white;
+        }
+
+        .node-label {
+            font-size: 11px;
+            font-weight: 500;
+            text-anchor: middle;
+            fill: var(--gray-700);
+        }
+
+        /* Graph Edges */
+        .edge {
+            stroke: var(--gray-300);
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        .edge.strong {
+            stroke: var(--teal);
+            stroke-width: 2;
+        }
+
+        .edge.conflict {
+            stroke: var(--red);
+            stroke-width: 2;
+            stroke-dasharray: 5, 5;
+        }
+
+        /* Graph Controls */
+        .graph-controls {
+            position: absolute;
+            bottom: 1.5rem;
+            left: 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .graph-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: var(--gray-600);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .graph-btn:hover {
+            background: var(--gray-50);
+        }
+
+        /* Legend */
+        .graph-legend {
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .legend-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            margin-bottom: 0.75rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            margin-bottom: 0.4rem;
+        }
+
+        .legend-line {
+            width: 20px;
+            height: 2px;
+        }
+
+        .legend-line.solid { background: var(--teal); }
+        .legend-line.dashed { 
+            background: repeating-linear-gradient(90deg, var(--red) 0, var(--red) 4px, transparent 4px, transparent 8px);
+        }
+
+        /* Right Panel - Details */
+        .details-panel {
+            background: var(--white);
+            border-left: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .details-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .details-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .details-header p {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+
+        /* Selected Entity */
+        .selected-entity {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .selected-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .selected-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: var(--gray-100);
+        }
+
+        .selected-info h4 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .selected-info span {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+
+        .entity-attributes {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .attr-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+
+        .attr-label {
+            color: var(--gray-500);
+        }
+
+        .attr-value {
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        /* Connections */
+        .connections-section {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .connection-item {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .connection-item:hover {
+            background: var(--gray-100);
+        }
+
+        .connection-item.conflict {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+
+        .connection-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .connection-info {
+            flex: 1;
+        }
+
+        .connection-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.2rem;
+        }
+
+        .connection-desc {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .connection-type {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        .connection-type.critical {
+            background: #fee2e2;
+            color: var(--red);
+        }
+
+        /* Anomalies */
+        .anomalies-section {
+            padding: 1.5rem;
+            background: #fffbeb;
+            border-top: 1px solid #fcd34d;
+        }
+
+        .anomaly-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--amber);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .anomaly-item {
+            background: var(--white);
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .anomaly-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 0.25rem;
+        }
+
+        .anomaly-desc {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="#" class="back-link">← NovaPharma Deal</a>
+            <h1 class="page-title">Knowledge Graph</h1>
+        </div>
+        <div class="topbar-right">
+            <button class="btn">Export Graph</button>
+            <button class="btn primary">Run Analysis</button>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <!-- Left: Entity Types -->
+        <aside class="entity-panel">
+            <div class="panel-section">
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input type="text" placeholder="Search entities...">
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">Entity Types</div>
+                <div class="entity-type active">
+                    <div class="entity-dot person"></div>
+                    <div class="entity-info">
+                        <div class="entity-name">People</div>
+                        <div class="entity-count">47 entities</div>
+                    </div>
+                    <div class="entity-toggle on"></div>
+                </div>
+                <div class="entity-type active">
+                    <div class="entity-dot company"></div>
+                    <div class="entity-info">
+                        <div class="entity-name">Companies</div>
+                        <div class="entity-count">23 entities</div>
+                    </div>
+                    <div class="entity-toggle on"></div>
+                </div>
+                <div class="entity-type active">
+                    <div class="entity-dot contract"></div>
+                    <div class="entity-info">
+                        <div class="entity-name">Contracts</div>
+                        <div class="entity-count">18 entities</div>
+                    </div>
+                    <div class="entity-toggle on"></div>
+                </div>
+                <div class="entity-type">
+                    <div class="entity-dot financial"></div>
+                    <div class="entity-info">
+                        <div class="entity-name">Financial Items</div>
+                        <div class="entity-count">156 entities</div>
+                    </div>
+                    <div class="entity-toggle"></div>
+                </div>
+                <div class="entity-type active">
+                    <div class="entity-dot risk"></div>
+                    <div class="entity-info">
+                        <div class="entity-name">Risk Factors</div>
+                        <div class="entity-count">14 entities</div>
+                    </div>
+                    <div class="entity-toggle on"></div>
+                </div>
+                <div class="entity-type">
+                    <div class="entity-dot ip"></div>
+                    <div class="entity-info">
+                        <div class="entity-name">IP Assets</div>
+                        <div class="entity-count">52 entities</div>
+                    </div>
+                    <div class="entity-toggle"></div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">Graph Stats</div>
+                <div class="graph-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">310</div>
+                        <div class="stat-label">Entities</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">847</div>
+                        <div class="stat-label">Relationships</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">Conflicts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">7</div>
+                        <div class="stat-label">Anomalies</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center: Graph Canvas -->
+        <main class="graph-canvas">
+            <svg class="graph-svg" viewBox="0 0 800 600">
+                <!-- Edges -->
+                <line class="edge strong" x1="400" y1="300" x2="280" y2="200"/>
+                <line class="edge strong" x1="400" y1="300" x2="520" y2="180"/>
+                <line class="edge" x1="400" y1="300" x2="300" y2="420"/>
+                <line class="edge" x1="400" y1="300" x2="550" y2="380"/>
+                <line class="edge conflict" x1="280" y1="200" x2="180" y2="280"/>
+                <line class="edge" x1="520" y1="180" x2="620" y2="120"/>
+                <line class="edge" x1="520" y1="180" x2="650" y2="250"/>
+                <line class="edge strong" x1="300" y1="420" x2="200" y2="500"/>
+                <line class="edge" x1="550" y1="380" x2="650" y2="450"/>
+                <line class="edge" x1="280" y1="200" x2="200" y2="120"/>
+                
+                <!-- Central Node: NovaPharma -->
+                <g class="node" transform="translate(400, 300)">
+                    <circle class="node-circle" r="35" fill="#7c3aed"/>
+                    <text class="node-label" y="55" fill="var(--gray-700)">NovaPharma</text>
+                </g>
+
+                <!-- Person: Dr. Sarah Chen (Board) -->
+                <g class="node" transform="translate(280, 200)">
+                    <circle class="node-circle" r="25" fill="#2563eb"/>
+                    <text class="node-label" y="40">Dr. Chen</text>
+                </g>
+
+                <!-- Company: Pfizer -->
+                <g class="node" transform="translate(520, 180)">
+                    <circle class="node-circle" r="28" fill="#7c3aed"/>
+                    <text class="node-label" y="45">Pfizer</text>
+                </g>
+
+                <!-- Contract: License Agreement -->
+                <g class="node" transform="translate(300, 420)">
+                    <circle class="node-circle" r="22" fill="#0d9488"/>
+                    <text class="node-label" y="38">Pfizer License</text>
+                </g>
+
+                <!-- Risk: FDA Approval -->
+                <g class="node" transform="translate(550, 380)">
+                    <circle class="node-circle" r="22" fill="#dc2626"/>
+                    <text class="node-label" y="38">FDA Risk</text>
+                </g>
+
+                <!-- Competitor (conflict connection) -->
+                <g class="node" transform="translate(180, 280)">
+                    <circle class="node-circle" r="20" fill="#7c3aed" stroke="#dc2626" stroke-width="3"/>
+                    <text class="node-label" y="35">Vertex (Comp)</text>
+                </g>
+
+                <!-- Other nodes -->
+                <g class="node" transform="translate(620, 120)">
+                    <circle class="node-circle" r="18" fill="#2563eb"/>
+                    <text class="node-label" y="32">M. Johnson</text>
+                </g>
+
+                <g class="node" transform="translate(650, 250)">
+                    <circle class="node-circle" r="18" fill="#0d9488"/>
+                    <text class="node-label" y="32">Supply Agmt</text>
+                </g>
+
+                <g class="node" transform="translate(200, 500)">
+                    <circle class="node-circle" r="20" fill="#16a34a"/>
+                    <text class="node-label" y="35">$180M Royalty</text>
+                </g>
+
+                <g class="node" transform="translate(650, 450)">
+                    <circle class="node-circle" r="18" fill="#dc2626"/>
+                    <text class="node-label" y="32">Reg. Risk</text>
+                </g>
+
+                <g class="node" transform="translate(200, 120)">
+                    <circle class="node-circle" r="18" fill="#2563eb"/>
+                    <text class="node-label" y="32">J. Williams</text>
+                </g>
+            </svg>
+
+            <!-- Legend -->
+            <div class="graph-legend">
+                <div class="legend-title">Relationship Types</div>
+                <div class="legend-item">
+                    <div class="legend-line solid"></div>
+                    Strong connection
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line dashed"></div>
+                    Potential conflict
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="graph-controls">
+                <button class="graph-btn">+</button>
+                <button class="graph-btn">−</button>
+                <button class="graph-btn">⟳</button>
+                <button class="graph-btn">⤢</button>
+            </div>
+        </main>
+
+        <!-- Right: Details Panel -->
+        <aside class="details-panel">
+            <div class="details-header">
+                <h3>Entity Details</h3>
+                <p>Click a node to see connections</p>
+            </div>
+
+            <div class="selected-entity">
+                <div class="selected-header">
+                    <div class="selected-icon" style="background: #dbeafe;">👤</div>
+                    <div class="selected-info">
+                        <h4>Dr. Sarah Chen</h4>
+                        <span>Person • Board Member</span>
+                    </div>
+                </div>
+                <div class="entity-attributes">
+                    <div class="attr-row">
+                        <span class="attr-label">Role</span>
+                        <span class="attr-value">Board Director</span>
+                    </div>
+                    <div class="attr-row">
+                        <span class="attr-label">Since</span>
+                        <span class="attr-value">2019</span>
+                    </div>
+                    <div class="attr-row">
+                        <span class="attr-label">Committees</span>
+                        <span class="attr-value">Audit, R&D</span>
+                    </div>
+                    <div class="attr-row">
+                        <span class="attr-label">Found In</span>
+                        <span class="attr-value">12 documents</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="connections-section">
+                <div class="panel-title">Connections (6)</div>
+                
+                <div class="connection-item conflict">
+                    <div class="connection-icon" style="background: #fee2e2;">⚠️</div>
+                    <div class="connection-info">
+                        <div class="connection-title">Vertex Pharmaceuticals</div>
+                        <div class="connection-desc">Advisory relationship discovered</div>
+                    </div>
+                    <span class="connection-type critical">Conflict</span>
+                </div>
+
+                <div class="connection-item">
+                    <div class="connection-icon" style="background: #dbeafe;">👤</div>
+                    <div class="connection-info">
+                        <div class="connection-title">James Williams</div>
+                        <div class="connection-desc">Co-authored 3 papers</div>
+                    </div>
+                    <span class="connection-type">Colleague</span>
+                </div>
+
+                <div class="connection-item">
+                    <div class="connection-icon" style="background: #d1fae5;">📄</div>
+                    <div class="connection-info">
+                        <div class="connection-title">Board Resolution 2023-07</div>
+                        <div class="connection-desc">Approved R&D budget increase</div>
+                    </div>
+                    <span class="connection-type">Signatory</span>
+                </div>
+
+                <div class="connection-item">
+                    <div class="connection-icon" style="background: #f3e8ff;">🏢</div>
+                    <div class="connection-info">
+                        <div class="connection-title">NovaPharma Inc.</div>
+                        <div class="connection-desc">Board member since 2019</div>
+                    </div>
+                    <span class="connection-type">Employment</span>
+                </div>
+            </div>
+
+            <div class="anomalies-section">
+                <div class="anomaly-header">
+                    ⚠️ Detected Anomalies
+                </div>
+                <div class="anomaly-item">
+                    <div class="anomaly-title">Potential Conflict of Interest</div>
+                    <div class="anomaly-desc">Dr. Chen advises Vertex Pharmaceuticals (competitor on Pfizer's Exhibit B list). May complicate board approval of acquisition.</div>
+                </div>
+                <div class="anomaly-item">
+                    <div class="anomaly-title">Undisclosed Relationship</div>
+                    <div class="anomaly-desc">Advisory role not mentioned in NovaPharma's board disclosures. Found in Vertex's SEC filings.</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</body>
+</html>

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Data Pipeline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+            --purple: #7c3aed;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .back-link {
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .page-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .pipeline-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--green);
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .stat-value.teal { color: var(--teal); }
+        .stat-value.green { color: var(--green); }
+        .stat-value.amber { color: var(--amber); }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-top: 0.25rem;
+        }
+
+        /* Pipeline Visualization */
+        .pipeline-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Pipeline Flow */
+        .pipeline-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0;
+        }
+
+        .pipeline-stage {
+            flex: 1;
+            position: relative;
+        }
+
+        .stage-card {
+            background: var(--gray-50);
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .stage-card.active {
+            border-color: var(--teal);
+            background: rgba(13, 148, 136, 0.05);
+        }
+
+        .stage-card.completed {
+            border-color: var(--green);
+        }
+
+        .stage-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 0.75rem;
+            background: var(--white);
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .stage-card.active .stage-icon {
+            border-color: var(--teal);
+            background: rgba(13, 148, 136, 0.1);
+        }
+
+        .stage-card.completed .stage-icon {
+            border-color: var(--green);
+            background: rgba(22, 163, 74, 0.1);
+        }
+
+        .stage-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 0.25rem;
+        }
+
+        .stage-status {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .stage-status.active {
+            color: var(--teal);
+        }
+
+        .stage-status.completed {
+            color: var(--green);
+        }
+
+        .stage-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-top: 0.5rem;
+        }
+
+        /* Pipeline Arrow */
+        .pipeline-arrow {
+            width: 60px;
+            height: 2px;
+            background: var(--gray-300);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .pipeline-arrow::after {
+            content: '→';
+            position: absolute;
+            right: -5px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+            font-size: 1rem;
+        }
+
+        .pipeline-arrow.active {
+            background: var(--teal);
+        }
+
+        .pipeline-arrow.active::after {
+            color: var(--teal);
+        }
+
+        /* Processing Details */
+        .processing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+            margin-top: 2rem;
+        }
+
+        .process-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            padding: 1.25rem;
+        }
+
+        .process-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .process-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .process-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .process-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 0.5rem;
+            background: var(--white);
+            border-radius: 6px;
+        }
+
+        .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--teal);
+        }
+
+        .metric-label {
+            font-size: 0.65rem;
+            color: var(--gray-500);
+        }
+
+        /* Queue Section */
+        .queue-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .queue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .queue-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+        }
+
+        .queue-item-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .queue-item-info {
+            flex: 1;
+        }
+
+        .queue-item-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .queue-item-meta {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .queue-item-status {
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .queue-item-status.processing {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--amber);
+        }
+
+        .queue-item-status.queued {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        .queue-item-status.completed {
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--green);
+        }
+
+        .queue-item-progress {
+            width: 100px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--teal);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="08-dashboard.html" class="back-link">← Dashboard</a>
+            <h1 class="page-title">Data Pipeline</h1>
+        </div>
+        <div class="pipeline-status">✓ All Systems Operational</div>
+    </div>
+
+    <main class="main-content">
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value">312</div>
+                <div class="stat-label">Documents Processed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value teal">48,672</div>
+                <div class="stat-label">Entities Extracted</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value green">1.2M</div>
+                <div class="stat-label">Tokens Analyzed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">99.7%</div>
+                <div class="stat-label">Accuracy Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value amber">4</div>
+                <div class="stat-label">In Queue</div>
+            </div>
+        </div>
+
+        <!-- Pipeline Visualization -->
+        <div class="pipeline-section">
+            <h2 class="section-title">Processing Pipeline</h2>
+            
+            <div class="pipeline-flow">
+                <div class="pipeline-stage">
+                    <div class="stage-card completed">
+                        <div class="stage-icon">📤</div>
+                        <div class="stage-name">Upload</div>
+                        <div class="stage-status completed">Completed</div>
+                        <div class="stage-count">312</div>
+                    </div>
+                </div>
+                
+                <div class="pipeline-arrow active"></div>
+                
+                <div class="pipeline-stage">
+                    <div class="stage-card completed">
+                        <div class="stage-icon">📄</div>
+                        <div class="stage-name">Parse</div>
+                        <div class="stage-status completed">Completed</div>
+                        <div class="stage-count">312</div>
+                    </div>
+                </div>
+                
+                <div class="pipeline-arrow active"></div>
+                
+                <div class="pipeline-stage">
+                    <div class="stage-card completed">
+                        <div class="stage-icon">🔍</div>
+                        <div class="stage-name">Extract</div>
+                        <div class="stage-status completed">Completed</div>
+                        <div class="stage-count">48,672</div>
+                    </div>
+                </div>
+                
+                <div class="pipeline-arrow active"></div>
+                
+                <div class="pipeline-stage">
+                    <div class="stage-card active">
+                        <div class="stage-icon">🧠</div>
+                        <div class="stage-name">Analyze</div>
+                        <div class="stage-status active">Processing...</div>
+                        <div class="stage-count">4 active</div>
+                    </div>
+                </div>
+                
+                <div class="pipeline-arrow"></div>
+                
+                <div class="pipeline-stage">
+                    <div class="stage-card">
+                        <div class="stage-icon">✅</div>
+                        <div class="stage-name">Validate</div>
+                        <div class="stage-status">Waiting</div>
+                        <div class="stage-count">—</div>
+                    </div>
+                </div>
+                
+                <div class="pipeline-arrow"></div>
+                
+                <div class="pipeline-stage">
+                    <div class="stage-card">
+                        <div class="stage-icon">📊</div>
+                        <div class="stage-name">Index</div>
+                        <div class="stage-status">Waiting</div>
+                        <div class="stage-count">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processing Details -->
+            <div class="processing-grid">
+                <div class="process-card">
+                    <div class="process-header">
+                        <div class="process-icon">📄</div>
+                        <span class="process-name">Document Parser</span>
+                    </div>
+                    <div class="process-metrics">
+                        <div class="metric-item">
+                            <div class="metric-value">1.2s</div>
+                            <div class="metric-label">Avg Time</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">99.9%</div>
+                            <div class="metric-label">Success</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">PDF</div>
+                            <div class="metric-label">Primary</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">4</div>
+                            <div class="metric-label">Formats</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="process-card">
+                    <div class="process-header">
+                        <div class="process-icon">🔍</div>
+                        <span class="process-name">Entity Extractor</span>
+                    </div>
+                    <div class="process-metrics">
+                        <div class="metric-item">
+                            <div class="metric-value">156</div>
+                            <div class="metric-label">Entities/Doc</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">94%</div>
+                            <div class="metric-label">Precision</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">12</div>
+                            <div class="metric-label">Types</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">NER</div>
+                            <div class="metric-label">Model</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="process-card">
+                    <div class="process-header">
+                        <div class="process-icon">🧠</div>
+                        <span class="process-name">AI Analyzer</span>
+                    </div>
+                    <div class="process-metrics">
+                        <div class="metric-item">
+                            <div class="metric-value">3</div>
+                            <div class="metric-label">Models</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">87%</div>
+                            <div class="metric-label">Consensus</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">2.1s</div>
+                            <div class="metric-label">Latency</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">$0.02</div>
+                            <div class="metric-label">Per Doc</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Queue Section -->
+        <div class="queue-section">
+            <div class="queue-header">
+                <h2 class="section-title" style="margin-bottom: 0;">Processing Queue</h2>
+            </div>
+
+            <div class="queue-list">
+                <div class="queue-item">
+                    <div class="queue-item-icon">📄</div>
+                    <div class="queue-item-info">
+                        <div class="queue-item-name">Pfizer_License_Amendment_2024.pdf</div>
+                        <div class="queue-item-meta">2.4 MB • 48 pages • Contract</div>
+                    </div>
+                    <span class="queue-item-status processing">Processing</span>
+                    <div class="queue-item-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 67%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="queue-item">
+                    <div class="queue-item-icon">📊</div>
+                    <div class="queue-item-info">
+                        <div class="queue-item-name">Financial_Projections_2025.xlsx</div>
+                        <div class="queue-item-meta">1.1 MB • 15 sheets • Financial</div>
+                    </div>
+                    <span class="queue-item-status processing">Processing</span>
+                    <div class="queue-item-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 34%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="queue-item">
+                    <div class="queue-item-icon">📄</div>
+                    <div class="queue-item-info">
+                        <div class="queue-item-name">Employment_Agreement_CEO.pdf</div>
+                        <div class="queue-item-meta">890 KB • 24 pages • Contract</div>
+                    </div>
+                    <span class="queue-item-status queued">Queued</span>
+                    <div class="queue-item-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="queue-item">
+                    <div class="queue-item-icon">📑</div>
+                    <div class="queue-item-info">
+                        <div class="queue-item-name">Board_Presentation_Q4.pptx</div>
+                        <div class="queue-item-meta">4.2 MB • 32 slides • Presentation</div>
+                    </div>
+                    <span class="queue-item-status queued">Queued</span>
+                    <div class="queue-item-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

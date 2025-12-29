@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Confidence Calibration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .back-link {
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .page-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .calibration-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--green);
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: var(--gray-500);
+        }
+
+        /* Summary Stats */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .summary-card.highlight {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, var(--white) 100%);
+            border-color: rgba(13, 148, 136, 0.2);
+        }
+
+        .summary-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .summary-value.green { color: var(--green); }
+        .summary-value.teal { color: var(--teal); }
+        .summary-value.amber { color: var(--amber); }
+
+        .summary-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .summary-trend.up { color: var(--green); }
+        .summary-trend.down { color: var(--red); }
+
+        /* Main Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 1.5rem;
+        }
+
+        /* Calibration Chart */
+        .calibration-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 1.75rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .section-badge {
+            font-size: 0.75rem;
+            background: var(--gray-100);
+            color: var(--gray-600);
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+        }
+
+        /* Calibration Plot */
+        .calibration-plot {
+            position: relative;
+            height: 350px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .plot-grid {
+            position: absolute;
+            top: 1.5rem;
+            left: 4rem;
+            right: 1.5rem;
+            bottom: 3rem;
+        }
+
+        .plot-diagonal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 49%, var(--gray-300) 49%, var(--gray-300) 51%, transparent 51%);
+        }
+
+        .plot-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        .plot-point {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--teal);
+            border: 3px solid var(--white);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transform: translate(-50%, 50%);
+        }
+
+        .plot-point.overconfident {
+            background: var(--amber);
+        }
+
+        .plot-point.underconfident {
+            background: var(--blue);
+        }
+
+        .plot-y-axis {
+            position: absolute;
+            left: 0;
+            top: 1.5rem;
+            bottom: 3rem;
+            width: 3.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: right;
+            padding-right: 0.5rem;
+        }
+
+        .plot-y-axis span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--gray-500);
+        }
+
+        .plot-x-axis {
+            position: absolute;
+            bottom: 0;
+            left: 4rem;
+            right: 1.5rem;
+            height: 2.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .plot-x-axis span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--gray-500);
+        }
+
+        .axis-label {
+            position: absolute;
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .axis-label.y {
+            left: -0.5rem;
+            top: 50%;
+            transform: rotate(-90deg) translateX(-50%);
+            transform-origin: left center;
+        }
+
+        .axis-label.x {
+            bottom: -0.25rem;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Calibration Legend */
+        .calibration-legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--gray-600);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.calibrated { background: var(--teal); }
+        .legend-dot.overconfident { background: var(--amber); }
+        .legend-dot.underconfident { background: var(--blue); }
+
+        /* Findings Table */
+        .findings-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .findings-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .findings-table th,
+        .findings-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 0.85rem;
+        }
+
+        .findings-table th {
+            font-weight: 600;
+            color: var(--gray-600);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .finding-text {
+            color: var(--gray-800);
+            max-width: 350px;
+        }
+
+        .confidence-bar {
+            width: 100px;
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        .confidence-fill.high { background: var(--green); }
+        .confidence-fill.medium { background: var(--amber); }
+        .confidence-fill.low { background: var(--red); }
+
+        .calibration-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .calibration-status.good {
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--green);
+        }
+
+        .calibration-status.warning {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--amber);
+        }
+
+        /* Right Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        /* Explanation Card */
+        .explanation-card {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, var(--white) 100%);
+            border: 1px solid rgba(13, 148, 136, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .explanation-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--teal), var(--teal-light));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .explanation-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .explanation-text {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            line-height: 1.6;
+        }
+
+        .explanation-text strong {
+            color: var(--gray-800);
+        }
+
+        /* Uncertainty Breakdown */
+        .uncertainty-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+        }
+
+        .uncertainty-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .uncertainty-item:last-child {
+            border-bottom: none;
+        }
+
+        .uncertainty-type {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .uncertainty-icon {
+            font-size: 1rem;
+        }
+
+        .uncertainty-label {
+            font-size: 0.85rem;
+            color: var(--gray-700);
+        }
+
+        .uncertainty-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Validation Methods */
+        .methods-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .method-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .method-check {
+            width: 20px;
+            height: 20px;
+            background: var(--green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7rem;
+            flex-shrink: 0;
+        }
+
+        .method-info h4 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 0.25rem;
+        }
+
+        .method-info p {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="08-dashboard.html" class="back-link">← NovaPharma Deal</a>
+            <h1 class="page-title">Confidence Calibration</h1>
+        </div>
+        <div class="calibration-badge">✓ Well Calibrated</div>
+    </div>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1>How Sure Is The AI?</h1>
+            <p>Validating AI confidence against actual accuracy to ensure trustworthy outputs</p>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="summary-grid">
+            <div class="summary-card highlight">
+                <div class="summary-label">Calibration Score</div>
+                <div class="summary-value green">0.92</div>
+                <div class="summary-trend up">↑ 0.04 from last deal</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Avg Confidence</div>
+                <div class="summary-value teal">84%</div>
+                <div class="summary-trend">Across 247 findings</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Actual Accuracy</div>
+                <div class="summary-value teal">87%</div>
+                <div class="summary-trend">Validated by humans</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Overconfident</div>
+                <div class="summary-value amber">12</div>
+                <div class="summary-trend">Findings flagged</div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div class="main-column">
+                <!-- Calibration Plot -->
+                <div class="calibration-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Calibration Plot</h2>
+                        <span class="section-badge">Last 30 Days</span>
+                    </div>
+
+                    <div class="calibration-plot">
+                        <div class="plot-y-axis">
+                            <span>100%</span>
+                            <span>80%</span>
+                            <span>60%</span>
+                            <span>40%</span>
+                            <span>20%</span>
+                            <span>0%</span>
+                        </div>
+                        <span class="axis-label y">Actual Accuracy</span>
+                        
+                        <div class="plot-grid">
+                            <div class="plot-diagonal"></div>
+                            <div class="plot-area">
+                                <!-- Points positioned based on confidence vs accuracy -->
+                                <!-- Well calibrated points (near diagonal) -->
+                                <div class="plot-point" style="left: 90%; bottom: 88%;"></div>
+                                <div class="plot-point" style="left: 85%; bottom: 83%;"></div>
+                                <div class="plot-point" style="left: 80%; bottom: 82%;"></div>
+                                <div class="plot-point" style="left: 75%; bottom: 78%;"></div>
+                                <div class="plot-point" style="left: 70%; bottom: 72%;"></div>
+                                <div class="plot-point" style="left: 65%; bottom: 68%;"></div>
+                                <div class="plot-point" style="left: 60%; bottom: 58%;"></div>
+                                <div class="plot-point" style="left: 55%; bottom: 52%;"></div>
+                                
+                                <!-- Overconfident points (below diagonal) -->
+                                <div class="plot-point overconfident" style="left: 92%; bottom: 75%;"></div>
+                                <div class="plot-point overconfident" style="left: 88%; bottom: 70%;"></div>
+                                
+                                <!-- Underconfident points (above diagonal) -->
+                                <div class="plot-point underconfident" style="left: 45%; bottom: 58%;"></div>
+                                <div class="plot-point underconfident" style="left: 50%; bottom: 65%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="plot-x-axis">
+                            <span>0%</span>
+                            <span>20%</span>
+                            <span>40%</span>
+                            <span>60%</span>
+                            <span>80%</span>
+                            <span>100%</span>
+                        </div>
+                        <span class="axis-label x">Stated Confidence</span>
+                    </div>
+
+                    <div class="calibration-legend">
+                        <div class="legend-item">
+                            <div class="legend-dot calibrated"></div>
+                            <span>Well Calibrated</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot overconfident"></div>
+                            <span>Overconfident</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot underconfident"></div>
+                            <span>Underconfident</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Findings Table -->
+                <div class="findings-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Finding-Level Calibration</h2>
+                        <span class="section-badge">Showing Flagged Items</span>
+                    </div>
+
+                    <table class="findings-table">
+                        <thead>
+                            <tr>
+                                <th>Finding</th>
+                                <th>Confidence</th>
+                                <th>Validated</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="finding-text">Revenue discrepancy of $2.3M between presentations</td>
+                                <td>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill high" style="width: 94%;"></div>
+                                    </div>
+                                    <span style="font-size: 0.75rem; color: var(--gray-500);">94%</span>
+                                </td>
+                                <td style="color: var(--green);">✓ Correct</td>
+                                <td><span class="calibration-status good">Well Calibrated</span></td>
+                            </tr>
+                            <tr>
+                                <td class="finding-text">Pfizer consent "sole discretion" clause identified</td>
+                                <td>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill high" style="width: 98%;"></div>
+                                    </div>
+                                    <span style="font-size: 0.75rem; color: var(--gray-500);">98%</span>
+                                </td>
+                                <td style="color: var(--green);">✓ Correct</td>
+                                <td><span class="calibration-status good">Well Calibrated</span></td>
+                            </tr>
+                            <tr>
+                                <td class="finding-text">FDA approval probability estimated at 72%</td>
+                                <td>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill high" style="width: 88%;"></div>
+                                    </div>
+                                    <span style="font-size: 0.75rem; color: var(--gray-500);">88%</span>
+                                </td>
+                                <td style="color: var(--amber);">~ Uncertain</td>
+                                <td><span class="calibration-status warning">Review</span></td>
+                            </tr>
+                            <tr>
+                                <td class="finding-text">Key person retention risk rated "Medium"</td>
+                                <td>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill medium" style="width: 75%;"></div>
+                                    </div>
+                                    <span style="font-size: 0.75rem; color: var(--gray-500);">75%</span>
+                                </td>
+                                <td style="color: var(--green);">✓ Correct</td>
+                                <td><span class="calibration-status good">Well Calibrated</span></td>
+                            </tr>
+                            <tr>
+                                <td class="finding-text">IP portfolio strength rated "Strong"</td>
+                                <td>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill high" style="width: 92%;"></div>
+                                    </div>
+                                    <span style="font-size: 0.75rem; color: var(--gray-500);">92%</span>
+                                </td>
+                                <td style="color: var(--red);">✗ Overstated</td>
+                                <td><span class="calibration-status warning">Overconfident</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Explanation -->
+                <div class="explanation-card">
+                    <div class="explanation-header">
+                        <div class="explanation-icon">🎯</div>
+                        <h3 class="explanation-title">Why This Matters</h3>
+                    </div>
+                    <div class="explanation-text">
+                        <strong>Calibration measures trustworthiness.</strong> A well-calibrated AI says "90% confident" only when it's right 90% of the time.
+                        <br><br>
+                        This deal shows a <strong>0.92 calibration score</strong> (1.0 = perfect). Points near the diagonal line indicate reliable confidence estimates.
+                        <br><br>
+                        <strong>12 findings</strong> showed overconfidence and have been flagged for human review.
+                    </div>
+                </div>
+
+                <!-- Uncertainty Breakdown -->
+                <div class="uncertainty-card">
+                    <h3 class="card-title">Uncertainty Sources</h3>
+                    
+                    <div class="uncertainty-item">
+                        <div class="uncertainty-type">
+                            <span class="uncertainty-icon">📄</span>
+                            <span class="uncertainty-label">Data Quality</span>
+                        </div>
+                        <span class="uncertainty-value" style="color: var(--green);">Low</span>
+                    </div>
+                    
+                    <div class="uncertainty-item">
+                        <div class="uncertainty-type">
+                            <span class="uncertainty-icon">🧠</span>
+                            <span class="uncertainty-label">Model Disagreement</span>
+                        </div>
+                        <span class="uncertainty-value" style="color: var(--amber);">Medium</span>
+                    </div>
+                    
+                    <div class="uncertainty-item">
+                        <div class="uncertainty-type">
+                            <span class="uncertainty-icon">📊</span>
+                            <span class="uncertainty-label">Estimation Error</span>
+                        </div>
+                        <span class="uncertainty-value" style="color: var(--green);">Low</span>
+                    </div>
+                    
+                    <div class="uncertainty-item">
+                        <div class="uncertainty-type">
+                            <span class="uncertainty-icon">🔮</span>
+                            <span class="uncertainty-label">Prediction Horizon</span>
+                        </div>
+                        <span class="uncertainty-value" style="color: var(--amber);">Medium</span>
+                    </div>
+                </div>
+
+                <!-- Validation Methods -->
+                <div class="methods-card">
+                    <h3 class="card-title">Validation Methods</h3>
+                    
+                    <div class="method-item">
+                        <div class="method-check">✓</div>
+                        <div class="method-info">
+                            <h4>Cross-Model Consensus</h4>
+                            <p>3 models must agree within 15% for high-confidence findings</p>
+                        </div>
+                    </div>
+                    
+                    <div class="method-item">
+                        <div class="method-check">✓</div>
+                        <div class="method-info">
+                            <h4>Source Verification</h4>
+                            <p>Every claim traced to specific document and page</p>
+                        </div>
+                    </div>
+                    
+                    <div class="method-item">
+                        <div class="method-check">✓</div>
+                        <div class="method-info">
+                            <h4>Historical Calibration</h4>
+                            <p>Confidence adjusted based on past accuracy by topic</p>
+                        </div>
+                    </div>
+                    
+                    <div class="method-item">
+                        <div class="method-check">✓</div>
+                        <div class="method-info">
+                            <h4>Contradiction Detection</h4>
+                            <p>Automatic flagging of conflicting information</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
