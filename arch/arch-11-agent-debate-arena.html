@@ -272,7 +272,56 @@
             </div>
         </div>
 
+        <!-- Code Example -->
+        <div class="section">
+            <h2 class="section-title">Implementation Example</h2>
+            <div class="diagram-container">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">TypeScript</span>
+                        <span class="code-file">lib/debate/runDebate.ts</span>
+                    </div>
+<pre><span class="keyword">async function</span> <span class="function">runDebate</span>(question: string, context: Document[]) {
+  <span class="keyword">const</span> forTeam = [<span class="string">'contract_analyst'</span>, <span class="string">'financial_modeler'</span>];
+  <span class="keyword">const</span> againstTeam = [<span class="string">'risk_assessor'</span>, <span class="string">'market_researcher'</span>];
+  
+  <span class="keyword">let</span> history: DebateTurn[] = [];
+
+  <span class="keyword">for</span> (<span class="keyword">let</span> round = 1; round <= 3; round++) {
+    <span class="comment">// FOR position argues</span>
+    <span class="keyword">const</span> forArg = <span class="keyword">await</span> callClaude({
+      prompt: buildDebatePrompt(<span class="string">'for'</span>, question, history),
+      agents: forTeam
+    });
+    history.push({ side: <span class="string">'for'</span>, round, content: forArg });
+
+    <span class="comment">// AGAINST position rebuts</span>
+    <span class="keyword">const</span> againstArg = <span class="keyword">await</span> callClaude({
+      prompt: buildDebatePrompt(<span class="string">'against'</span>, question, history),
+      agents: againstTeam
+    });
+    history.push({ side: <span class="string">'against'</span>, round, content: againstArg });
+  }
+
+  <span class="comment">// Neutral judge synthesizes</span>
+  <span class="keyword">return await</span> callClaude({ role: <span class="string">'judge'</span>, history });
+}</pre>
+                </div>
+            </div>
+        </div>
+
         <a href="11-agent-debate-arena.html" class="view-screen-btn">View Screen Mockup →</a>
     </main>
+    <style>
+        .code-block { background: #0d1117; border-radius: 8px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; padding: 0.5rem 1rem; background: #161b22; border-bottom: 1px solid #30363d; }
+        .code-lang { color: #58a6ff; font-size: 0.75rem; font-weight: 600; }
+        .code-file { color: #8b949e; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; }
+        .code-block pre { padding: 1rem; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.6; overflow-x: auto; color: #c9d1d9; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .function { color: #d2a8ff; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .comment { color: #8b949e; }
+    </style>
 </body>
 </html>

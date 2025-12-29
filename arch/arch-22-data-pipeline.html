@@ -240,7 +240,55 @@
             </div>
         </div>
 
+        <!-- Code Example -->
+        <div class="section">
+            <h2 class="section-title">Implementation Example</h2>
+            <div class="diagram-container">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">TypeScript</span>
+                        <span class="code-file">lib/pipeline/processDocument.ts</span>
+                    </div>
+<pre><span class="keyword">async function</span> <span class="function">processDocument</span>(job: QueueJob) {
+  <span class="keyword">await</span> updateStatus(job.id, <span class="string">'processing'</span>);
+
+  <span class="comment">// 1. Extract text from PDF</span>
+  <span class="keyword">const</span> text = <span class="keyword">await</span> pdfjs.extractText(job.fileUrl);
+
+  <span class="comment">// 2. Classify document type</span>
+  <span class="keyword">const</span> docType = <span class="keyword">await</span> gemini.classify(text.slice(0, 2000));
+
+  <span class="comment">// 3. Chunk for embedding</span>
+  <span class="keyword">const</span> chunks = chunkText(text, { size: 500, overlap: 50 });
+
+  <span class="comment">// 4. Generate embeddings & store</span>
+  <span class="keyword">for</span> (<span class="keyword">const</span> chunk <span class="keyword">of</span> chunks) {
+    <span class="keyword">const</span> embedding = <span class="keyword">await</span> openai.embed(chunk);
+    <span class="keyword">await</span> supabase.from(<span class="string">'document_chunks'</span>).insert({
+      document_id: job.documentId,
+      content: chunk,
+      embedding
+    });
+  }
+
+  <span class="keyword">await</span> updateStatus(job.id, <span class="string">'complete'</span>);
+}</pre>
+                </div>
+            </div>
+        </div>
+
         <a href="../22-data-pipeline.html" class="view-screen-btn">View Screen Mockup →</a>
     </main>
+    <style>
+        .code-block { background: #0d1117; border-radius: 8px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; padding: 0.5rem 1rem; background: #161b22; border-bottom: 1px solid #30363d; }
+        .code-lang { color: #58a6ff; font-size: 0.75rem; font-weight: 600; }
+        .code-file { color: #8b949e; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; }
+        .code-block pre { padding: 1rem; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.6; overflow-x: auto; color: #c9d1d9; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .function { color: #d2a8ff; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .comment { color: #8b949e; }
+    </style>
 </body>
 </html>
