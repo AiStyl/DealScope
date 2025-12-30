@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { MainLayout } from '@/components/layout'
 import { Card, Badge, Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
@@ -149,13 +149,19 @@ export default function TimelinePage() {
     category: 'operational' as const,
   })
 
-  const filteredMilestones = filterCategory
-    ? milestones.filter(m => m.category === filterCategory)
-    : milestones
-
-  const sortedMilestones = [...filteredMilestones].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  )
+  // FIXED: Use useMemo to properly sort milestones by date
+  const sortedMilestones = useMemo(() => {
+    let filtered = filterCategory
+      ? milestones.filter(m => m.category === filterCategory)
+      : milestones
+    
+    // Sort by date (ascending - earliest first)
+    return [...filtered].sort((a, b) => {
+      const dateA = new Date(a.date).getTime()
+      const dateB = new Date(b.date).getTime()
+      return dateA - dateB
+    })
+  }, [milestones, filterCategory])
 
   const updateStatus = (id: string, status: Milestone['status']) => {
     setMilestones(prev =>
@@ -172,6 +178,7 @@ export default function TimelinePage() {
       status: 'upcoming',
     }
 
+    // Add to list - sorting is handled by useMemo
     setMilestones(prev => [...prev, milestone])
     setIsAddingNew(false)
     setNewMilestone({ name: '', description: '', date: '', category: 'operational' })
@@ -199,6 +206,9 @@ export default function TimelinePage() {
     const diff = new Date(dateStr).getTime() - new Date().getTime()
     return Math.ceil(diff / (1000 * 60 * 60 * 24))
   }
+
+  // Find the closing date for header
+  const closingMilestone = milestones.find(m => m.category === 'closing')
 
   return (
     <MainLayout
@@ -308,10 +318,15 @@ export default function TimelinePage() {
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-teal-600" />
                 <h3 className="font-semibold text-gray-900">Deal Timeline</h3>
+                <Badge variant="default" className="ml-2">
+                  {sortedMilestones.length} milestones
+                </Badge>
               </div>
-              <div className="text-sm text-gray-500">
-                Target Closing: {formatDate(milestones.find(m => m.category === 'closing')?.date || '')}
-              </div>
+              {closingMilestone && (
+                <div className="text-sm text-gray-500">
+                  Target Closing: <span className="font-medium text-gray-900">{formatDate(closingMilestone.date)}</span>
+                </div>
+              )}
             </div>
 
             {/* Timeline View */}
@@ -388,13 +403,14 @@ export default function TimelinePage() {
                                     <span className="text-gray-500">Status:</span>
                                     <select
                                       value={milestone.status}
-                                      onChange={(e) => updateStatus(milestone.id, e.target.value as any)}
+                                      onChange={(e) => updateStatus(milestone.id, e.target.value as Milestone['status'])}
                                       onClick={(e) => e.stopPropagation()}
                                       className="ml-2 px-2 py-1 border rounded text-xs"
                                     >
-                                      {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                                        <option key={key} value={key}>{config.color.includes('green') ? 'Complete' : config.color.includes('blue') ? 'In Progress' : config.color.includes('red') ? 'Delayed' : 'Upcoming'}</option>
-                                      ))}
+                                      <option value="complete">Complete</option>
+                                      <option value="in_progress">In Progress</option>
+                                      <option value="upcoming">Upcoming</option>
+                                      <option value="delayed">Delayed</option>
                                     </select>
                                   </div>
                                 </div>
@@ -492,7 +508,7 @@ export default function TimelinePage() {
                       <label className="text-sm font-medium text-gray-700">Category</label>
                       <select
                         value={newMilestone.category}
-                        onChange={(e) => setNewMilestone(prev => ({ ...prev, category: e.target.value as any }))}
+                        onChange={(e) => setNewMilestone(prev => ({ ...prev, category: e.target.value as Milestone['category'] }))}
                         className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg"
                       >
                         {Object.keys(CATEGORY_CONFIG).map(cat => (

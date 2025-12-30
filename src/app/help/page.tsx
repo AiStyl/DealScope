@@ -6,274 +6,400 @@ import { Card, Badge, Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import {
   HelpCircle,
-  Book,
-  Video,
-  MessageCircle,
-  Search,
-  ChevronRight,
-  ExternalLink,
-  Brain,
   FileText,
-  Zap,
-  Shield,
-  Users,
+  Brain,
+  Scale,
+  GitCompare,
+  Target,
+  Calculator,
+  Calendar,
+  ClipboardCheck,
+  Network,
+  Lightbulb,
   BarChart3,
+  Settings,
+  Play,
+  ChevronRight,
+  CheckCircle,
+  ArrowRight,
+  BookOpen,
+  Video,
+  MessageSquare,
+  Mail,
+  Briefcase,
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 
-const HELP_TOPICS = [
+interface Feature {
+  id: string
+  name: string
+  description: string
+  value_proposition: string
+  icon: React.ElementType
+  color: string
+  link: string
+  steps: string[]
+}
+
+const FEATURES: Feature[] = [
   {
-    id: 'getting-started',
-    icon: Zap,
-    title: 'Getting Started',
-    description: 'Learn the basics of DealScope',
-    articles: [
-      'Uploading your first document',
-      'Running multi-agent analysis',
-      'Understanding the consensus engine',
-      'Generating your first report',
-    ],
-  },
-  {
-    id: 'multi-model',
-    icon: Brain,
-    title: 'Multi-Model AI',
-    description: 'How our AI orchestration works',
-    articles: [
-      'Why we use multiple models',
-      'Understanding model strengths',
-      'How consensus is built',
-      'Interpreting confidence scores',
-    ],
-  },
-  {
-    id: 'documents',
+    id: 'document-review',
+    name: 'Document Review',
+    description: 'Upload M&A documents for AI-powered analysis',
+    value_proposition: 'Reduce document review time by 80%. AI extracts key terms, risks, and action items in minutes instead of hours.',
     icon: FileText,
-    title: 'Document Analysis',
-    description: 'Analyze contracts and financials',
-    articles: [
-      'Supported file formats',
-      'How AI annotations work',
-      'Reading risk scores',
-      'Exporting findings',
+    color: 'blue',
+    link: '/document-review',
+    steps: [
+      'Upload a document (PDF, DOCX, or image)',
+      'AI extracts text and analyzes content',
+      'Review findings with risk scores',
+      'Export or share analysis',
     ],
   },
   {
-    id: 'security',
-    icon: Shield,
-    title: 'Security & Compliance',
-    description: 'Enterprise-grade security',
-    articles: [
-      'Data encryption',
-      'SOC 2 compliance',
-      'Audit trail',
-      'API key management',
+    id: 'multi-agent',
+    name: 'Multi-Agent Analysis',
+    description: 'Three AI models analyze your documents simultaneously',
+    value_proposition: 'Eliminate single-model bias. Statistical consensus across Claude, GPT-4, and Gemini reduces hallucinations by 60%.',
+    icon: Brain,
+    color: 'purple',
+    link: '/multi-agent',
+    steps: [
+      'Select an analyzed document',
+      'AI runs parallel analysis with 3 models',
+      'Review consensus scores and disagreements',
+      'Each finding tagged with source model',
     ],
   },
   {
-    id: 'team',
-    icon: Users,
-    title: 'Team Collaboration',
-    description: 'Work together on deals',
-    articles: [
-      'Inviting team members',
-      'Role permissions',
-      'Sharing reports',
-      'Activity tracking',
+    id: 'compare-models',
+    name: 'Model Comparison',
+    description: 'See how different AI models respond to the same question',
+    value_proposition: 'Compare reasoning styles. See which model is most confident and fastest for your specific questions.',
+    icon: GitCompare,
+    color: 'teal',
+    link: '/compare-models',
+    steps: [
+      'Enter a question about M&A',
+      'All 3 models respond in parallel',
+      'Compare responses side-by-side',
+      'View agreement scores and timing',
     ],
   },
   {
-    id: 'analytics',
+    id: 'debate',
+    name: 'Agent Debate Arena',
+    description: 'AI models argue opposing positions on deal risks',
+    value_proposition: 'Surface hidden risks. Adversarial debate reveals weaknesses in deal structure that consensus analysis might miss.',
+    icon: Scale,
+    color: 'amber',
+    link: '/debate',
+    steps: [
+      'Enter a position to debate',
+      'Claude argues FOR the position',
+      'GPT-4 argues AGAINST (seeing Claude\'s argument)',
+      'Gemini provides independent judgment',
+    ],
+  },
+  {
+    id: 'risk-simulation',
+    name: 'Monte Carlo Risk',
+    description: 'Run thousands of scenarios to quantify deal risk',
+    value_proposition: 'Data-driven decisions. 10,000+ simulations provide statistical confidence intervals for deal outcomes.',
+    icon: Target,
+    color: 'red',
+    link: '/risk-simulation',
+    steps: [
+      'Select document and set base value',
+      'AI extracts risk factors from document',
+      'Run 10,000+ Monte Carlo simulations',
+      'View VaR, distribution, and worst cases',
+    ],
+  },
+  {
+    id: 'deal-simulator',
+    name: 'Deal Simulator',
+    description: 'Model deal scenarios with IRR and NPV calculations',
+    value_proposition: 'Optimize deal structure. Instantly see how changes in price, leverage, or synergies affect returns.',
+    icon: Calculator,
+    color: 'emerald',
+    link: '/deal-simulator',
+    steps: [
+      'Adjust deal parameters (price, debt, etc.)',
+      'View IRR, NPV, and MOIC calculations',
+      'Compare base vs upside/downside scenarios',
+      'AI provides deal structure insights',
+    ],
+  },
+  {
+    id: 'valuation',
+    name: 'Valuation Calculator',
+    description: 'DCF and comparable company analysis',
+    value_proposition: 'Professional valuation. Full DCF model with 5-year projections plus comparable company multiples.',
     icon: BarChart3,
-    title: 'Analytics & Reports',
-    description: 'Generate insights and reports',
-    articles: [
-      'Report templates',
-      'AI-generated summaries',
-      'Custom reports',
-      'Export options',
+    color: 'indigo',
+    link: '/valuation',
+    steps: [
+      'Enter financial assumptions',
+      'Review 5-year DCF projections',
+      'Compare to peer multiples',
+      'View football field valuation range',
+    ],
+  },
+  {
+    id: 'checklist',
+    name: 'Due Diligence Checklist',
+    description: 'AI-powered M&A checklist with 19 standard items',
+    value_proposition: 'Never miss a step. Comprehensive checklist covers legal, financial, operational, and commercial DD.',
+    icon: ClipboardCheck,
+    color: 'cyan',
+    link: '/deal-checklist',
+    steps: [
+      'Generate standard M&A checklist',
+      'Optionally link to document for AI assessment',
+      'Track status of each item',
+      'Filter by category or status',
+    ],
+  },
+  {
+    id: 'timeline',
+    name: 'Deal Timeline',
+    description: 'Visual milestone tracking for deal execution',
+    value_proposition: 'Stay on schedule. Track all critical dates and see which milestones are at risk.',
+    icon: Calendar,
+    color: 'rose',
+    link: '/timeline',
+    steps: [
+      'View pre-loaded M&A milestones',
+      'Add custom milestones with dates',
+      'Update status as you progress',
+      'Milestones auto-sort by date',
+    ],
+  },
+  {
+    id: 'knowledge-graph',
+    name: 'Knowledge Graph',
+    description: 'Visualize entities and relationships in documents',
+    value_proposition: 'See the big picture. AI extracts companies, people, contracts, and their connections.',
+    icon: Network,
+    color: 'violet',
+    link: '/knowledge-graph',
+    steps: [
+      'Select an analyzed document',
+      'AI extracts entities and relationships',
+      'Interactive graph visualization',
+      'Click nodes to see connections',
     ],
   },
 ]
 
-const FAQS = [
+const FAQ = [
   {
-    q: 'How is DealScope different from ChatGPT or other AI tools?',
-    a: 'DealScope uses multiple AI models (Claude, GPT-4, Gemini) simultaneously and builds consensus between them. This means higher accuracy and cross-validation that single-model tools cannot provide.',
+    q: 'What makes DealScope different from ChatGPT?',
+    a: 'DealScope is purpose-built for M&A. It uses 3 AI models simultaneously for statistical consensus, has specialized M&A prompts, and provides audit trails required for professional use.',
+  },
+  {
+    q: 'How does multi-model consensus reduce errors?',
+    a: 'When Claude, GPT-4, and Gemini all identify the same risk, you can be confident it\'s real. When they disagree, the system flags it for human review.',
   },
   {
     q: 'Is my data secure?',
-    a: 'Yes. All data is encrypted at rest and in transit. We maintain SOC 2 compliance and never train AI models on your data. All AI API calls are made without data retention.',
+    a: 'Yes. Documents are encrypted with AES-256, stored in SOC 2 compliant infrastructure, and never used to train AI models.',
   },
   {
-    q: 'What file formats are supported?',
-    a: 'We support PDF, DOCX, XLSX, and TXT files. PDFs are processed with OCR for scanned documents.',
-  },
-  {
-    q: 'How accurate is the AI analysis?',
-    a: 'Our multi-model approach achieves 94% accuracy on legal document analysis, validated through consensus scoring between models.',
+    q: 'Can I use my own API keys?',
+    a: 'Enterprise plans support custom API keys. Contact us for details.',
   },
 ]
 
 export default function HelpPage() {
-  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedFeature, setSelectedFeature] = useState<Feature | null>(null)
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null)
 
   return (
     <MainLayout
-      title="Help Center"
-      subtitle="Documentation, guides, and support resources"
+      title="Help & Documentation"
+      subtitle="Learn how to get the most out of DealScope"
     >
       <div className="space-y-8">
-        {/* Search */}
-        <Card className="p-6">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-xl font-semibold text-gray-900 text-center mb-4">
-              How can we help you?
-            </h2>
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search for help articles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white"
-              />
+        {/* Quick Start */}
+        <Card className="p-6 bg-gradient-to-r from-teal-50 to-emerald-50 border-teal-200">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center">
+              <Play className="w-6 h-6 text-teal-600" />
             </div>
+            <div>
+              <h2 className="text-xl font-semibold text-teal-900">Quick Start Guide</h2>
+              <p className="text-teal-700">Get started in 3 simple steps</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-6">
+            {[
+              { step: 1, title: 'Upload Documents', desc: 'Upload M&A documents for analysis', link: '/document-review' },
+              { step: 2, title: 'Run AI Analysis', desc: 'Let 3 AI models analyze your docs', link: '/multi-agent' },
+              { step: 3, title: 'Review Findings', desc: 'See risks, insights, and recommendations', link: '/dashboard' },
+            ].map((item) => (
+              <Link key={item.step} href={item.link}>
+                <div className="flex items-start gap-3 p-4 bg-white rounded-lg hover:shadow-md transition cursor-pointer">
+                  <div className="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold">
+                    {item.step}
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">{item.title}</div>
+                    <div className="text-sm text-gray-500">{item.desc}</div>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
         </Card>
 
-        {/* Quick Links */}
-        <div className="grid grid-cols-4 gap-4">
-          <Card hover className="p-4 cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                <Book className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-900">Documentation</h3>
-                <p className="text-xs text-gray-500">Full guides</p>
-              </div>
-            </div>
-          </Card>
-          <Card hover className="p-4 cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
-                <Video className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-900">Video Tutorials</h3>
-                <p className="text-xs text-gray-500">Watch & learn</p>
-              </div>
-            </div>
-          </Card>
-          <Card hover className="p-4 cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                <MessageCircle className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-900">Contact Support</h3>
-                <p className="text-xs text-gray-500">Get help</p>
-              </div>
-            </div>
-          </Card>
-          <Card hover className="p-4 cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                <ExternalLink className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-900">API Docs</h3>
-                <p className="text-xs text-gray-500">For developers</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Help Topics */}
+        {/* Feature Grid */}
         <div>
-          <h2 className="font-semibold text-gray-900 mb-4">Browse by Topic</h2>
-          <div className="grid grid-cols-3 gap-4">
-            {HELP_TOPICS.map((topic) => {
-              const Icon = topic.icon
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">All Features</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {FEATURES.map((feature) => {
+              const Icon = feature.icon
               return (
-                <Card key={topic.id} hover className="p-5 cursor-pointer">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-6 h-6 text-teal-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium text-gray-900 mb-1">{topic.title}</h3>
-                      <p className="text-sm text-gray-500 mb-3">{topic.description}</p>
-                      <div className="space-y-1">
-                        {topic.articles.slice(0, 3).map((article) => (
-                          <div
-                            key={article}
-                            className="text-sm text-teal-600 hover:text-teal-700 flex items-center gap-1"
-                          >
-                            <ChevronRight className="w-3 h-3" />
-                            {article}
-                          </div>
-                        ))}
-                        {topic.articles.length > 3 && (
-                          <div className="text-xs text-gray-400 mt-2">
-                            +{topic.articles.length - 3} more articles
-                          </div>
-                        )}
+                <motion.div
+                  key={feature.id}
+                  whileHover={{ scale: 1.02 }}
+                  onClick={() => setSelectedFeature(selectedFeature?.id === feature.id ? null : feature)}
+                  className="cursor-pointer"
+                >
+                  <Card className={cn(
+                    'p-4 transition',
+                    selectedFeature?.id === feature.id && 'ring-2 ring-teal-500'
+                  )}>
+                    <div className="flex items-start gap-3">
+                      <div className={cn(
+                        'w-10 h-10 rounded-lg flex items-center justify-center',
+                        `bg-${feature.color}-100`
+                      )}>
+                        <Icon className={cn('w-5 h-5', `text-${feature.color}-600`)} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-medium text-gray-900">{feature.name}</h3>
+                          <ChevronRight className={cn(
+                            'w-4 h-4 text-gray-400 transition',
+                            selectedFeature?.id === feature.id && 'rotate-90'
+                          )} />
+                        </div>
+                        <p className="text-sm text-gray-500">{feature.description}</p>
                       </div>
                     </div>
-                  </div>
-                </Card>
+
+                    <AnimatePresence>
+                      {selectedFeature?.id === feature.id && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <div className="p-3 bg-amber-50 rounded-lg mb-4">
+                              <div className="flex items-start gap-2">
+                                <Lightbulb className="w-4 h-4 text-amber-600 mt-0.5" />
+                                <p className="text-sm text-amber-800">{feature.value_proposition}</p>
+                              </div>
+                            </div>
+
+                            <div className="text-xs font-semibold text-gray-500 uppercase mb-2">How to use:</div>
+                            <ol className="space-y-2 mb-4">
+                              {feature.steps.map((step, i) => (
+                                <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                                  <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-xs font-medium flex-shrink-0">
+                                    {i + 1}
+                                  </span>
+                                  {step}
+                                </li>
+                              ))}
+                            </ol>
+
+                            <Link href={feature.link}>
+                              <Button size="sm" className="gap-2">
+                                Open {feature.name}
+                                <ArrowRight className="w-3 h-3" />
+                              </Button>
+                            </Link>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </Card>
+                </motion.div>
               )
             })}
           </div>
         </div>
 
-        {/* FAQs */}
-        <div>
-          <h2 className="font-semibold text-gray-900 mb-4">Frequently Asked Questions</h2>
-          <Card className="divide-y divide-gray-100">
-            {FAQS.map((faq, index) => (
-              <div
-                key={index}
-                className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-gray-900 pr-4">{faq.q}</h3>
-                  <ChevronRight
-                    className={cn(
-                      'w-5 h-5 text-gray-400 transition-transform flex-shrink-0',
-                      expandedFaq === index && 'rotate-90'
-                    )}
-                  />
-                </div>
-                {expandedFaq === index && (
-                  <p className="text-sm text-gray-600 mt-3 pr-8">{faq.a}</p>
-                )}
+        {/* FAQ */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <HelpCircle className="w-5 h-5 text-purple-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Frequently Asked Questions</h2>
+          </div>
+
+          <div className="space-y-3">
+            {FAQ.map((item, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
+                  className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50"
+                >
+                  <span className="font-medium text-gray-900">{item.q}</span>
+                  <ChevronRight className={cn(
+                    'w-4 h-4 text-gray-400 transition',
+                    expandedFaq === i && 'rotate-90'
+                  )} />
+                </button>
+                <AnimatePresence>
+                  {expandedFaq === i && (
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: 'auto' }}
+                      exit={{ height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-4 pb-4 text-sm text-gray-600 border-t border-gray-100 pt-3">
+                        {item.a}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ))}
-          </Card>
-        </div>
-
-        {/* Contact Support */}
-        <Card className="p-6 bg-gradient-to-r from-teal-50 to-cyan-50 border-teal-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center">
-                <MessageCircle className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">Still need help?</h3>
-                <p className="text-sm text-gray-600">
-                  Our support team is available 24/7 to assist you
-                </p>
-              </div>
-            </div>
-            <Button>Contact Support</Button>
           </div>
         </Card>
+
+        {/* Contact */}
+        <div className="grid grid-cols-3 gap-4">
+          <Card className="p-4 text-center">
+            <BookOpen className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+            <h3 className="font-medium text-gray-900">Documentation</h3>
+            <p className="text-sm text-gray-500 mb-3">Full API docs and guides</p>
+            <Button variant="secondary" size="sm">View Docs</Button>
+          </Card>
+
+          <Card className="p-4 text-center">
+            <MessageSquare className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+            <h3 className="font-medium text-gray-900">Live Chat</h3>
+            <p className="text-sm text-gray-500 mb-3">Talk to our support team</p>
+            <Button variant="secondary" size="sm">Start Chat</Button>
+          </Card>
+
+          <Card className="p-4 text-center">
+            <Mail className="w-8 h-8 text-teal-600 mx-auto mb-2" />
+            <h3 className="font-medium text-gray-900">Email Support</h3>
+            <p className="text-sm text-gray-500 mb-3">support@dealscope.ai</p>
+            <Button variant="secondary" size="sm">Send Email</Button>
+          </Card>
+        </div>
       </div>
     </MainLayout>
   )
