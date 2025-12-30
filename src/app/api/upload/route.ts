@@ -51,10 +51,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to upload file to storage' }, { status: 500 })
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
+    // Generate signed URL (expires in 7 days) for private bucket
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from('documents')
-      .getPublicUrl(fileName)
+      .createSignedUrl(uploadData.path, 60 * 60 * 24 * 7) // 7 days
+
+    if (signedUrlError) {
+      console.error('Signed URL error:', signedUrlError)
+    }
 
     // Create document record in database
     const { data: docData, error: docError } = await supabase
@@ -63,7 +67,6 @@ export async function POST(request: NextRequest) {
         deal_id: dealId || null,
         name: file.name,
         file_path: uploadData.path,
-        file_url: urlData.publicUrl,
         file_type: file.type,
         file_size: file.size,
         status: 'pending',
@@ -92,7 +95,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      document: docData,
+      document: {
+        ...docData,
+        signed_url: signedUrlData?.signedUrl || null,
+      },
       message: 'Document uploaded successfully. Ready for analysis.',
     })
 

@@ -5,11 +5,12 @@
 ```
 src/
 ├── app/api/
-│   ├── upload/route.ts    # POST: Upload documents to Supabase Storage
-│   └── analyze/route.ts   # POST: Analyze with Claude, GET: Fetch findings
+│   ├── upload/route.ts         # POST: Upload documents to Supabase Storage
+│   ├── analyze/route.ts        # POST: Analyze with Claude, GET: Fetch findings
+│   └── documents/[id]/route.ts # GET: Document + signed URL, DELETE: Remove doc
 └── lib/
-    ├── supabase.ts        # Supabase client & helper functions
-    └── anthropic.ts       # Claude API integration & prompts
+    ├── supabase.ts             # Supabase client & helper functions
+    └── anthropic.ts            # Claude API integration & prompts
 ```
 
 ## Required Dependencies
@@ -27,17 +28,17 @@ Already configured in Vercel:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` ✅
 - `ANTHROPIC_API_KEY` ✅
 
-Optional (for server-side storage access):
-- `SUPABASE_SERVICE_ROLE_KEY` (get from Supabase dashboard → Settings → API)
+Optional (recommended for server-side storage access):
+- `SUPABASE_SERVICE_ROLE_KEY` - Get from Supabase dashboard → Settings → API → service_role key
 
-## Supabase Storage Bucket
+## Supabase Storage Bucket ✅ DONE
 
-Create a storage bucket called `documents`:
-1. Go to Supabase dashboard → Storage
-2. Click "New bucket"
-3. Name: `documents`
-4. Public: Yes (for file access)
-5. Click Create
+You've created a PRIVATE `documents` bucket - this is correct for M&A confidentiality.
+
+**How it works:**
+- Files are NOT publicly accessible
+- API generates **signed URLs** (temporary links that expire)
+- Default expiry: 7 days for uploads, 1 hour for viewing
 
 ## API Endpoints
 
@@ -53,6 +54,7 @@ const response = await fetch('/api/upload', {
   method: 'POST',
   body: formData,
 })
+// Returns: { document: {..., signed_url: "..."}, success: true }
 ```
 
 ### POST /api/analyze
@@ -67,18 +69,26 @@ const response = await fetch('/api/analyze', {
     analysisType: 'contract' // or 'financial' or 'general'
   }),
 })
+// Returns: { analysis: {...}, findings: [...] }
 ```
 
-### GET /api/analyze?documentId=xxx
-Fetch analysis results for a document.
+### GET /api/documents/[id]
+Get document details with fresh signed URL.
+
+```javascript
+const response = await fetch('/api/documents/abc-123')
+// Returns: { document: {..., signed_url: "fresh-url"}, findings: [...] }
+```
+
+### DELETE /api/documents/[id]
+Delete a document and its findings.
 
 ## Test Flow
 
-1. Upload a PDF/TXT document via /api/upload
-2. Get back document ID
-3. Call /api/analyze with document ID
-4. Claude analyzes and returns findings
-5. Findings saved to Supabase `findings` table
+1. Upload a PDF/TXT via /api/upload → Get document ID + signed URL
+2. Call /api/analyze with document ID → Claude analyzes
+3. Findings saved to Supabase `findings` table
+4. Call /api/documents/[id] to get fresh signed URL when needed
 
 ## Architecture 404 Fix
 
