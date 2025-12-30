@@ -425,7 +425,7 @@ export default function ReportsPage() {
                         </div>
                         {report.status === 'generating' && (
                           <div className="mt-2 w-48">
-                            <Progress value={report.progress} size="sm" variant="warning" />
+                            <Progress value={report.progress || 0} size="sm" variant="warning" />
                           </div>
                         )}
                       </div>
