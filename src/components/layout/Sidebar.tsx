@@ -17,6 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Boxes,
+  Network,
+  Shield,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -28,7 +30,14 @@ const navigation = [
   { name: 'Agent Debate', href: '/debate', icon: Swords },
   { name: 'Model Orchestration', href: '/orchestration', icon: GitBranch },
   { name: 'Reasoning Streams', href: '/streams', icon: Activity },
+  { name: 'Knowledge Graph', href: '/knowledge-graph', icon: Network },
+  { name: 'Risk Simulation', href: '/risk-simulation', icon: Activity },
+  { name: 'Deal Simulator', href: '/deal-simulator', icon: GitBranch },
+  { name: 'Sensitivity Analysis', href: '/sensitivity-analysis', icon: LayoutDashboard },
   { name: 'Reports', href: '/reports', icon: FileText },
+  { name: 'Audit Trail', href: '/audit-trail', icon: Shield },
+  { name: 'Team Workspace', href: '/team', icon: Network },
+  { name: 'API Console', href: '/api-console', icon: Boxes },
 ]
 
 const secondaryNavigation = [
@@ -146,11 +155,11 @@ export function Sidebar() {
         <div className="px-3 py-4 border-t border-gray-200">
           <div className="flex items-center gap-3 px-3 py-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-sm font-medium">
-              AS
+              JJ
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">AiStyl</p>
-              <p className="text-xs text-gray-500 truncate">Free Plan</p>
+              <p className="text-sm font-medium text-gray-900 truncate">JJ</p>
+              <p className="text-xs text-gray-500 truncate">CloudSprint Labs</p>
             </div>
           </div>
         </div>
