@@ -201,16 +201,20 @@ export async function POST(request: NextRequest) {
     const report = await generateReport(documentId, reportType)
 
     // Log audit
-    supabase.from('audit_logs').insert({
-      event_type: 'report',
-      action: 'generate_report',
-      details: {
-        document_id: documentId,
-        report_type: reportType,
-        format,
-        processing_time_ms: Date.now() - startTime,
-      },
-    }).then(() => {}).catch(e => console.log('Audit error:', e))
+    try {
+      supabase.from('audit_logs').insert({
+        event_type: 'report',
+        action: 'generate_report',
+        details: {
+          document_id: documentId,
+          report_type: reportType,
+          format,
+          processing_time_ms: Date.now() - startTime,
+        },
+      })
+    } catch (e) {
+      console.log('Audit error:', e)
+    }
 
     // Return based on format
     if (format === 'markdown') {

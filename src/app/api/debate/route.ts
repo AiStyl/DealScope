@@ -342,18 +342,22 @@ export async function POST(request: NextRequest) {
     console.log('Verdict:', verdict.winner)
 
     // Log audit event (non-blocking)
-    supabase.from('audit_logs').insert({
-      event_type: 'debate',
-      action: 'agent_debate',
-      details: {
-        topic,
-        document_id: documentId,
-        rounds: debateRounds.length,
-        winner: verdict.winner,
-        confidence: verdict.confidence,
-        processing_time_ms: Date.now() - startTime,
-      },
-    }).then(() => {}).catch(e => console.log('Audit log error:', e))
+    try {
+      supabase.from('audit_logs').insert({
+        event_type: 'debate',
+        action: 'agent_debate',
+        details: {
+          topic,
+          document_id: documentId,
+          rounds: debateRounds.length,
+          winner: verdict.winner,
+          confidence: verdict.confidence,
+          processing_time_ms: Date.now() - startTime,
+        },
+      })
+    } catch (e) {
+      console.log('Audit log error:', e)
+    }
 
     return NextResponse.json({
       success: true,

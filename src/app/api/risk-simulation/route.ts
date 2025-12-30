@@ -351,17 +351,21 @@ export async function POST(request: NextRequest) {
     )
 
     // Log audit
-    supabase.from('audit_logs').insert({
-      event_type: 'simulation',
-      action: 'monte_carlo_risk',
-      details: {
-        document_id: documentId,
-        base_value: baseDealValue,
-        simulations: summary.simulations_run,
-        var_95: summary.value_at_risk_95,
-        processing_time_ms: Date.now() - startTime,
-      },
-    }).then(() => {}).catch(e => console.log('Audit error:', e))
+    try {
+      supabase.from('audit_logs').insert({
+        event_type: 'simulation',
+        action: 'monte_carlo_risk',
+        details: {
+          document_id: documentId,
+          base_value: baseDealValue,
+          simulations: summary.simulations_run,
+          var_95: summary.value_at_risk_95,
+          processing_time_ms: Date.now() - startTime,
+        },
+      })
+    } catch (e) {
+      console.log('Audit error:', e)
+    }
 
     return NextResponse.json({
       success: true,
