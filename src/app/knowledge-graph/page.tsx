@@ -261,9 +261,12 @@ export default function KnowledgeGraphPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{selectedEntityData.name}</h3>
-                    <Badge style={{ backgroundColor: `${getEntityColor(selectedEntityData.type)}20`, color: getEntityColor(selectedEntityData.type) }}>
+                    <span 
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                      style={{ backgroundColor: `${getEntityColor(selectedEntityData.type)}20`, color: getEntityColor(selectedEntityData.type) }}
+                    >
                       {selectedEntityData.type}
-                    </Badge>
+                    </span>
                   </div>
                 </div>
 
