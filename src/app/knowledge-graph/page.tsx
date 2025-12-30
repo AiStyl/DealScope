@@ -209,11 +209,10 @@ export default function KnowledgeGraphPage() {
                       className={cn(
                         'rounded-full flex items-center justify-center transition-all shadow-lg',
                         size,
-                        isSelected && 'ring-4 ring-offset-2'
+                        isSelected && 'ring-4 ring-offset-2 ring-teal-500'
                       )}
                       style={{
                         backgroundColor: getEntityColor(entity.type),
-                        ringColor: getEntityColor(entity.type),
                       }}
                     >
                       <Icon className={cn(iconSize, 'text-white')} />
