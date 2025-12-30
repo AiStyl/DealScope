@@ -5,305 +5,465 @@ import { MainLayout } from '@/components/layout'
 import { Card, Badge, Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import {
-  Table2,
-  Brain,
-  Download,
-  RefreshCw,
+  BarChart3,
   TrendingUp,
   TrendingDown,
+  DollarSign,
+  Percent,
+  Target,
+  Loader2,
   AlertTriangle,
-  Plus,
-  Minus,
+  Play,
+  Info,
+  ArrowRight,
+  ArrowLeft,
 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
-// Sensitivity matrix data
-const SENSITIVITY_DATA = {
-  baseCase: {
-    revenue: 120,
-    margin: 25,
-    multiple: 8,
-    value: 240,
-  },
-  revenueRange: [-20, -10, 0, 10, 20],
-  marginRange: [-5, -2.5, 0, 2.5, 5],
-  multipleRange: [6, 7, 8, 9, 10],
+interface TornadoData {
+  variable: string
+  low_irr: number
+  base_irr: number
+  high_irr: number
+  downside: number
+  upside: number
 }
 
-// Calculate enterprise value
-const calculateValue = (revenue: number, margin: number, multiple: number) => {
-  const ebitda = revenue * (margin / 100)
-  return ebitda * multiple
+interface SensitivityResult {
+  variable: string
+  unit: string
+  base_value: number
+  low_value: number
+  high_value: number
+  base_irr: number
+  low_irr: number
+  high_irr: number
+  irr_swing: number
+  sensitivity_rank: number
 }
 
-// Generate matrix values
-const generateMatrix = () => {
-  const matrix: number[][] = []
-  for (const revDelta of SENSITIVITY_DATA.revenueRange) {
-    const row: number[] = []
-    for (const marginDelta of SENSITIVITY_DATA.marginRange) {
-      const value = calculateValue(
-        SENSITIVITY_DATA.baseCase.revenue * (1 + revDelta / 100),
-        SENSITIVITY_DATA.baseCase.margin + marginDelta,
-        SENSITIVITY_DATA.baseCase.multiple
-      )
-      row.push(Math.round(value))
-    }
-    matrix.push(row)
+interface AnalysisResult {
+  base_case: {
+    irr: number
+    parameters: Record<string, number>
   }
-  return matrix
+  sensitivity_results: SensitivityResult[]
+  tornado_chart_data: TornadoData[]
+  breakeven_analysis: Record<string, number>
+  key_findings: string[]
 }
 
-const MATRIX = generateMatrix()
+const formatValue = (value: number, unit: string) => {
+  if (unit === '$') {
+    if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`
+    return `$${(value / 1e3).toFixed(0)}K`
+  }
+  if (unit === 'x') return `${value.toFixed(1)}x`
+  return `${value.toFixed(0)}${unit}`
+}
 
 export default function SensitivityAnalysisPage() {
-  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null)
-  const baseValue = SENSITIVITY_DATA.baseCase.value
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedVar, setSelectedVar] = useState<SensitivityResult | null>(null)
 
-  const getCellColor = (value: number) => {
-    const diff = ((value - baseValue) / baseValue) * 100
-    if (diff > 15) return 'bg-green-500 text-white'
-    if (diff > 5) return 'bg-green-300'
-    if (diff > -5) return 'bg-gray-100'
-    if (diff > -15) return 'bg-red-300'
-    return 'bg-red-500 text-white'
+  // Parameters
+  const [purchasePrice, setPurchasePrice] = useState(100000000)
+  const [equityPct, setEquityPct] = useState(40)
+  const [synergies, setSynergies] = useState(8000000)
+  const [integrationCosts, setIntegrationCosts] = useState(5000000)
+  const [revenueGrowth, setRevenueGrowth] = useState(8)
+  const [ebitdaMargin, setEbitdaMargin] = useState(18)
+  const [exitMultiple, setExitMultiple] = useState(6)
+
+  const runAnalysis = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/sensitivity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          purchase_price: purchasePrice,
+          equity_percentage: equityPct,
+          synergies,
+          integration_costs: integrationCosts,
+          revenue_growth: revenueGrowth,
+          ebitda_margin: ebitdaMargin,
+          exit_multiple: exitMultiple,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setResult(data.analysis)
+        setSelectedVar(null)
+      } else {
+        setError(data.error || 'Analysis failed')
+      }
+    } catch (err) {
+      console.error('Analysis error:', err)
+      setError('Failed to run sensitivity analysis.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getIrrColor = (irr: number) => {
+    if (irr >= 25) return 'text-green-600'
+    if (irr >= 20) return 'text-emerald-600'
+    if (irr >= 15) return 'text-amber-600'
+    return 'text-red-600'
   }
 
   return (
     <MainLayout
       title="Sensitivity Analysis"
-      subtitle="Multi-variable what-if analysis with AI-powered scenario modeling"
+      subtitle="Understand which variables have the greatest impact on returns"
     >
-      <div className="space-y-6">
-        {/* Base Case Summary */}
-        <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-6">
+        {/* Parameters */}
+        <div className="col-span-1 space-y-4">
           <Card className="p-4">
-            <div className="text-sm text-gray-500">Base Revenue</div>
-            <div className="text-2xl font-bold text-gray-900">${SENSITIVITY_DATA.baseCase.revenue}M</div>
-          </Card>
-          <Card className="p-4">
-            <div className="text-sm text-gray-500">EBITDA Margin</div>
-            <div className="text-2xl font-bold text-gray-900">{SENSITIVITY_DATA.baseCase.margin}%</div>
-          </Card>
-          <Card className="p-4">
-            <div className="text-sm text-gray-500">EV/EBITDA Multiple</div>
-            <div className="text-2xl font-bold text-gray-900">{SENSITIVITY_DATA.baseCase.multiple}x</div>
-          </Card>
-          <Card className="p-4 bg-teal-50 border-teal-200">
-            <div className="text-sm text-teal-600">Enterprise Value</div>
-            <div className="text-2xl font-bold text-teal-700">${SENSITIVITY_DATA.baseCase.value}M</div>
-          </Card>
-        </div>
-
-        {/* Sensitivity Matrix */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <Table2 className="w-5 h-5 text-teal-600" />
-              <h2 className="font-semibold text-gray-900">Revenue vs. Margin Sensitivity</h2>
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="w-5 h-5 text-purple-600" />
+              <h3 className="font-semibold text-gray-900">Base Parameters</h3>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-4 h-4 rounded bg-red-500" />
-                <span>-15%+</span>
-                <div className="w-4 h-4 rounded bg-red-300" />
-                <span>-5%</span>
-                <div className="w-4 h-4 rounded bg-gray-100 border" />
-                <span>Base</span>
-                <div className="w-4 h-4 rounded bg-green-300" />
-                <span>+5%</span>
-                <div className="w-4 h-4 rounded bg-green-500" />
-                <span>+15%+</span>
+
+            <div className="space-y-3 text-sm">
+              <div>
+                <label className="text-gray-600">Purchase Price</label>
+                <input
+                  type="number"
+                  value={purchasePrice}
+                  onChange={(e) => setPurchasePrice(Number(e.target.value))}
+                  className="w-full mt-1 px-2 py-1 border rounded text-sm"
+                />
               </div>
-              <Button variant="secondary" size="sm">
-                <Download className="w-4 h-4" />
-                Export
-              </Button>
+              <div>
+                <label className="text-gray-600">Equity %</label>
+                <input
+                  type="number"
+                  value={equityPct}
+                  onChange={(e) => setEquityPct(Number(e.target.value))}
+                  className="w-full mt-1 px-2 py-1 border rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-gray-600">Synergies (Y3)</label>
+                <input
+                  type="number"
+                  value={synergies}
+                  onChange={(e) => setSynergies(Number(e.target.value))}
+                  className="w-full mt-1 px-2 py-1 border rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-gray-600">Integration Costs</label>
+                <input
+                  type="number"
+                  value={integrationCosts}
+                  onChange={(e) => setIntegrationCosts(Number(e.target.value))}
+                  className="w-full mt-1 px-2 py-1 border rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-gray-600">Revenue Growth %</label>
+                <input
+                  type="number"
+                  value={revenueGrowth}
+                  onChange={(e) => setRevenueGrowth(Number(e.target.value))}
+                  className="w-full mt-1 px-2 py-1 border rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-gray-600">EBITDA Margin %</label>
+                <input
+                  type="number"
+                  value={ebitdaMargin}
+                  onChange={(e) => setEbitdaMargin(Number(e.target.value))}
+                  className="w-full mt-1 px-2 py-1 border rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-gray-600">Exit Multiple</label>
+                <input
+                  type="number"
+                  value={exitMultiple}
+                  onChange={(e) => setExitMultiple(Number(e.target.value))}
+                  className="w-full mt-1 px-2 py-1 border rounded text-sm"
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 bg-gray-50 rounded-tl-lg">
-                    Revenue ↓ / Margin →
-                  </th>
-                  {SENSITIVITY_DATA.marginRange.map((delta) => (
-                    <th key={delta} className="p-3 text-center text-xs font-medium text-gray-500 bg-gray-50">
-                      {delta >= 0 ? '+' : ''}{delta}% ({SENSITIVITY_DATA.baseCase.margin + delta}%)
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {MATRIX.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    <td className="p-3 text-xs font-medium text-gray-500 bg-gray-50">
-                      {SENSITIVITY_DATA.revenueRange[rowIndex] >= 0 ? '+' : ''}
-                      {SENSITIVITY_DATA.revenueRange[rowIndex]}% 
-                      (${Math.round(SENSITIVITY_DATA.baseCase.revenue * (1 + SENSITIVITY_DATA.revenueRange[rowIndex] / 100))}M)
-                    </td>
-                    {row.map((value, colIndex) => {
-                      const isBase = rowIndex === 2 && colIndex === 2
-                      const isSelected = selectedCell?.row === rowIndex && selectedCell?.col === colIndex
-                      return (
-                        <td
-                          key={colIndex}
-                          className={cn(
-                            'p-3 text-center cursor-pointer transition-all',
-                            getCellColor(value),
-                            isBase && 'ring-2 ring-teal-500 ring-offset-2',
-                            isSelected && 'ring-2 ring-blue-500 ring-offset-2'
-                          )}
-                          onClick={() => setSelectedCell({ row: rowIndex, col: colIndex })}
-                        >
-                          <div className="font-semibold">${value}M</div>
-                          <div className="text-xs opacity-75">
-                            {value > baseValue ? '+' : ''}{Math.round((value - baseValue) / baseValue * 100)}%
-                          </div>
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        {/* Multiple Sensitivity */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <TrendingUp className="w-5 h-5 text-purple-600" />
-            <h2 className="font-semibold text-gray-900">Multiple Sensitivity (at Base Case)</h2>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {SENSITIVITY_DATA.multipleRange.map((multiple) => {
-              const value = calculateValue(
-                SENSITIVITY_DATA.baseCase.revenue,
-                SENSITIVITY_DATA.baseCase.margin,
-                multiple
-              )
-              const isBase = multiple === SENSITIVITY_DATA.baseCase.multiple
-              return (
-                <motion.div
-                  key={multiple}
-                  whileHover={{ scale: 1.05 }}
-                  className={cn(
-                    'flex-1 p-4 rounded-xl text-center border-2 transition-colors',
-                    isBase
-                      ? 'bg-teal-50 border-teal-500'
-                      : 'bg-gray-50 border-gray-200 hover:border-gray-300'
-                  )}
-                >
-                  <div className="text-sm text-gray-500 mb-1">{multiple}x Multiple</div>
-                  <div className={cn(
-                    'text-2xl font-bold',
-                    isBase ? 'text-teal-700' : 'text-gray-900'
-                  )}>
-                    ${Math.round(value)}M
-                  </div>
-                  <div className={cn(
-                    'text-xs mt-1',
-                    value > baseValue ? 'text-green-600' : value < baseValue ? 'text-red-600' : 'text-gray-500'
-                  )}>
-                    {value > baseValue ? '+' : ''}{Math.round((value - baseValue) / baseValue * 100)}% vs base
-                  </div>
-                </motion.div>
-              )
-            })}
-          </div>
-        </Card>
-
-        {/* AI Analysis */}
-        <div className="grid grid-cols-3 gap-6">
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-4 h-4 text-green-600" />
-              <h3 className="font-semibold text-gray-900 text-sm">Upside Scenario</h3>
-            </div>
-            <div className="text-2xl font-bold text-green-600 mb-2">$312M</div>
-            <p className="text-xs text-gray-600 mb-3">
-              +20% revenue, +5% margin expansion
-            </p>
-            <div className="p-2 bg-green-50 rounded text-xs text-green-700">
-              <strong>Claude:</strong> Achievable if synergies realized within 18 months
-            </div>
+            <Button
+              onClick={runAnalysis}
+              disabled={loading}
+              className="w-full mt-4 gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4" />
+                  Run Analysis
+                </>
+              )}
+            </Button>
           </Card>
 
-          <Card className="p-4 bg-teal-50 border-teal-200">
-            <div className="flex items-center gap-2 mb-3">
-              <Brain className="w-4 h-4 text-teal-600" />
-              <h3 className="font-semibold text-gray-900 text-sm">Base Case</h3>
-            </div>
-            <div className="text-2xl font-bold text-teal-700 mb-2">$240M</div>
-            <p className="text-xs text-gray-600 mb-3">
-              Current projections, 8x multiple
-            </p>
-            <div className="p-2 bg-teal-100 rounded text-xs text-teal-700">
-              <strong>Consensus:</strong> 85% confidence in base case assumptions
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingDown className="w-4 h-4 text-red-600" />
-              <h3 className="font-semibold text-gray-900 text-sm">Downside Scenario</h3>
-            </div>
-            <div className="text-2xl font-bold text-red-600 mb-2">$180M</div>
-            <p className="text-xs text-gray-600 mb-3">
-              -20% revenue, -5% margin compression
-            </p>
-            <div className="p-2 bg-red-50 rounded text-xs text-red-700">
-              <strong>GPT-4:</strong> 12% probability based on market conditions
-            </div>
-          </Card>
-        </div>
-
-        {/* Key Drivers */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
-              <h2 className="font-semibold text-gray-900">Key Value Drivers (AI-Identified)</h2>
-            </div>
-            <Badge variant="info">
-              <Brain className="w-3 h-3" />
-              Multi-Model Analysis
-            </Badge>
-          </div>
-
-          <div className="space-y-4">
-            {[
-              { driver: 'Revenue Growth Rate', impact: 'High', current: '+8% YoY', model: 'gpt-4', note: 'Each 1% change = $12M value' },
-              { driver: 'EBITDA Margin', impact: 'High', current: '25%', model: 'claude', note: 'Each 1% change = $9.6M value' },
-              { driver: 'Comparable Multiple', impact: 'Medium', current: '8x', model: 'consensus', note: 'Range: 6-10x for sector' },
-              { driver: 'Working Capital', impact: 'Low', current: '$15M', model: 'gpt-4', note: 'Standard for industry' },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">{item.driver}</div>
-                  <div className="text-xs text-gray-500">{item.note}</div>
+          {/* Selected Variable Detail */}
+          {selectedVar && (
+            <Card className="p-4">
+              <h4 className="font-semibold text-gray-900 mb-3">{selectedVar.variable}</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Base Value</span>
+                  <span>{formatValue(selectedVar.base_value, selectedVar.unit)}</span>
                 </div>
-                <Badge variant={
-                  item.impact === 'High' ? 'danger' :
-                  item.impact === 'Medium' ? 'warning' : 'default'
-                }>
-                  {item.impact} Impact
-                </Badge>
-                <div className="text-sm font-medium text-gray-900 w-20">{item.current}</div>
-                <Badge variant={
-                  item.model === 'claude' ? 'claude' :
-                  item.model === 'gpt-4' ? 'gpt4' : 'consensus'
-                }>
-                  {item.model}
-                </Badge>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Range</span>
+                  <span>
+                    {formatValue(selectedVar.low_value, selectedVar.unit)} - {formatValue(selectedVar.high_value, selectedVar.unit)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">IRR Swing</span>
+                  <span className="font-semibold text-purple-600">{selectedVar.irr_swing}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Sensitivity Rank</span>
+                  <Badge variant="default">#{selectedVar.sensitivity_rank}</Badge>
+                </div>
               </div>
-            ))}
-          </div>
-        </Card>
+            </Card>
+          )}
+        </div>
+
+        {/* Results */}
+        <div className="col-span-3 space-y-4">
+          {/* Error */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {loading ? (
+            <Card className="p-12 text-center">
+              <div className="flex flex-col items-center">
+                <div className="relative mb-4">
+                  <div className="w-16 h-16 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600" />
+                  <BarChart3 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-purple-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">Running Sensitivity Analysis</h3>
+                <p className="text-sm text-gray-500">Calculating IRR impact for each variable...</p>
+              </div>
+            </Card>
+          ) : !result ? (
+            <Card className="p-12 text-center">
+              <BarChart3 className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+              <h3 className="font-semibold text-gray-900 mb-2">Sensitivity Analysis</h3>
+              <p className="text-sm text-gray-500 max-w-md mx-auto">
+                See how changes in each variable affect your deal's IRR.
+                The tornado chart shows which factors have the greatest impact.
+              </p>
+            </Card>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
+              {/* Base IRR Header */}
+              <Card className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                      <Target className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <div className="text-sm text-purple-600 font-medium">Base Case IRR</div>
+                      <div className={cn('text-3xl font-bold', getIrrColor(result.base_case.irr))}>
+                        {result.base_case.irr}%
+                      </div>
+                    </div>
+                  </div>
+                  <Badge variant={result.base_case.irr >= 20 ? 'success' : 'warning'}>
+                    {result.base_case.irr >= 20 ? 'Above 20% Hurdle' : 'Below 20% Hurdle'}
+                  </Badge>
+                </div>
+              </Card>
+
+              {/* Tornado Chart */}
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-6">
+                  <BarChart3 className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-semibold text-gray-900">Tornado Chart - IRR Sensitivity</h3>
+                </div>
+
+                <div className="space-y-3">
+                  {result.tornado_chart_data.map((item, i) => {
+                    const maxSwing = Math.max(...result.tornado_chart_data.map(d => Math.max(Math.abs(d.downside), Math.abs(d.upside))))
+                    const downsideWidth = (Math.abs(item.downside) / maxSwing) * 45
+                    const upsideWidth = (Math.abs(item.upside) / maxSwing) * 45
+                    const sensitivityResult = result.sensitivity_results.find(r => r.variable === item.variable)
+
+                    return (
+                      <motion.div
+                        key={item.variable}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className={cn(
+                          'flex items-center gap-2 p-2 rounded-lg cursor-pointer transition',
+                          selectedVar?.variable === item.variable ? 'bg-purple-50' : 'hover:bg-gray-50'
+                        )}
+                        onClick={() => setSelectedVar(sensitivityResult || null)}
+                      >
+                        <div className="w-32 text-sm text-right text-gray-600">
+                          {item.variable}
+                        </div>
+                        
+                        {/* Downside bar */}
+                        <div className="w-[45%] flex justify-end">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-red-600">{item.downside.toFixed(1)}%</span>
+                            <div
+                              className="h-8 bg-red-400 rounded-l"
+                              style={{ width: `${downsideWidth}%`, minWidth: item.downside !== 0 ? '4px' : '0' }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Center line */}
+                        <div className="w-px h-10 bg-gray-400" />
+
+                        {/* Upside bar */}
+                        <div className="w-[45%]">
+                          <div className="flex items-center gap-1">
+                            <div
+                              className="h-8 bg-green-400 rounded-r"
+                              style={{ width: `${upsideWidth}%`, minWidth: item.upside !== 0 ? '4px' : '0' }}
+                            />
+                            <span className="text-xs text-green-600">+{item.upside.toFixed(1)}%</span>
+                          </div>
+                        </div>
+
+                        <div className="w-16 text-xs text-gray-500 text-right">
+                          #{result.sensitivity_results.find(r => r.variable === item.variable)?.sensitivity_rank}
+                        </div>
+                      </motion.div>
+                    )
+                  })}
+                </div>
+
+                {/* Legend */}
+                <div className="flex items-center justify-center gap-8 mt-6 pt-4 border-t border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <ArrowLeft className="w-4 h-4 text-red-500" />
+                    <div className="w-4 h-4 bg-red-400 rounded" />
+                    <span className="text-sm text-gray-600">IRR Decrease</span>
+                  </div>
+                  <div className="w-px h-4 bg-gray-300" />
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-green-400 rounded" />
+                    <ArrowRight className="w-4 h-4 text-green-500" />
+                    <span className="text-sm text-gray-600">IRR Increase</span>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Sensitivity Table */}
+              <Card className="p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Detailed Sensitivity Results</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-2 font-medium text-gray-500">Rank</th>
+                        <th className="text-left py-2 font-medium text-gray-500">Variable</th>
+                        <th className="text-right py-2 font-medium text-gray-500">Low</th>
+                        <th className="text-right py-2 font-medium text-gray-500">Base</th>
+                        <th className="text-right py-2 font-medium text-gray-500">High</th>
+                        <th className="text-right py-2 font-medium text-gray-500">Low IRR</th>
+                        <th className="text-right py-2 font-medium text-gray-500">High IRR</th>
+                        <th className="text-right py-2 font-medium text-gray-500">Swing</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.sensitivity_results.map((row) => (
+                        <tr
+                          key={row.variable}
+                          className={cn(
+                            'border-b border-gray-100 cursor-pointer transition',
+                            selectedVar?.variable === row.variable ? 'bg-purple-50' : 'hover:bg-gray-50'
+                          )}
+                          onClick={() => setSelectedVar(row)}
+                        >
+                          <td className="py-2">
+                            <Badge variant={row.sensitivity_rank <= 3 ? 'danger' : 'default'}>
+                              #{row.sensitivity_rank}
+                            </Badge>
+                          </td>
+                          <td className="py-2 font-medium">{row.variable}</td>
+                          <td className="py-2 text-right text-gray-500">
+                            {formatValue(row.low_value, row.unit)}
+                          </td>
+                          <td className="py-2 text-right">
+                            {formatValue(row.base_value, row.unit)}
+                          </td>
+                          <td className="py-2 text-right text-gray-500">
+                            {formatValue(row.high_value, row.unit)}
+                          </td>
+                          <td className={cn('py-2 text-right', getIrrColor(row.low_irr))}>
+                            {row.low_irr}%
+                          </td>
+                          <td className={cn('py-2 text-right', getIrrColor(row.high_irr))}>
+                            {row.high_irr}%
+                          </td>
+                          <td className="py-2 text-right font-semibold text-purple-600">
+                            {row.irr_swing}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+
+              {/* Key Findings */}
+              <Card className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <Info className="w-5 h-5 text-amber-600" />
+                  <h3 className="font-semibold text-amber-900">Key Findings</h3>
+                </div>
+                <div className="space-y-2">
+                  {result.key_findings.map((finding, i) => (
+                    <div key={i} className="flex items-start gap-2 text-sm text-amber-800">
+                      <span className="font-bold">•</span>
+                      {finding}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </motion.div>
+          )}
+        </div>
       </div>
     </MainLayout>
   )
