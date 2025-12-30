@@ -444,12 +444,12 @@ export default function DocumentsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {selectedDocument.signed_url && (
-                        <Button variant="secondary" size="sm" asChild>
-                          <a href={selectedDocument.signed_url} target="_blank" rel="noopener noreferrer">
+                        <a href={selectedDocument.signed_url} target="_blank" rel="noopener noreferrer">
+                          <Button variant="secondary" size="sm">
                             <Eye className="w-4 h-4" />
                             View
-                          </a>
-                        </Button>
+                          </Button>
+                        </a>
                       )}
                       <Button
                         size="sm"
