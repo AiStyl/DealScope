@@ -1,171 +1,250 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { MainLayout } from '@/components/layout'
 import { Card, Badge, Button, Progress } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import {
-  TrendingUp,
-  TrendingDown,
-  Brain,
-  Play,
-  Pause,
-  RotateCcw,
-  Settings,
-  Download,
-  AlertTriangle,
-  CheckCircle,
-  Target,
-  Percent,
-  DollarSign,
-  BarChart3,
   Activity,
+  TrendingDown,
+  TrendingUp,
+  AlertTriangle,
+  BarChart3,
+  Play,
+  Loader2,
+  DollarSign,
+  Target,
+  Shield,
+  RefreshCw,
+  Info,
+  ChevronDown,
+  FileText,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-// Simulation parameters
-const DEFAULT_PARAMS = {
-  baseValue: 250,
-  volatility: 20,
-  iterations: 10000,
-  timeHorizon: 5,
+interface RiskFactor {
+  name: string
+  category: string
+  probability: number
+  impact_low: number
+  impact_high: number
+  description: string
 }
 
-// Mock simulation results
-const SIMULATION_RESULTS = {
-  expectedValue: 287.5,
-  p10: 198.2,
-  p25: 234.6,
-  p50: 278.9,
-  p75: 332.4,
-  p90: 389.1,
-  probability: {
-    above300: 42,
-    above250: 68,
-    below200: 8,
-  },
-  riskFactors: [
-    { name: 'MAC Clause Trigger', probability: 12, impact: -45, model: 'claude' },
-    { name: 'Regulatory Delay', probability: 25, impact: -15, model: 'gpt-4' },
-    { name: 'Earnout Achievement', probability: 68, impact: 50, model: 'consensus' },
-    { name: 'Integration Synergies', probability: 75, impact: 30, model: 'gpt-4' },
-    { name: 'Key Employee Retention', probability: 85, impact: 20, model: 'claude' },
-  ],
+interface SimulationResult {
+  config: {
+    base_deal_value: number
+    simulations_run: number
+    risk_factors_count: number
+  }
+  risk_factors: RiskFactor[]
+  summary: {
+    expected_value: number
+    median_value: number
+    standard_deviation: number
+    min_scenario: number
+    max_scenario: number
+  }
+  risk_metrics: {
+    value_at_risk_95: number
+    value_at_risk_99: number
+    expected_shortfall: number
+    var_95_percent_of_base: number
+    var_99_percent_of_base: number
+  }
+  probabilities: {
+    below_80_percent: number
+    below_90_percent: number
+    above_110_percent: number
+  }
+  distribution: {
+    bucket: string
+    count: number
+    percentage: number
+  }[]
+  top_risk_contributors: {
+    name: string
+    frequency: number
+    avg_impact: number
+  }[]
+  worst_scenarios: {
+    value: number
+    impact_percent: number
+    risks_triggered: string[]
+  }[]
+  processing_time_ms: number
 }
 
-// Mock distribution data for visualization
-const DISTRIBUTION_BARS = Array.from({ length: 40 }, (_, i) => {
-  const x = 150 + i * 10
-  const mean = 280
-  const std = 60
-  const height = Math.exp(-Math.pow(x - mean, 2) / (2 * std * std)) * 100
-  return { x, height, isTarget: x >= 250 && x <= 300 }
-})
+interface Document {
+  id: string
+  name: string
+  status: string
+}
 
 export default function RiskSimulationPage() {
-  const [isRunning, setIsRunning] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [iterations, setIterations] = useState(0)
-  const [showResults, setShowResults] = useState(true)
-  const [params, setParams] = useState(DEFAULT_PARAMS)
+  const [documents, setDocuments] = useState<Document[]>([])
+  const [selectedDoc, setSelectedDoc] = useState<string | null>(null)
+  const [baseDealValue, setBaseDealValue] = useState(100000000)
+  const [simulations, setSimulations] = useState(10000)
+  const [loading, setLoading] = useState(false)
+  const [loadingDocs, setLoadingDocs] = useState(true)
+  const [result, setResult] = useState<SimulationResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [showRiskFactors, setShowRiskFactors] = useState(false)
 
-  const runSimulation = () => {
-    setIsRunning(true)
-    setProgress(0)
-    setIterations(0)
-    setShowResults(false)
+  const fetchDocuments = useCallback(async () => {
+    try {
+      setLoadingDocs(true)
+      const response = await fetch('/api/upload')
+      const data = await response.json()
+      if (data.documents) {
+        setDocuments(data.documents.filter((d: Document) => d.status === 'analyzed'))
+      }
+    } catch (err) {
+      console.error('Failed to fetch documents:', err)
+    } finally {
+      setLoadingDocs(false)
+    }
+  }, [])
 
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        const next = prev + Math.random() * 15
-        if (next >= 100) {
-          clearInterval(interval)
-          setIsRunning(false)
-          setShowResults(true)
-          return 100
-        }
-        setIterations(Math.floor((next / 100) * params.iterations))
-        return next
+  useEffect(() => {
+    fetchDocuments()
+  }, [fetchDocuments])
+
+  const runSimulation = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/risk-simulation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          documentId: selectedDoc,
+          baseDealValue,
+          simulations,
+        }),
       })
-    }, 200)
+
+      const data = await response.json()
+
+      if (data.success) {
+        setResult(data.simulation)
+      } else {
+        setError(data.error || 'Simulation failed')
+      }
+    } catch (err) {
+      console.error('Simulation error:', err)
+      setError('Simulation failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatCurrency = (value: number) => {
+    if (value >= 1e9) return `$${(value / 1e9).toFixed(1)}B`
+    if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`
+    if (value >= 1e3) return `$${(value / 1e3).toFixed(1)}K`
+    return `$${value.toFixed(0)}`
+  }
+
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      Legal: 'bg-purple-100 text-purple-700',
+      Financial: 'bg-green-100 text-green-700',
+      Operational: 'bg-blue-100 text-blue-700',
+      Regulatory: 'bg-amber-100 text-amber-700',
+      Market: 'bg-cyan-100 text-cyan-700',
+      Integration: 'bg-pink-100 text-pink-700',
+      Reputation: 'bg-orange-100 text-orange-700',
+    }
+    return colors[category] || 'bg-gray-100 text-gray-700'
   }
 
   return (
     <MainLayout
-      title="Risk Simulation"
-      subtitle="Monte Carlo simulation with multi-model probability analysis"
+      title="Monte Carlo Risk Simulation"
+      subtitle="Quantitative risk analysis using statistical simulation"
     >
       <div className="space-y-6">
-        {/* Control Panel */}
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Base Value ($M)</label>
-                <input
-                  type="number"
-                  value={params.baseValue}
-                  onChange={(e) => setParams(p => ({ ...p, baseValue: Number(e.target.value) }))}
-                  className="w-24 px-3 py-1.5 border border-gray-200 rounded-lg text-sm"
-                  disabled={isRunning}
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Volatility (%)</label>
-                <input
-                  type="number"
-                  value={params.volatility}
-                  onChange={(e) => setParams(p => ({ ...p, volatility: Number(e.target.value) }))}
-                  className="w-24 px-3 py-1.5 border border-gray-200 rounded-lg text-sm"
-                  disabled={isRunning}
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Iterations</label>
-                <select
-                  value={params.iterations}
-                  onChange={(e) => setParams(p => ({ ...p, iterations: Number(e.target.value) }))}
-                  className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-sm"
-                  disabled={isRunning}
-                >
-                  <option value={1000}>1,000</option>
-                  <option value={10000}>10,000</option>
-                  <option value={50000}>50,000</option>
-                  <option value={100000}>100,000</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Time Horizon (Years)</label>
-                <input
-                  type="number"
-                  value={params.timeHorizon}
-                  onChange={(e) => setParams(p => ({ ...p, timeHorizon: Number(e.target.value) }))}
-                  className="w-24 px-3 py-1.5 border border-gray-200 rounded-lg text-sm"
-                  disabled={isRunning}
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setParams(DEFAULT_PARAMS)
-                  setShowResults(false)
-                }}
-                disabled={isRunning}
+        {/* Configuration Panel */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="w-5 h-5 text-teal-600" />
+            <h2 className="font-semibold text-gray-900">Simulation Configuration</h2>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-6">
+            {/* Document Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Source Document (Optional)
+              </label>
+              <select
+                value={selectedDoc || ''}
+                onChange={(e) => setSelectedDoc(e.target.value || null)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                disabled={loading}
               >
-                <RotateCcw className="w-4 h-4" />
-                Reset
-              </Button>
+                <option value="">Use default risk factors</option>
+                {documents.map((doc) => (
+                  <option key={doc.id} value={doc.id}>
+                    {doc.name.slice(0, 40)}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                AI will extract risks from document
+              </p>
+            </div>
+
+            {/* Base Deal Value */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Base Deal Value
+              </label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="number"
+                  value={baseDealValue}
+                  onChange={(e) => setBaseDealValue(Number(e.target.value))}
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  disabled={loading}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {formatCurrency(baseDealValue)}
+              </p>
+            </div>
+
+            {/* Simulations */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Simulations
+              </label>
+              <select
+                value={simulations}
+                onChange={(e) => setSimulations(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                disabled={loading}
+              >
+                <option value={1000}>1,000 (Quick)</option>
+                <option value={10000}>10,000 (Standard)</option>
+                <option value={50000}>50,000 (Precise)</option>
+              </select>
+            </div>
+
+            {/* Run Button */}
+            <div className="flex items-end">
               <Button
                 onClick={runSimulation}
-                disabled={isRunning}
-                className="gap-2"
+                disabled={loading}
+                className="w-full gap-2"
               >
-                {isRunning ? (
+                {loading ? (
                   <>
-                    <Activity className="w-4 h-4 animate-pulse" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Running...
                   </>
                 ) : (
@@ -177,253 +256,305 @@ export default function RiskSimulationPage() {
               </Button>
             </div>
           </div>
-
-          {/* Progress Bar */}
-          {isRunning && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="mt-4 pt-4 border-t border-gray-200"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">
-                  Running {iterations.toLocaleString()} / {params.iterations.toLocaleString()} iterations...
-                </span>
-                <span className="text-sm font-medium text-teal-600">{Math.round(progress)}%</span>
-              </div>
-              <Progress value={progress} size="lg" />
-              <div className="flex items-center justify-center gap-4 mt-3 text-xs text-gray-500">
-                <span className="flex items-center gap-1">
-                  <div className="w-4 h-4 rounded-full bg-amber-100 flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-amber-700">C</span>
-                  </div>
-                  Claude analyzing risk factors
-                </span>
-                <span className="flex items-center gap-1">
-                  <div className="w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-emerald-700">G4</span>
-                  </div>
-                  GPT-4 computing distributions
-                </span>
-              </div>
-            </motion.div>
-          )}
         </Card>
 
-        {/* Results */}
+        {/* Error */}
         <AnimatePresence>
-          {showResults && (
+          {error && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-6"
+              exit={{ opacity: 0, y: -10 }}
+              className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700"
             >
-              {/* Key Metrics */}
-              <div className="grid grid-cols-5 gap-4">
-                <Card className="p-4 text-center">
-                  <div className="text-3xl font-bold text-gray-900">${SIMULATION_RESULTS.expectedValue}M</div>
-                  <div className="text-sm text-gray-500 mt-1">Expected Value</div>
-                  <Badge variant="success" className="mt-2">
-                    <TrendingUp className="w-3 h-3" />
-                    +15%
-                  </Badge>
-                </Card>
-                <Card className="p-4 text-center">
-                  <div className="text-3xl font-bold text-red-600">${SIMULATION_RESULTS.p10}M</div>
-                  <div className="text-sm text-gray-500 mt-1">P10 (Downside)</div>
-                  <div className="text-xs text-gray-400 mt-2">10th percentile</div>
-                </Card>
-                <Card className="p-4 text-center">
-                  <div className="text-3xl font-bold text-gray-900">${SIMULATION_RESULTS.p50}M</div>
-                  <div className="text-sm text-gray-500 mt-1">P50 (Median)</div>
-                  <div className="text-xs text-gray-400 mt-2">50th percentile</div>
-                </Card>
-                <Card className="p-4 text-center">
-                  <div className="text-3xl font-bold text-green-600">${SIMULATION_RESULTS.p90}M</div>
-                  <div className="text-sm text-gray-500 mt-1">P90 (Upside)</div>
-                  <div className="text-xs text-gray-400 mt-2">90th percentile</div>
-                </Card>
-                <Card className="p-4 text-center bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200">
-                  <div className="text-3xl font-bold text-teal-700">{SIMULATION_RESULTS.probability.above250}%</div>
-                  <div className="text-sm text-teal-600 mt-1">Probability {'>'} $250M</div>
-                  <div className="text-xs text-teal-500 mt-2">Target threshold</div>
-                </Card>
-              </div>
-
-              <div className="grid grid-cols-3 gap-6">
-                {/* Distribution Chart */}
-                <Card className="col-span-2 p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-gray-900">Value Distribution</h3>
-                    <div className="flex items-center gap-4 text-xs">
-                      <span className="flex items-center gap-1">
-                        <div className="w-3 h-3 rounded bg-teal-500" />
-                        Target Range
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <div className="w-3 h-3 rounded bg-gray-300" />
-                        Other Outcomes
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-64 flex items-end gap-0.5 px-4">
-                    {DISTRIBUTION_BARS.map((bar, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ height: 0 }}
-                        animate={{ height: `${bar.height}%` }}
-                        transition={{ delay: i * 0.02, duration: 0.3 }}
-                        className={cn(
-                          'flex-1 rounded-t',
-                          bar.isTarget ? 'bg-teal-500' : 'bg-gray-300'
-                        )}
-                        title={`$${bar.x}M`}
-                      />
-                    ))}
-                  </div>
-                  <div className="flex justify-between mt-2 text-xs text-gray-500 px-4">
-                    <span>$150M</span>
-                    <span>$250M</span>
-                    <span>$350M</span>
-                    <span>$450M</span>
-                  </div>
-                </Card>
-
-                {/* Probability Breakdown */}
-                <Card className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-4">Outcome Probabilities</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-600">Above $300M</span>
-                        <span className="font-medium text-green-600">{SIMULATION_RESULTS.probability.above300}%</span>
-                      </div>
-                      <Progress value={SIMULATION_RESULTS.probability.above300} variant="success" />
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-600">Above $250M (Target)</span>
-                        <span className="font-medium text-teal-600">{SIMULATION_RESULTS.probability.above250}%</span>
-                      </div>
-                      <Progress value={SIMULATION_RESULTS.probability.above250} />
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-600">Below $200M (Risk)</span>
-                        <span className="font-medium text-red-600">{SIMULATION_RESULTS.probability.below200}%</span>
-                      </div>
-                      <Progress value={SIMULATION_RESULTS.probability.below200} variant="danger" />
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-4 border-t">
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Simulation Parameters</h4>
-                    <div className="space-y-2 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Iterations</span>
-                        <span className="font-mono">{params.iterations.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Volatility</span>
-                        <span className="font-mono">{params.volatility}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Time Horizon</span>
-                        <span className="font-mono">{params.timeHorizon} years</span>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-
-              {/* Risk Factors */}
-              <Card className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-amber-500" />
-                    <h3 className="font-semibold text-gray-900">Risk Factors (AI-Identified)</h3>
-                  </div>
-                  <Badge variant="info">
-                    <Brain className="w-3 h-3" />
-                    Multi-Model Analysis
-                  </Badge>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="text-left text-xs text-gray-500 border-b">
-                        <th className="pb-3 font-medium">Risk Factor</th>
-                        <th className="pb-3 font-medium text-center">Probability</th>
-                        <th className="pb-3 font-medium text-center">Impact ($M)</th>
-                        <th className="pb-3 font-medium text-center">Expected Impact</th>
-                        <th className="pb-3 font-medium text-center">Identified By</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {SIMULATION_RESULTS.riskFactors.map((risk, i) => (
-                        <motion.tr
-                          key={risk.name}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.1 }}
-                          className="text-sm"
-                        >
-                          <td className="py-3 font-medium text-gray-900">{risk.name}</td>
-                          <td className="py-3 text-center">
-                            <Badge variant={risk.probability > 50 ? 'success' : risk.probability > 25 ? 'warning' : 'danger'}>
-                              {risk.probability}%
-                            </Badge>
-                          </td>
-                          <td className={cn(
-                            'py-3 text-center font-medium',
-                            risk.impact > 0 ? 'text-green-600' : 'text-red-600'
-                          )}>
-                            {risk.impact > 0 ? '+' : ''}{risk.impact}
-                          </td>
-                          <td className={cn(
-                            'py-3 text-center font-medium',
-                            (risk.probability * risk.impact / 100) > 0 ? 'text-green-600' : 'text-red-600'
-                          )}>
-                            {((risk.probability * risk.impact / 100) > 0 ? '+' : '')}{(risk.probability * risk.impact / 100).toFixed(1)}
-                          </td>
-                          <td className="py-3 text-center">
-                            <Badge variant={
-                              risk.model === 'claude' ? 'claude' :
-                              risk.model === 'gpt-4' ? 'gpt4' : 'consensus'
-                            }>
-                              {risk.model}
-                            </Badge>
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
-
-              {/* Multi-Model Attribution */}
-              <Card className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
-                    <Brain className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">Multi-Model Monte Carlo</h3>
-                    <p className="text-sm text-gray-600">
-                      Risk factors identified by Claude, probability distributions computed by GPT-4, 
-                      and cross-validated through consensus. This provides more robust risk estimates than single-model analysis.
-                    </p>
-                  </div>
-                  <Button variant="secondary">
-                    <Download className="w-4 h-4" />
-                    Export Analysis
-                  </Button>
-                </div>
-              </Card>
+              <AlertTriangle className="w-4 h-4" />
+              {error}
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Loading State */}
+        {loading && (
+          <Card className="p-8 text-center">
+            <div className="flex flex-col items-center">
+              <div className="relative mb-4">
+                <div className="w-16 h-16 border-4 border-teal-200 rounded-full animate-spin border-t-teal-600" />
+                <Activity className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-teal-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Running Monte Carlo Simulation</h3>
+              <p className="text-sm text-gray-500">
+                Simulating {simulations.toLocaleString()} scenarios...
+              </p>
+            </div>
+          </Card>
+        )}
+
+        {/* Results */}
+        {result && !loading && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            {/* Key Metrics */}
+            <div className="grid grid-cols-4 gap-4">
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="w-4 h-4 text-teal-600" />
+                  <span className="text-sm text-gray-500">Expected Value</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(result.summary.expected_value)}
+                </div>
+                <div className={cn(
+                  'text-xs mt-1',
+                  result.summary.expected_value < baseDealValue ? 'text-red-600' : 'text-green-600'
+                )}>
+                  {((result.summary.expected_value / baseDealValue - 1) * 100).toFixed(1)}% of base
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="w-4 h-4 text-red-600" />
+                  <span className="text-sm text-gray-500">VaR (95%)</span>
+                </div>
+                <div className="text-2xl font-bold text-red-600">
+                  {formatCurrency(result.risk_metrics.value_at_risk_95)}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {result.risk_metrics.var_95_percent_of_base}% of base
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingDown className="w-4 h-4 text-orange-600" />
+                  <span className="text-sm text-gray-500">P(Value &lt; 80%)</span>
+                </div>
+                <div className="text-2xl font-bold text-orange-600">
+                  {result.probabilities.below_80_percent}%
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Significant loss probability
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-4 h-4 text-green-600" />
+                  <span className="text-sm text-gray-500">P(Value &gt; 110%)</span>
+                </div>
+                <div className="text-2xl font-bold text-green-600">
+                  {result.probabilities.above_110_percent}%
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Upside probability
+                </div>
+              </Card>
+            </div>
+
+            {/* Distribution Chart */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-semibold text-gray-900">Value Distribution</h3>
+                </div>
+                <Badge variant="default">
+                  {result.config.simulations_run.toLocaleString()} simulations
+                </Badge>
+              </div>
+
+              <div className="space-y-2">
+                {result.distribution.map((bucket, i) => (
+                  <div key={bucket.bucket} className="flex items-center gap-3">
+                    <div className="w-20 text-sm text-gray-600 text-right">
+                      {bucket.bucket}
+                    </div>
+                    <div className="flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${bucket.percentage}%` }}
+                        transition={{ delay: i * 0.05 }}
+                        className={cn(
+                          'h-full rounded-lg',
+                          bucket.bucket.includes('< 70') || bucket.bucket.includes('70-80') 
+                            ? 'bg-red-500' 
+                            : bucket.bucket.includes('80-90')
+                            ? 'bg-orange-500'
+                            : bucket.bucket.includes('90-95') || bucket.bucket.includes('95-100')
+                            ? 'bg-amber-500'
+                            : 'bg-green-500'
+                        )}
+                      />
+                    </div>
+                    <div className="w-16 text-sm text-gray-600">
+                      {bucket.percentage}%
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Risk Contributors & Scenarios */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Top Risk Contributors */}
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                  <h3 className="font-semibold text-gray-900">Top Risk Contributors</h3>
+                </div>
+                <div className="space-y-3">
+                  {result.top_risk_contributors.map((risk, i) => (
+                    <div key={risk.name} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold">
+                          {i + 1}
+                        </div>
+                        <span className="text-sm text-gray-700">{risk.name}</span>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <span className="text-gray-500">{risk.frequency}% freq</span>
+                        <span className="text-red-600 font-medium">-{risk.avg_impact}% avg</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Worst Scenarios */}
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingDown className="w-5 h-5 text-red-600" />
+                  <h3 className="font-semibold text-gray-900">Worst Case Scenarios</h3>
+                </div>
+                <div className="space-y-3">
+                  {result.worst_scenarios.map((scenario, i) => (
+                    <div key={i} className="p-3 bg-red-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-red-800">
+                          {formatCurrency(scenario.value)}
+                        </span>
+                        <Badge variant="danger">
+                          {scenario.impact_percent.toFixed(1)}%
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {scenario.risks_triggered.slice(0, 3).map((risk) => (
+                          <span
+                            key={risk}
+                            className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded"
+                          >
+                            {risk}
+                          </span>
+                        ))}
+                        {scenario.risks_triggered.length > 3 && (
+                          <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded">
+                            +{scenario.risks_triggered.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+
+            {/* Risk Factors (Collapsible) */}
+            <Card className="p-6">
+              <button
+                onClick={() => setShowRiskFactors(!showRiskFactors)}
+                className="w-full flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-gray-600" />
+                  <h3 className="font-semibold text-gray-900">
+                    Risk Factors Used ({result.risk_factors.length})
+                  </h3>
+                </div>
+                <ChevronDown
+                  className={cn(
+                    'w-5 h-5 text-gray-400 transition-transform',
+                    showRiskFactors && 'rotate-180'
+                  )}
+                />
+              </button>
+
+              <AnimatePresence>
+                {showRiskFactors && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-4 space-y-3">
+                      {result.risk_factors.map((risk) => (
+                        <div
+                          key={risk.name}
+                          className="p-3 bg-gray-50 rounded-lg"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-900">{risk.name}</span>
+                              <span className={cn('px-2 py-0.5 text-xs rounded', getCategoryColor(risk.category))}>
+                                {risk.category}
+                              </span>
+                            </div>
+                            <span className="text-sm text-gray-500">
+                              P: {(risk.probability * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">{risk.description}</p>
+                          <div className="text-xs text-gray-500">
+                            Impact range: {risk.impact_low}% to {risk.impact_high}%
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Card>
+
+            {/* Summary Stats */}
+            <Card className="p-4 bg-gradient-to-r from-teal-50 to-emerald-50 border-teal-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Info className="w-5 h-5 text-teal-600" />
+                  <div>
+                    <span className="font-medium text-teal-900">Simulation Complete</span>
+                    <span className="text-sm text-teal-700 ml-2">
+                      {result.config.simulations_run.toLocaleString()} scenarios in {(result.processing_time_ms / 1000).toFixed(1)}s
+                    </span>
+                  </div>
+                </div>
+                <Button variant="secondary" size="sm" onClick={runSimulation}>
+                  <RefreshCw className="w-4 h-4" />
+                  Re-run
+                </Button>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !result && (
+          <Card className="p-12 text-center">
+            <Activity className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+            <h3 className="font-semibold text-gray-900 mb-2">Monte Carlo Risk Simulation</h3>
+            <p className="text-sm text-gray-500 max-w-lg mx-auto mb-6">
+              Run thousands of probabilistic scenarios to understand how different risks
+              could affect your deal value. Get VaR metrics, probability distributions,
+              and identify top risk contributors.
+            </p>
+            <Button onClick={runSimulation} className="gap-2">
+              <Play className="w-4 h-4" />
+              Run Simulation
+            </Button>
+          </Card>
+        )}
       </div>
     </MainLayout>
   )

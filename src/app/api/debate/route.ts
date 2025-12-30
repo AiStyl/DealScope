@@ -66,32 +66,37 @@ Respond in JSON format:
   "evidence_cited": ["Specific evidence or clause referenced"]
 }`
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 2048,
-    system: systemPrompt,
-    messages: [{
-      role: 'user',
-      content: `Topic to debate: "${topic}"\n\nContext/Document:\n${context.slice(0, 30000)}`
-    }],
-  })
-
-  const content = response.content[0]
-  if (content.type !== 'text') throw new Error('Unexpected response type')
-  
   try {
-    const jsonMatch = content.text.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0])
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: [{
+        role: 'user',
+        content: `Topic to debate: "${topic}"\n\nContext/Document:\n${context.slice(0, 30000)}`
+      }],
+    })
+
+    const content = response.content[0]
+    if (content.type !== 'text') throw new Error('Unexpected response type')
+    
+    try {
+      const jsonMatch = content.text.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0])
+      }
+    } catch (e) {
+      // Fallback if JSON parsing fails
     }
-  } catch (e) {
-    // Fallback if JSON parsing fails
-  }
-  
-  return {
-    argument: content.text,
-    key_points: [],
-    evidence_cited: [],
+    
+    return {
+      argument: content.text,
+      key_points: [],
+      evidence_cited: [],
+    }
+  } catch (error) {
+    console.error('Claude FOR error:', error)
+    throw new Error(`Claude failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
@@ -118,23 +123,28 @@ Respond in JSON format:
   "evidence_cited": ["Specific evidence or clause referenced"]
 }`
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { 
-        role: 'user', 
-        content: `Topic: "${topic}"\n\nContext:\n${context.slice(0, 30000)}\n\n---\n\nOpposing counsel (arguing FOR) states:\n${forArgument}\n\nProvide your rebuttal arguing AGAINST.`
-      },
-    ],
-    max_tokens: 2048,
-    response_format: { type: 'json_object' },
-  })
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o', // Fixed: was gpt-4-turbo-preview
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { 
+          role: 'user', 
+          content: `Topic: "${topic}"\n\nContext:\n${context.slice(0, 30000)}\n\n---\n\nOpposing counsel (arguing FOR) states:\n${forArgument}\n\nProvide your rebuttal arguing AGAINST.`
+        },
+      ],
+      max_tokens: 2048,
+      response_format: { type: 'json_object' },
+    })
 
-  const content = response.choices[0]?.message?.content
-  if (!content) throw new Error('No response from GPT-4')
-  
-  return JSON.parse(content)
+    const content = response.choices[0]?.message?.content
+    if (!content) throw new Error('No response from GPT-4')
+    
+    return JSON.parse(content)
+  } catch (error) {
+    console.error('GPT-4 AGAINST error:', error)
+    throw new Error(`GPT-4 failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
 }
 
 // Gemini judges the debate
@@ -185,45 +195,60 @@ Respond in JSON format:
   "recommendation": "What should the deal team do based on this debate?"
 }`
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 2048,
-        },
-      }),
-    }
-  )
-
-  const data = await response.json()
-  const content = data.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!content) throw new Error('No response from Gemini')
-
   try {
-    const jsonMatch = content.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      const result = JSON.parse(jsonMatch[0])
-      return {
-        ...result,
-        judge_model: 'Gemini',
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 2048,
+          },
+        }),
       }
-    }
-  } catch (e) {
-    // Fallback
-  }
+    )
 
-  return {
-    winner: 'TIE',
-    confidence: 0.5,
-    reasoning: content,
-    key_factors: [],
-    recommendation: 'Review the debate transcript manually.',
-    judge_model: 'Gemini',
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Gemini API error:', errorText)
+      throw new Error(`Gemini API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text
+    
+    if (!content) {
+      console.error('No content from Gemini:', data)
+      throw new Error('No response from Gemini')
+    }
+
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        const result = JSON.parse(jsonMatch[0])
+        return {
+          ...result,
+          judge_model: 'Gemini',
+        }
+      }
+    } catch (e) {
+      // Fallback
+    }
+
+    return {
+      winner: 'TIE',
+      confidence: 0.5,
+      reasoning: content,
+      key_factors: [],
+      recommendation: 'Review the debate transcript manually.',
+      judge_model: 'Gemini',
+    }
+  } catch (error) {
+    console.error('Gemini judge error:', error)
+    throw new Error(`Gemini failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
@@ -238,15 +263,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'topic is required' }, { status: 400 })
     }
 
+    console.log('Starting debate on topic:', topic)
+
     // Get context from document if provided
     let debateContext = context || ''
     
     if (documentId && !debateContext) {
-      const { data: document } = await supabase
+      const { data: document, error: docError } = await supabase
         .from('documents')
         .select('extracted_text, name')
         .eq('id', documentId)
         .single()
+      
+      if (docError) {
+        console.log('Document lookup error (non-fatal):', docError)
+      }
       
       if (document?.extracted_text) {
         debateContext = document.extracted_text
@@ -254,7 +285,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!debateContext) {
-      debateContext = 'No specific document context provided. Debate based on general M&A principles.'
+      debateContext = 'No specific document context provided. Debate based on general M&A principles and industry best practices.'
     }
 
     const debateRounds: DebateRound[] = []
@@ -272,6 +303,7 @@ export async function POST(request: NextRequest) {
         debateContext,
         lastAgainstArgument
       )
+      console.log(`Round ${i}: Claude argued FOR`)
       
       // GPT-4 argues AGAINST - it SEES Claude's argument
       const againstResult = await gpt4ArguesAgainst(
@@ -280,6 +312,7 @@ export async function POST(request: NextRequest) {
         forResult.argument,
         lastAgainstArgument
       )
+      console.log(`Round ${i}: GPT-4 argued AGAINST`)
 
       debateRounds.push({
         round: i,
@@ -306,9 +339,10 @@ export async function POST(request: NextRequest) {
     // Gemini judges the full debate
     console.log('Gemini is judging the debate...')
     const verdict = await geminiJudges(topic, debateContext, debateRounds)
+    console.log('Verdict:', verdict.winner)
 
-    // Log audit event
-    await supabase.from('audit_logs').insert({
+    // Log audit event (non-blocking)
+    supabase.from('audit_logs').insert({
       event_type: 'debate',
       action: 'agent_debate',
       details: {
@@ -319,7 +353,7 @@ export async function POST(request: NextRequest) {
         confidence: verdict.confidence,
         processing_time_ms: Date.now() - startTime,
       },
-    })
+    }).then(() => {}).catch(e => console.log('Audit log error:', e))
 
     return NextResponse.json({
       success: true,
@@ -343,7 +377,7 @@ export async function POST(request: NextRequest) {
           winner: verdict.winner,
           confidence: verdict.confidence,
           reasoning: verdict.reasoning,
-          key_factors: verdict.key_factors,
+          key_factors: verdict.key_factors || [],
           recommendation: verdict.recommendation,
         },
         
@@ -361,61 +395,40 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Debate error:', error)
     return NextResponse.json(
-      { error: 'Debate failed', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        success: false,
+        error: 'Debate failed', 
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      },
       { status: 500 }
     )
   }
 }
 
-// GET endpoint for quick debate without document
+// GET endpoint for info
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const topic = searchParams.get('topic')
-
-  if (!topic) {
-    return NextResponse.json({
-      endpoint: '/api/debate',
-      description: 'Adversarial AI debate - Claude argues FOR, GPT-4 argues AGAINST, Gemini judges',
-      method: 'POST',
-      body: {
-        topic: 'string - The position to debate (required)',
-        documentId: 'uuid - Document for context (optional)',
-        context: 'string - Direct context text (optional)',
-        rounds: 'number - Debate rounds 1-3 (default: 2)',
-      },
-      example_topics: [
-        'The MAC clause exclusions adequately protect the buyer',
-        'The indemnification cap at 10% is sufficient for this deal size',
-        'Cross-industry M&A risks outweigh the potential synergies',
-        'The asymmetric breakup fee structure is unfair to the seller',
-        'Earnout provisions should be included to bridge valuation gap',
-      ],
-      differentiators: [
-        'Sequential, not parallel - models see and respond to each other',
-        'Real adversarial debate, not scripted responses',
-        'Independent judge evaluates argument quality',
-        'Applicable to any M&A decision point',
-      ],
-    })
-  }
-
-  // Quick single-round debate
-  try {
-    const forResult = await claudeArguesFor(topic, 'General M&A context')
-    const againstResult = await gpt4ArguesAgainst(topic, 'General M&A context', forResult.argument)
-
-    return NextResponse.json({
-      topic,
-      quick_debate: {
-        for: { model: 'Claude', argument: forResult.argument, key_points: forResult.key_points },
-        against: { model: 'GPT-4', argument: againstResult.argument, key_points: againstResult.key_points },
-      },
-      note: 'This is a quick single-round debate. Use POST for full multi-round debate with judging.',
-    })
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Quick debate failed', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    )
-  }
+  return NextResponse.json({
+    endpoint: '/api/debate',
+    description: 'Adversarial AI debate - Claude argues FOR, GPT-4 argues AGAINST, Gemini judges',
+    method: 'POST',
+    body: {
+      topic: 'string - The position to debate (required)',
+      documentId: 'uuid - Document for context (optional)',
+      context: 'string - Direct context text (optional)',
+      rounds: 'number - Debate rounds 1-3 (default: 2)',
+    },
+    example_topics: [
+      'The MAC clause exclusions adequately protect the buyer',
+      'The indemnification cap at 10% is sufficient for this deal size',
+      'Cross-industry M&A risks outweigh the potential synergies',
+      'The asymmetric breakup fee structure is unfair to the seller',
+      'Earnout provisions should be included to bridge valuation gap',
+    ],
+    differentiators: [
+      'Sequential, not parallel - models see and respond to each other',
+      'Real adversarial debate, not scripted responses',
+      'Independent judge evaluates argument quality',
+      'Applicable to any M&A decision point',
+    ],
+  })
 }
