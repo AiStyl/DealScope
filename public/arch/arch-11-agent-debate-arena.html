@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture — Agent Debate Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --white: #ffffff; --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-500: #64748b; --gray-600: #475569;
+            --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a; --gray-950: #0a0f1a;
+            --teal: #0d9488; --teal-light: #14b8a6; --amber: #d97706; --red: #dc2626;
+            --green: #16a34a; --blue: #2563eb; --purple: #7c3aed;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--gray-950); color: var(--gray-100); min-height: 100vh; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; background: var(--gray-900); border-bottom: 1px solid var(--gray-800); }
+        .topbar-left { display: flex; align-items: center; gap: 1.5rem; }
+        .back-link { color: var(--gray-400); text-decoration: none; font-size: 0.9rem; }
+        .page-title { font-size: 1.1rem; font-weight: 600; color: var(--white); }
+        .screen-badge { background: var(--red); color: white; padding: 0.4rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
+        .page-header { text-align: center; margin-bottom: 3rem; }
+        .page-header h1 { font-family: 'Fraunces', serif; font-size: 2rem; color: var(--white); margin-bottom: 0.5rem; }
+        .page-header p { color: var(--gray-400); font-size: 1rem; }
+        .section { margin-bottom: 3rem; }
+        .section-title { font-size: 1rem; font-weight: 600; color: var(--teal-light); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .diagram-container { background: var(--gray-900); border: 1px solid var(--gray-800); border-radius: 16px; padding: 2rem; }
+        
+        /* Debate Flow */
+        .debate-flow { display: flex; flex-direction: column; gap: 1.5rem; align-items: center; }
+        .debate-stage { display: flex; align-items: center; gap: 2rem; width: 100%; justify-content: center; }
+        .debate-node { background: var(--gray-800); border: 2px solid var(--gray-700); border-radius: 12px; padding: 1.25rem; text-align: center; min-width: 200px; }
+        .debate-node.question { border-color: var(--blue); background: rgba(37, 99, 235, 0.1); }
+        .debate-node.for { border-color: var(--green); background: rgba(22, 163, 74, 0.1); }
+        .debate-node.against { border-color: var(--red); background: rgba(220, 38, 38, 0.1); }
+        .debate-node.consensus { border-color: var(--purple); background: rgba(124, 58, 237, 0.1); }
+        .node-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .node-title { font-weight: 600; color: var(--white); font-size: 0.9rem; }
+        .node-desc { font-size: 0.75rem; color: var(--gray-400); margin-top: 0.25rem; }
+        .node-tech { margin-top: 0.5rem; }
+        .tech-tag { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: var(--gray-700); border-radius: 4px; color: var(--teal-light); font-family: 'JetBrains Mono', monospace; }
+        
+        .vs-badge { background: var(--amber); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem; }
+        .flow-arrow { color: var(--gray-500); font-size: 1.5rem; }
+        
+        /* Debate Rules */
+        .rules-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .rule-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 10px; padding: 1rem; text-align: center; }
+        .rule-num { font-size: 1.5rem; font-weight: 700; color: var(--teal-light); margin-bottom: 0.5rem; }
+        .rule-title { font-weight: 600; color: var(--white); font-size: 0.85rem; margin-bottom: 0.25rem; }
+        .rule-desc { font-size: 0.75rem; color: var(--gray-400); }
+        
+        /* Agent Config */
+        .agent-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .agent-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 12px; padding: 1.5rem; }
+        .agent-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .agent-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .agent-icon.contract { background: #dbeafe; }
+        .agent-icon.risk { background: #fef3c7; }
+        .agent-icon.financial { background: #dcfce7; }
+        .agent-icon.researcher { background: #ede9fe; }
+        .agent-name { font-weight: 600; color: var(--white); }
+        .agent-model { font-size: 0.75rem; color: var(--gray-400); }
+        .agent-tasks { display: flex; flex-direction: column; gap: 0.5rem; }
+        .agent-task { font-size: 0.8rem; color: var(--gray-300); padding-left: 1rem; position: relative; }
+        .agent-task::before { content: '→'; position: absolute; left: 0; color: var(--teal-light); }
+        
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .info-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 12px; padding: 1.5rem; }
+        .info-card h3 { font-size: 0.9rem; color: var(--teal-light); margin-bottom: 1rem; }
+        .info-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .info-item { display: flex; justify-content: space-between; font-size: 0.8rem; }
+        .info-item span:first-child { color: var(--gray-400); }
+        .info-item span:last-child { color: var(--white); font-family: 'JetBrains Mono', monospace; }
+        
+        .view-screen-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="23-architecture.html" class="back-link">← System Architecture</a>
+            <h1 class="page-title">Agent Debate Arena</h1>
+        </div>
+        <span class="screen-badge">Screen 11</span>
+    </div>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Agent Debate Arena Architecture</h1>
+            <p>Structured adversarial debate between AI agents to surface all perspectives on critical decisions</p>
+        </div>
+
+        <!-- Debate Flow -->
+        <div class="section">
+            <h2 class="section-title">Debate Flow</h2>
+            <div class="diagram-container">
+                <div class="debate-flow">
+                    <div class="debate-node question">
+                        <div class="node-icon">❓</div>
+                        <div class="node-title">Debate Question</div>
+                        <div class="node-desc">"Should we proceed with the earnout structure?"</div>
+                    </div>
+                    
+                    <div class="flow-arrow">↓</div>
+                    
+                    <div class="debate-stage">
+                        <div class="debate-node for">
+                            <div class="node-icon">✅</div>
+                            <div class="node-title">FOR Position</div>
+                            <div class="node-desc">Financial Modeler + Contract Analyst</div>
+                            <div class="node-tech"><span class="tech-tag">Claude</span> <span class="tech-tag">GPT-4</span></div>
+                        </div>
+                        
+                        <div class="vs-badge">VS</div>
+                        
+                        <div class="debate-node against">
+                            <div class="node-icon">❌</div>
+                            <div class="node-title">AGAINST Position</div>
+                            <div class="node-desc">Risk Assessor + Market Researcher</div>
+                            <div class="node-tech"><span class="tech-tag">Claude</span> <span class="tech-tag">Gemini</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flow-arrow">↓</div>
+                    
+                    <div class="debate-node" style="border-color: var(--amber); background: rgba(217, 119, 6, 0.1);">
+                        <div class="node-icon">🔄</div>
+                        <div class="node-title">Multi-Round Debate</div>
+                        <div class="node-desc">Arguments → Rebuttals → Counter-rebuttals (3 rounds)</div>
+                    </div>
+                    
+                    <div class="flow-arrow">↓</div>
+                    
+                    <div class="debate-node consensus">
+                        <div class="node-icon">⚖️</div>
+                        <div class="node-title">Synthesis & Recommendation</div>
+                        <div class="node-desc">Neutral judge weighs evidence, produces final recommendation</div>
+                        <div class="node-tech"><span class="tech-tag">Claude Opus</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debate Rules -->
+        <div class="section">
+            <h2 class="section-title">Debate Protocol</h2>
+            <div class="diagram-container">
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <div class="rule-num">1</div>
+                        <div class="rule-title">Evidence Required</div>
+                        <div class="rule-desc">Every claim must cite specific documents or data</div>
+                    </div>
+                    <div class="rule-card">
+                        <div class="rule-num">2</div>
+                        <div class="rule-title">Steelman Opponents</div>
+                        <div class="rule-desc">Must acknowledge strongest opposing arguments</div>
+                    </div>
+                    <div class="rule-card">
+                        <div class="rule-num">3</div>
+                        <div class="rule-title">Quantify Risks</div>
+                        <div class="rule-desc">Probability and impact estimates for all risks</div>
+                    </div>
+                    <div class="rule-card">
+                        <div class="rule-num">4</div>
+                        <div class="rule-title">Time Limits</div>
+                        <div class="rule-desc">Each turn limited to 60 seconds max</div>
+                    </div>
+                    <div class="rule-card">
+                        <div class="rule-num">5</div>
+                        <div class="rule-title">No Ad Hominem</div>
+                        <div class="rule-desc">Attack arguments, not other agents</div>
+                    </div>
+                    <div class="rule-card">
+                        <div class="rule-num">6</div>
+                        <div class="rule-title">Uncertainty Disclosure</div>
+                        <div class="rule-desc">Must state confidence level for each claim</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Participating Agents -->
+        <div class="section">
+            <h2 class="section-title">Participating Agents</h2>
+            <div class="agent-grid">
+                <div class="agent-card">
+                    <div class="agent-header">
+                        <div class="agent-icon contract">📄</div>
+                        <div>
+                            <div class="agent-name">Contract Analyst</div>
+                            <div class="agent-model">Claude API</div>
+                        </div>
+                    </div>
+                    <div class="agent-tasks">
+                        <div class="agent-task">Analyzes legal terms and obligations</div>
+                        <div class="agent-task">Identifies change-of-control clauses</div>
+                        <div class="agent-task">Flags termination triggers</div>
+                    </div>
+                </div>
+                <div class="agent-card">
+                    <div class="agent-header">
+                        <div class="agent-icon risk">⚠️</div>
+                        <div>
+                            <div class="agent-name">Risk Assessor</div>
+                            <div class="agent-model">Claude API</div>
+                        </div>
+                    </div>
+                    <div class="agent-tasks">
+                        <div class="agent-task">Evaluates downside scenarios</div>
+                        <div class="agent-task">Quantifies probability of risks</div>
+                        <div class="agent-task">Recommends mitigations</div>
+                    </div>
+                </div>
+                <div class="agent-card">
+                    <div class="agent-header">
+                        <div class="agent-icon financial">💰</div>
+                        <div>
+                            <div class="agent-name">Financial Modeler</div>
+                            <div class="agent-model">GPT-4 API</div>
+                        </div>
+                    </div>
+                    <div class="agent-tasks">
+                        <div class="agent-task">Builds valuation models</div>
+                        <div class="agent-task">Calculates IRR scenarios</div>
+                        <div class="agent-task">Sensitivity analysis</div>
+                    </div>
+                </div>
+                <div class="agent-card">
+                    <div class="agent-header">
+                        <div class="agent-icon researcher">🔬</div>
+                        <div>
+                            <div class="agent-name">Market Researcher</div>
+                            <div class="agent-model">Gemini API</div>
+                        </div>
+                    </div>
+                    <div class="agent-tasks">
+                        <div class="agent-task">Finds comparable transactions</div>
+                        <div class="agent-task">Industry trend analysis</div>
+                        <div class="agent-task">Competitive landscape</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Specs -->
+        <div class="section">
+            <h2 class="section-title">Technical Specifications</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>🔌 APIs Used</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>FOR Team Lead</span><span>Claude API</span></div>
+                        <div class="info-item"><span>AGAINST Team Lead</span><span>Claude API</span></div>
+                        <div class="info-item"><span>Financial Analysis</span><span>GPT-4 API</span></div>
+                        <div class="info-item"><span>Research/Search</span><span>Gemini API</span></div>
+                        <div class="info-item"><span>Judge/Synthesis</span><span>Claude Opus</span></div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>⚡ Performance</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>Rounds per Debate</span><span>3 rounds</span></div>
+                        <div class="info-item"><span>Time per Turn</span><span>30-60 seconds</span></div>
+                        <div class="info-item"><span>Total Debate Time</span><span>5-10 minutes</span></div>
+                        <div class="info-item"><span>Streaming</span><span>Real-time SSE</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Example -->
+        <div class="section">
+            <h2 class="section-title">Implementation Example</h2>
+            <div class="diagram-container">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">TypeScript</span>
+                        <span class="code-file">lib/debate/runDebate.ts</span>
+                    </div>
+<pre><span class="keyword">async function</span> <span class="function">runDebate</span>(question: string, context: Document[]) {
+  <span class="keyword">const</span> forTeam = [<span class="string">'contract_analyst'</span>, <span class="string">'financial_modeler'</span>];
+  <span class="keyword">const</span> againstTeam = [<span class="string">'risk_assessor'</span>, <span class="string">'market_researcher'</span>];
+  
+  <span class="keyword">let</span> history: DebateTurn[] = [];
+
+  <span class="keyword">for</span> (<span class="keyword">let</span> round = 1; round <= 3; round++) {
+    <span class="comment">// FOR position argues</span>
+    <span class="keyword">const</span> forArg = <span class="keyword">await</span> callClaude({
+      prompt: buildDebatePrompt(<span class="string">'for'</span>, question, history),
+      agents: forTeam
+    });
+    history.push({ side: <span class="string">'for'</span>, round, content: forArg });
+
+    <span class="comment">// AGAINST position rebuts</span>
+    <span class="keyword">const</span> againstArg = <span class="keyword">await</span> callClaude({
+      prompt: buildDebatePrompt(<span class="string">'against'</span>, question, history),
+      agents: againstTeam
+    });
+    history.push({ side: <span class="string">'against'</span>, round, content: againstArg });
+  }
+
+  <span class="comment">// Neutral judge synthesizes</span>
+  <span class="keyword">return await</span> callClaude({ role: <span class="string">'judge'</span>, history });
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <a href="11-agent-debate-arena.html" class="view-screen-btn">View Screen Mockup →</a>
+    </main>
+    <style>
+        .code-block { background: #0d1117; border-radius: 8px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; padding: 0.5rem 1rem; background: #161b22; border-bottom: 1px solid #30363d; }
+        .code-lang { color: #58a6ff; font-size: 0.75rem; font-weight: 600; }
+        .code-file { color: #8b949e; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; }
+        .code-block pre { padding: 1rem; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.6; overflow-x: auto; color: #c9d1d9; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .function { color: #d2a8ff; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .comment { color: #8b949e; }
+    </style>
+</body>
+</html>

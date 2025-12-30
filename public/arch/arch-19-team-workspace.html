@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture — Team Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --white: #ffffff; --gray-400: #94a3b8; --gray-500: #64748b; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a; --gray-950: #0a0f1a; --teal: #0d9488; --teal-light: #14b8a6; --amber: #d97706; --green: #16a34a; --blue: #2563eb; --purple: #7c3aed; --red: #dc2626; }
+        body { font-family: 'Inter', sans-serif; background: var(--gray-950); color: #f1f5f9; min-height: 100vh; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; background: var(--gray-900); border-bottom: 1px solid var(--gray-800); }
+        .topbar-left { display: flex; align-items: center; gap: 1.5rem; }
+        .back-link { color: var(--gray-400); text-decoration: none; font-size: 0.9rem; }
+        .back-link:hover { color: var(--teal-light); }
+        .page-title { font-size: 1.1rem; font-weight: 600; color: var(--white); }
+        .screen-badge { background: var(--blue); color: white; padding: 0.4rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
+        .page-header { text-align: center; margin-bottom: 3rem; }
+        .page-header h1 { font-family: 'Fraunces', serif; font-size: 2rem; color: var(--white); margin-bottom: 0.5rem; }
+        .page-header p { color: var(--gray-400); font-size: 1rem; }
+        .section { margin-bottom: 3rem; }
+        .section-title { font-size: 1rem; font-weight: 600; color: var(--teal-light); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .diagram-container { background: var(--gray-900); border: 1px solid var(--gray-800); border-radius: 16px; padding: 2rem; }
+        .collab-flow { display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 1.5rem; }
+        .collab-node { background: var(--gray-800); border: 2px solid var(--gray-700); border-radius: 12px; padding: 1.5rem; text-align: center; width: 200px; }
+        .collab-node.user { border-color: var(--blue); background: rgba(37, 99, 235, 0.1); }
+        .collab-node.realtime { border-color: var(--green); background: rgba(22, 163, 74, 0.1); }
+        .collab-node.sync { border-color: var(--purple); background: rgba(124, 58, 237, 0.1); }
+        .node-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .node-title { font-weight: 600; color: var(--white); }
+        .node-desc { font-size: 0.75rem; color: var(--gray-400); margin-top: 0.25rem; }
+        .tech-tag { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: var(--gray-700); border-radius: 4px; color: var(--teal-light); font-family: 'JetBrains Mono', monospace; margin: 0.25rem; display: inline-block; }
+        .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .feature-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 10px; padding: 1.25rem; }
+        .feature-card h4 { font-size: 0.9rem; color: var(--white); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .feature-card p { font-size: 0.75rem; color: var(--gray-400); line-height: 1.5; }
+        .feature-card ul { font-size: 0.75rem; color: var(--gray-400); margin-top: 0.5rem; padding-left: 1rem; }
+        .role-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+        .role-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 10px; padding: 1rem; text-align: center; }
+        .role-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .role-name { font-weight: 600; color: var(--white); font-size: 0.85rem; }
+        .role-perms { font-size: 0.7rem; color: var(--gray-400); margin-top: 0.25rem; }
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .info-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 12px; padding: 1.5rem; }
+        .info-card h3 { font-size: 0.9rem; color: var(--teal-light); margin-bottom: 1rem; }
+        .info-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .info-item { display: flex; justify-content: space-between; font-size: 0.8rem; }
+        .info-item span:first-child { color: var(--gray-400); }
+        .info-item span:last-child { color: var(--white); font-family: 'JetBrains Mono', monospace; }
+        .view-screen-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="../23-architecture.html" class="back-link">← System Architecture</a>
+            <h1 class="page-title">Team Workspace</h1>
+        </div>
+        <span class="screen-badge">Screen 19</span>
+    </div>
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Team Workspace Architecture</h1>
+            <p>Real-time collaboration with role-based access and approval workflows</p>
+        </div>
+
+        <!-- Collaboration Flow -->
+        <div class="section">
+            <h2 class="section-title">Real-Time Collaboration</h2>
+            <div class="diagram-container">
+                <div class="collab-flow">
+                    <div class="collab-node user">
+                        <div class="node-icon">👤</div>
+                        <div class="node-title">User A</div>
+                        <div class="node-desc">Editing document</div>
+                    </div>
+                    <div class="collab-node realtime">
+                        <div class="node-icon">⚡</div>
+                        <div class="node-title">Supabase Realtime</div>
+                        <div class="node-desc">Broadcast changes</div>
+                        <div><span class="tech-tag">WebSocket</span></div>
+                    </div>
+                    <div class="collab-node user">
+                        <div class="node-icon">👥</div>
+                        <div class="node-title">User B & C</div>
+                        <div class="node-desc">See live updates</div>
+                    </div>
+                    <div class="collab-node sync">
+                        <div class="node-icon">🔄</div>
+                        <div class="node-title">Conflict Resolution</div>
+                        <div class="node-desc">Last-write-wins + merge</div>
+                        <div><span class="tech-tag">CRDT</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Roles & Permissions -->
+        <div class="section">
+            <h2 class="section-title">Role-Based Access Control</h2>
+            <div class="diagram-container">
+                <div class="role-grid">
+                    <div class="role-card">
+                        <div class="role-icon">👑</div>
+                        <div class="role-name">Admin</div>
+                        <div class="role-perms">Full access, billing, team mgmt</div>
+                    </div>
+                    <div class="role-card">
+                        <div class="role-icon">📊</div>
+                        <div class="role-name">Deal Lead</div>
+                        <div class="role-perms">Create deals, assign, approve</div>
+                    </div>
+                    <div class="role-card">
+                        <div class="role-icon">✍️</div>
+                        <div class="role-name">Analyst</div>
+                        <div class="role-perms">Edit, comment, upload docs</div>
+                    </div>
+                    <div class="role-card">
+                        <div class="role-icon">👀</div>
+                        <div class="role-name">Viewer</div>
+                        <div class="role-perms">Read-only, download reports</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="section">
+            <h2 class="section-title">Collaboration Features</h2>
+            <div class="diagram-container">
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>💬 Comments & Threads</h4>
+                        <p>Threaded discussions on any finding or document</p>
+                        <ul>
+                            <li>@mentions with notifications</li>
+                            <li>Resolve/unresolve threads</li>
+                            <li>Link to specific evidence</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>✅ Approval Workflows</h4>
+                        <p>Multi-stage sign-off for IC memos</p>
+                        <ul>
+                            <li>Sequential approvers</li>
+                            <li>Approval with conditions</li>
+                            <li>Escalation rules</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📋 Task Assignment</h4>
+                        <p>Assign analysis tasks to team members</p>
+                        <ul>
+                            <li>Due dates & reminders</li>
+                            <li>Progress tracking</li>
+                            <li>Workload balancing</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🔔 Notifications</h4>
+                        <p>Stay updated on deal activity</p>
+                        <ul>
+                            <li>In-app notifications</li>
+                            <li>Email digests</li>
+                            <li>Slack integration</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📊 Activity Feed</h4>
+                        <p>See who did what and when</p>
+                        <ul>
+                            <li>Filterable by user/action</li>
+                            <li>Export for compliance</li>
+                            <li>Timeline view</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🔐 Access Logs</h4>
+                        <p>Track who accessed what</p>
+                        <ul>
+                            <li>Document view tracking</li>
+                            <li>Download logging</li>
+                            <li>Session management</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Specs -->
+        <div class="section">
+            <h2 class="section-title">Technical Specifications</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>🔌 Real-Time Stack</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>Protocol</span><span>Supabase Realtime</span></div>
+                        <div class="info-item"><span>Transport</span><span>WebSocket</span></div>
+                        <div class="info-item"><span>Presence</span><span>Built-in</span></div>
+                        <div class="info-item"><span>Auth</span><span>Supabase Auth</span></div>
+                        <div class="info-item"><span>RLS</span><span>Row-level security</span></div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>⚡ Performance</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>Sync Latency</span><span>< 100ms</span></div>
+                        <div class="info-item"><span>Max Concurrent</span><span>50 users/deal</span></div>
+                        <div class="info-item"><span>Reconnect</span><span>Automatic</span></div>
+                        <div class="info-item"><span>Offline Support</span><span>Queue + sync</span></div>
+                        <div class="info-item"><span>Notifications</span><span>< 1s delivery</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="../19-team-workspace.html" class="view-screen-btn">View Screen Mockup →</a>
+    </main>
+</body>
+</html>

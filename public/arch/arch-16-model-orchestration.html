@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture — Model Orchestration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --white: #ffffff; --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-500: #64748b; --gray-600: #475569;
+            --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a; --gray-950: #0a0f1a;
+            --teal: #0d9488; --teal-light: #14b8a6; --amber: #d97706; --red: #dc2626;
+            --green: #16a34a; --blue: #2563eb; --purple: #7c3aed;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--gray-950); color: var(--gray-100); min-height: 100vh; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; background: var(--gray-900); border-bottom: 1px solid var(--gray-800); }
+        .topbar-left { display: flex; align-items: center; gap: 1.5rem; }
+        .back-link { color: var(--gray-400); text-decoration: none; font-size: 0.9rem; }
+        .page-title { font-size: 1.1rem; font-weight: 600; color: var(--white); }
+        .screen-badge { background: linear-gradient(135deg, var(--amber) 0%, #f59e0b 100%); color: white; padding: 0.4rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
+        .page-header { text-align: center; margin-bottom: 3rem; }
+        .page-header h1 { font-family: 'Fraunces', serif; font-size: 2rem; color: var(--white); margin-bottom: 0.5rem; }
+        .page-header p { color: var(--gray-400); font-size: 1rem; }
+        .differentiator { background: linear-gradient(135deg, rgba(217, 119, 6, 0.2) 0%, rgba(217, 119, 6, 0.05) 100%); border: 1px solid rgba(217, 119, 6, 0.3); border-radius: 8px; padding: 0.75rem 1.5rem; display: inline-block; margin-top: 1rem; }
+        .differentiator span { color: var(--amber); font-weight: 600; }
+        .section { margin-bottom: 3rem; }
+        .section-title { font-size: 1rem; font-weight: 600; color: var(--teal-light); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .diagram-container { background: var(--gray-900); border: 1px solid var(--gray-800); border-radius: 16px; padding: 2rem; }
+        
+        /* Orchestration Flow */
+        .orch-flow { display: flex; flex-direction: column; gap: 1.5rem; align-items: center; }
+        .orch-node { background: var(--gray-800); border: 2px solid var(--gray-700); border-radius: 12px; padding: 1.25rem 2rem; text-align: center; min-width: 280px; }
+        .orch-node.input { border-color: var(--blue); background: rgba(37, 99, 235, 0.1); }
+        .orch-node.router { border-color: var(--teal); background: rgba(13, 148, 136, 0.1); }
+        .orch-node.model { border-color: var(--amber); background: rgba(217, 119, 6, 0.1); min-width: 160px; }
+        .orch-node.consensus { border-color: var(--purple); background: rgba(124, 58, 237, 0.1); }
+        .orch-node.output { border-color: var(--green); background: rgba(22, 163, 74, 0.1); }
+        .node-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .node-title { font-weight: 600; color: var(--white); font-size: 0.9rem; }
+        .node-desc { font-size: 0.75rem; color: var(--gray-400); margin-top: 0.25rem; }
+        .tech-tag { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: var(--gray-700); border-radius: 4px; color: var(--teal-light); font-family: 'JetBrains Mono', monospace; margin-top: 0.5rem; display: inline-block; }
+        
+        .flow-arrow { color: var(--gray-500); font-size: 1.5rem; }
+        .models-row { display: flex; gap: 1.5rem; justify-content: center; }
+        .branch-arrows { display: flex; gap: 8rem; color: var(--gray-500); font-size: 1.25rem; }
+        
+        /* Routing Rules */
+        .rules-table { width: 100%; border-collapse: collapse; }
+        .rules-table th, .rules-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--gray-700); }
+        .rules-table th { color: var(--gray-400); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; }
+        .rules-table td { font-size: 0.85rem; color: var(--gray-200); }
+        .rules-table .task-type { color: var(--white); font-weight: 600; }
+        .rules-table .model-badge { padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+        .model-badge.claude { background: rgba(217, 119, 6, 0.2); color: #fbbf24; }
+        .model-badge.gpt { background: rgba(16, 163, 127, 0.2); color: #34d399; }
+        .model-badge.gemini { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        
+        /* Metrics Grid */
+        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+        .metric-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 10px; padding: 1.25rem; text-align: center; }
+        .metric-value { font-family: 'JetBrains Mono', monospace; font-size: 1.75rem; font-weight: 700; color: var(--teal-light); }
+        .metric-label { font-size: 0.75rem; color: var(--gray-400); margin-top: 0.25rem; }
+        
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .info-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 12px; padding: 1.5rem; }
+        .info-card h3 { font-size: 0.9rem; color: var(--teal-light); margin-bottom: 1rem; }
+        .info-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .info-item { display: flex; justify-content: space-between; font-size: 0.8rem; }
+        .info-item span:first-child { color: var(--gray-400); }
+        .info-item span:last-child { color: var(--white); font-family: 'JetBrains Mono', monospace; }
+        
+        .view-screen-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="23-architecture.html" class="back-link">← System Architecture</a>
+            <h1 class="page-title">Model Orchestration</h1>
+        </div>
+        <span class="screen-badge">Screen 16 — KEY DIFFERENTIATOR</span>
+    </div>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Model Orchestration Architecture</h1>
+            <p>Intelligent routing across Claude, GPT-4, and Gemini with real-time consensus</p>
+            <div class="differentiator">
+                <span>⭐ This is what makes DealScope different from simple API wrappers</span>
+            </div>
+        </div>
+
+        <!-- Orchestration Flow -->
+        <div class="section">
+            <h2 class="section-title">Orchestration Pipeline</h2>
+            <div class="diagram-container">
+                <div class="orch-flow">
+                    <div class="orch-node input">
+                        <div class="node-icon">📥</div>
+                        <div class="node-title">Incoming Task</div>
+                        <div class="node-desc">Document analysis, question, or calculation request</div>
+                    </div>
+                    
+                    <div class="flow-arrow">↓</div>
+                    
+                    <div class="orch-node router">
+                        <div class="node-icon">🔀</div>
+                        <div class="node-title">Intelligent Router</div>
+                        <div class="node-desc">Classifies task type, selects optimal model(s), sets validation strategy</div>
+                        <span class="tech-tag">Custom ML Classifier</span>
+                    </div>
+                    
+                    <div class="branch-arrows">
+                        <span>↓</span>
+                        <span>↓</span>
+                        <span>↓</span>
+                    </div>
+                    
+                    <div class="models-row">
+                        <div class="orch-node model">
+                            <div class="node-icon">🟠</div>
+                            <div class="node-title">Claude</div>
+                            <div class="node-desc">Reasoning, Legal</div>
+                            <span class="tech-tag">claude-3-opus</span>
+                        </div>
+                        <div class="orch-node model">
+                            <div class="node-icon">🟢</div>
+                            <div class="node-title">GPT-4</div>
+                            <div class="node-desc">Math, Finance</div>
+                            <span class="tech-tag">gpt-4-turbo</span>
+                        </div>
+                        <div class="orch-node model">
+                            <div class="node-icon">🔵</div>
+                            <div class="node-title">Gemini</div>
+                            <div class="node-desc">Search, Speed</div>
+                            <span class="tech-tag">gemini-pro</span>
+                        </div>
+                    </div>
+                    
+                    <div class="branch-arrows">
+                        <span>↓</span>
+                        <span>↓</span>
+                        <span>↓</span>
+                    </div>
+                    
+                    <div class="orch-node consensus">
+                        <div class="node-icon">🤝</div>
+                        <div class="node-title">Consensus Engine</div>
+                        <div class="node-desc">Weighted voting, conflict resolution, confidence calculation</div>
+                        <span class="tech-tag">Custom Logic</span>
+                    </div>
+                    
+                    <div class="flow-arrow">↓</div>
+                    
+                    <div class="orch-node output">
+                        <div class="node-icon">✅</div>
+                        <div class="node-title">Validated Response</div>
+                        <div class="node-desc">Final answer with confidence score, citations, and audit trail</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Routing Rules -->
+        <div class="section">
+            <h2 class="section-title">Routing Rules</h2>
+            <div class="diagram-container">
+                <table class="rules-table">
+                    <thead>
+                        <tr>
+                            <th>Task Type</th>
+                            <th>Primary Model</th>
+                            <th>Validator</th>
+                            <th>Rationale</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="task-type">Contract Analysis</td>
+                            <td><span class="model-badge claude">Claude</span></td>
+                            <td><span class="model-badge gpt">GPT-4</span></td>
+                            <td>Best at nuanced legal reasoning</td>
+                        </tr>
+                        <tr>
+                            <td class="task-type">Risk Assessment</td>
+                            <td><span class="model-badge claude">Claude</span></td>
+                            <td><span class="model-badge gemini">Gemini</span></td>
+                            <td>Strong chain-of-thought for risk</td>
+                        </tr>
+                        <tr>
+                            <td class="task-type">Financial Modeling</td>
+                            <td><span class="model-badge gpt">GPT-4</span></td>
+                            <td><span class="model-badge claude">Claude</span></td>
+                            <td>Superior numerical accuracy</td>
+                        </tr>
+                        <tr>
+                            <td class="task-type">Document Search</td>
+                            <td><span class="model-badge gemini">Gemini</span></td>
+                            <td><span class="model-badge claude">Claude</span></td>
+                            <td>Fastest for retrieval tasks</td>
+                        </tr>
+                        <tr>
+                            <td class="task-type">Summarization</td>
+                            <td><span class="model-badge gemini">Gemini</span></td>
+                            <td><span class="model-badge gpt">GPT-4</span></td>
+                            <td>Cost-effective for bulk text</td>
+                        </tr>
+                        <tr>
+                            <td class="task-type">High-Stakes Decision</td>
+                            <td><span class="model-badge claude">All Three</span></td>
+                            <td>Consensus Vote</td>
+                            <td>Maximum confidence required</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Real-Time Metrics -->
+        <div class="section">
+            <h2 class="section-title">Real-Time Metrics</h2>
+            <div class="diagram-container">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">94%</div>
+                        <div class="metric-label">Model Consensus</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">2.3s</div>
+                        <div class="metric-label">Avg Response Time</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">$0.02</div>
+                        <div class="metric-label">Cost per Analysis</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">847</div>
+                        <div class="metric-label">Tokens This Session</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Specs -->
+        <div class="section">
+            <h2 class="section-title">Technical Specifications</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>🔌 API Configuration</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>Claude Model</span><span>claude-3-opus</span></div>
+                        <div class="info-item"><span>OpenAI Model</span><span>gpt-4-turbo</span></div>
+                        <div class="info-item"><span>Gemini Model</span><span>gemini-pro</span></div>
+                        <div class="info-item"><span>Streaming</span><span>WebSocket + SSE</span></div>
+                        <div class="info-item"><span>Fallback Strategy</span><span>Automatic retry</span></div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>⚡ Performance Targets</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>Routing Latency</span><span>&lt; 50ms</span></div>
+                        <div class="info-item"><span>Parallel Calls</span><span>Up to 3</span></div>
+                        <div class="info-item"><span>Timeout</span><span>30 seconds</span></div>
+                        <div class="info-item"><span>Retry Attempts</span><span>3 max</span></div>
+                        <div class="info-item"><span>Cache TTL</span><span>1 hour</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Example -->
+        <div class="section">
+            <h2 class="section-title">Implementation Example</h2>
+            <div class="diagram-container">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">TypeScript</span>
+                        <span class="code-file">lib/orchestrator/router.ts</span>
+                    </div>
+<pre><span class="keyword">const</span> ROUTING_RULES: Record&lt;TaskType, ModelConfig&gt; = {
+  contract_analysis: { primary: <span class="string">'claude'</span>, validator: <span class="string">'gpt-4'</span> },
+  financial_modeling: { primary: <span class="string">'gpt-4'</span>, validator: <span class="string">'claude'</span> },
+  document_search:    { primary: <span class="string">'gemini'</span>, validator: <span class="string">'claude'</span> },
+  high_stakes:        { primary: <span class="string">'all'</span>, validator: <span class="string">'consensus'</span> }
+};
+
+<span class="keyword">async function</span> <span class="function">routeTask</span>(task: Task): Promise&lt;Result&gt; {
+  <span class="keyword">const</span> config = ROUTING_RULES[classifyTask(task)];
+  
+  <span class="keyword">if</span> (config.primary === <span class="string">'all'</span>) {
+    <span class="comment">// High-stakes: run all 3 models, vote on result</span>
+    <span class="keyword">const</span> results = <span class="keyword">await</span> Promise.all([
+      callClaude(task), callGPT4(task), callGemini(task)
+    ]);
+    <span class="keyword">return</span> buildConsensus(results);
+  }
+
+  <span class="comment">// Standard: primary model + validator</span>
+  <span class="keyword">const</span> primary = <span class="keyword">await</span> callModel(config.primary, task);
+  <span class="keyword">const</span> validation = <span class="keyword">await</span> callModel(config.validator, {
+    ...task, validate: primary.output
+  });
+
+  <span class="keyword">return</span> { ...primary, confidence: validation.score };
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <a href="16-model-orchestration.html" class="view-screen-btn">View Screen Mockup →</a>
+    </main>
+    <style>
+        .code-block { background: #0d1117; border-radius: 8px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; padding: 0.5rem 1rem; background: #161b22; border-bottom: 1px solid #30363d; }
+        .code-lang { color: #58a6ff; font-size: 0.75rem; font-weight: 600; }
+        .code-file { color: #8b949e; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; }
+        .code-block pre { padding: 1rem; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.6; overflow-x: auto; color: #c9d1d9; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .function { color: #d2a8ff; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .comment { color: #8b949e; }
+    </style>
+</body>
+</html>

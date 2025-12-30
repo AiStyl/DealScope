@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEALSCOPE — Architecture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --gray-950: #0a0f1a;
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --amber: #d97706;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #2563eb;
+            --purple: #7c3aed;
+            --pink: #db2777;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-950);
+            color: var(--gray-100);
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--gray-900);
+            border-bottom: 1px solid var(--gray-800);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .back-link {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .page-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .version-badge {
+            background: var(--gray-800);
+            color: var(--teal-light);
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .page-header h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 1rem;
+        }
+
+        .page-header p {
+            font-size: 1.1rem;
+            color: var(--gray-400);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 5rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-number {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        /* Architecture Diagram Container */
+        .diagram-container {
+            background: var(--gray-900);
+            border: 1px solid var(--gray-800);
+            border-radius: 16px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .diagram-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(13, 148, 136, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(124, 58, 237, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        /* High Level Architecture */
+        .high-level-arch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .arch-layer {
+            flex: 1;
+            text-align: center;
+        }
+
+        .layer-box {
+            background: var(--gray-800);
+            border: 2px solid var(--gray-700);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .layer-box:hover {
+            border-color: var(--teal);
+            transform: translateY(-4px);
+        }
+
+        .layer-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1rem;
+            background: var(--gray-700);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+        }
+
+        .layer-icon.users { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+        .layer-icon.frontend { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+        .layer-icon.api { background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%); }
+        .layer-icon.ai { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .layer-icon.data { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+
+        .layer-name {
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .layer-tech {
+            font-size: 0.8rem;
+            color: var(--gray-400);
+        }
+
+        /* Flow Arrows */
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--teal);
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            width: 40px;
+        }
+
+        .flow-arrow::after {
+            content: '→';
+        }
+
+        /* Multi-Model Orchestration Diagram */
+        .orchestration-diagram {
+            position: relative;
+            z-index: 1;
+        }
+
+        .orch-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .orch-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        .orch-node {
+            background: var(--gray-800);
+            border: 2px solid var(--gray-700);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            text-align: center;
+            min-width: 140px;
+        }
+
+        .orch-node.input {
+            border-color: var(--blue);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .orch-node.router {
+            border-color: var(--teal);
+            background: rgba(13, 148, 136, 0.1);
+        }
+
+        .orch-node.model {
+            border-color: var(--amber);
+            background: rgba(217, 119, 6, 0.1);
+        }
+
+        .orch-node.model.claude { border-color: #d97706; }
+        .orch-node.model.gpt { border-color: #10b981; }
+        .orch-node.model.gemini { border-color: #3b82f6; }
+
+        .orch-node.consensus {
+            border-color: var(--purple);
+            background: rgba(124, 58, 237, 0.1);
+        }
+
+        .orch-node.output {
+            border-color: var(--green);
+            background: rgba(22, 163, 74, 0.1);
+        }
+
+        .node-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .node-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--white);
+        }
+
+        .node-sublabel {
+            font-size: 0.7rem;
+            color: var(--gray-400);
+            margin-top: 0.25rem;
+        }
+
+        /* Vertical Arrow */
+        .v-arrow {
+            display: flex;
+            justify-content: center;
+            color: var(--gray-500);
+            font-size: 1.25rem;
+        }
+
+        .v-arrow::after {
+            content: '↓';
+        }
+
+        .v-arrow.up::after {
+            content: '↑';
+        }
+
+        /* Split Arrows */
+        .split-arrows {
+            display: flex;
+            justify-content: center;
+            gap: 8rem;
+            color: var(--gray-500);
+            font-size: 1.25rem;
+            position: relative;
+        }
+
+        .split-arrows::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 25%;
+            right: 25%;
+            height: 2px;
+            background: var(--gray-700);
+        }
+
+        .split-arrows span::after {
+            content: '↓';
+        }
+
+        /* Merge Arrows */
+        .merge-arrows {
+            display: flex;
+            justify-content: center;
+            gap: 8rem;
+            color: var(--gray-500);
+            font-size: 1.25rem;
+            position: relative;
+        }
+
+        .merge-arrows::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 25%;
+            right: 25%;
+            height: 2px;
+            background: var(--gray-700);
+        }
+
+        .merge-arrows span::after {
+            content: '↓';
+        }
+
+        /* Data Pipeline */
+        .pipeline-flow {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .pipeline-stage {
+            flex: 1;
+            position: relative;
+        }
+
+        .stage-content {
+            background: var(--gray-800);
+            border: 2px solid var(--gray-700);
+            border-radius: 12px;
+            padding: 1.25rem;
+            height: 100%;
+            transition: all 0.3s;
+        }
+
+        .stage-content:hover {
+            border-color: var(--teal);
+        }
+
+        .stage-number {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--teal);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .stage-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .stage-name {
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .stage-details {
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            line-height: 1.5;
+        }
+
+        .stage-tech {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--gray-700);
+        }
+
+        .tech-badge {
+            display: inline-block;
+            background: var(--gray-700);
+            color: var(--teal-light);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .pipeline-arrow {
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--teal);
+            font-size: 1.5rem;
+            z-index: 2;
+        }
+
+        .pipeline-stage:last-child .pipeline-arrow {
+            display: none;
+        }
+
+        /* Screen Components Grid */
+        .screens-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .screen-card {
+            background: var(--gray-800);
+            border: 1px solid var(--gray-700);
+            border-radius: 10px;
+            padding: 1rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: block;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .screen-card:hover {
+            border-color: var(--teal);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(13, 148, 136, 0.2);
+        }
+
+        .screen-card .click-hint {
+            font-size: 0.65rem;
+            color: var(--teal-light);
+            margin-top: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .screen-card:hover .click-hint {
+            opacity: 1;
+        }
+
+        .screen-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .screen-num {
+            background: var(--gray-700);
+            color: var(--teal-light);
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .screen-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .screen-desc {
+            font-size: 0.7rem;
+            color: var(--gray-400);
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .screen-connects {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .connect-badge {
+            font-size: 0.6rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            background: var(--gray-700);
+            color: var(--gray-400);
+        }
+
+        .connect-badge.api { background: rgba(13, 148, 136, 0.2); color: var(--teal-light); }
+        .connect-badge.ai { background: rgba(217, 119, 6, 0.2); color: #fbbf24; }
+        .connect-badge.db { background: rgba(16, 163, 74, 0.2); color: #86efac; }
+        .connect-badge.ui { background: rgba(124, 58, 237, 0.2); color: #a78bfa; }
+
+        /* API Sources */
+        .api-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .api-category {
+            background: var(--gray-800);
+            border: 1px solid var(--gray-700);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .api-category-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-700);
+        }
+
+        .api-category-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .api-category-icon.ai { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .api-category-icon.financial { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .api-category-icon.infra { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+
+        .api-category-name {
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .api-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .api-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            background: var(--gray-900);
+            border-radius: 8px;
+        }
+
+        .api-logo {
+            width: 32px;
+            height: 32px;
+            background: var(--gray-700);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .api-logo.claude { background: #d97706; color: white; }
+        .api-logo.openai { background: #10b981; color: white; }
+        .api-logo.gemini { background: #3b82f6; color: white; }
+        .api-logo.sec { background: #1e40af; color: white; }
+        .api-logo.yahoo { background: #7c3aed; color: white; }
+        .api-logo.alpha { background: #059669; color: white; }
+        .api-logo.fred { background: #dc2626; color: white; }
+        .api-logo.supabase { background: #22c55e; color: white; }
+        .api-logo.vercel { background: white; color: black; }
+        .api-logo.next { background: black; color: white; }
+
+        .api-info {
+            flex: 1;
+        }
+
+        .api-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .api-purpose {
+            font-size: 0.7rem;
+            color: var(--gray-400);
+        }
+
+        .api-cost {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: rgba(22, 163, 74, 0.2);
+            color: #86efac;
+        }
+
+        .api-cost.paid {
+            background: rgba(217, 119, 6, 0.2);
+            color: #fcd34d;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-800);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--gray-400);
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .legend-color.real { background: var(--green); }
+        .legend-color.ai { background: var(--amber); }
+        .legend-color.free { background: var(--teal); }
+
+        /* Footer */
+        .arch-footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-800);
+        }
+
+        .arch-footer p {
+            color: var(--gray-500);
+            font-size: 0.85rem;
+        }
+
+        .arch-footer .highlight {
+            color: var(--teal-light);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="index.html" class="back-link">← All Screens</a>
+            <h1 class="page-title">System Architecture</h1>
+        </div>
+        <span class="version-badge">v4.0 • 22 Screens</span>
+    </div>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1>DealScope Architecture</h1>
+            <p>Enterprise-grade multi-model AI platform for M&A due diligence, built on real data sources and production APIs.</p>
+        </div>
+
+        <!-- Section 1: High Level Architecture -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">1</div>
+                <h2 class="section-title">High-Level Architecture</h2>
+            </div>
+            <div class="diagram-container">
+                <div class="high-level-arch">
+                    <div class="arch-layer">
+                        <div class="layer-box">
+                            <div class="layer-icon users">👥</div>
+                            <div class="layer-name">Users</div>
+                            <div class="layer-tech">PE Firms, IB Analysts</div>
+                        </div>
+                    </div>
+                    <div class="flow-arrow"></div>
+                    <div class="arch-layer">
+                        <div class="layer-box">
+                            <div class="layer-icon frontend">🖥️</div>
+                            <div class="layer-name">Frontend</div>
+                            <div class="layer-tech">Next.js 14 + Tailwind</div>
+                        </div>
+                    </div>
+                    <div class="flow-arrow"></div>
+                    <div class="arch-layer">
+                        <div class="layer-box">
+                            <div class="layer-icon api">⚡</div>
+                            <div class="layer-name">API Layer</div>
+                            <div class="layer-tech">Next.js API Routes</div>
+                        </div>
+                    </div>
+                    <div class="flow-arrow"></div>
+                    <div class="arch-layer">
+                        <div class="layer-box">
+                            <div class="layer-icon ai">🧠</div>
+                            <div class="layer-name">AI Orchestrator</div>
+                            <div class="layer-tech">Claude + GPT-4 + Gemini</div>
+                        </div>
+                    </div>
+                    <div class="flow-arrow"></div>
+                    <div class="arch-layer">
+                        <div class="layer-box">
+                            <div class="layer-icon data">🗄️</div>
+                            <div class="layer-name">Data Layer</div>
+                            <div class="layer-tech">Supabase + External APIs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Multi-Model Orchestration -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">2</div>
+                <h2 class="section-title">Multi-Model AI Orchestration</h2>
+            </div>
+            <div class="diagram-container">
+                <div class="orchestration-diagram">
+                    <div class="orch-flow">
+                        <!-- Input -->
+                        <div class="orch-row">
+                            <div class="orch-node input">
+                                <div class="node-icon">📄</div>
+                                <div class="node-label">User Query / Document</div>
+                                <div class="node-sublabel">Contracts, Financials, Questions</div>
+                            </div>
+                        </div>
+
+                        <div class="v-arrow"></div>
+
+                        <!-- Router -->
+                        <div class="orch-row">
+                            <div class="orch-node router">
+                                <div class="node-icon">🔀</div>
+                                <div class="node-label">Intelligent Router</div>
+                                <div class="node-sublabel">Analyzes task type & routes to best model</div>
+                            </div>
+                        </div>
+
+                        <div class="split-arrows">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+
+                        <!-- Models -->
+                        <div class="orch-row">
+                            <div class="orch-node model claude">
+                                <div class="node-icon">🟠</div>
+                                <div class="node-label">Claude Opus</div>
+                                <div class="node-sublabel">Contracts, Risk, Reasoning</div>
+                            </div>
+                            <div class="orch-node model gpt">
+                                <div class="node-icon">🟢</div>
+                                <div class="node-label">GPT-4 Turbo</div>
+                                <div class="node-sublabel">Financials, Calculations</div>
+                            </div>
+                            <div class="orch-node model gemini">
+                                <div class="node-icon">🔵</div>
+                                <div class="node-label">Gemini Pro</div>
+                                <div class="node-sublabel">Search, Summarization</div>
+                            </div>
+                        </div>
+
+                        <div class="merge-arrows">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+
+                        <!-- Consensus -->
+                        <div class="orch-row">
+                            <div class="orch-node consensus">
+                                <div class="node-icon">🤝</div>
+                                <div class="node-label">Consensus Engine</div>
+                                <div class="node-sublabel">Cross-validates, resolves conflicts, builds confidence</div>
+                            </div>
+                        </div>
+
+                        <div class="v-arrow"></div>
+
+                        <!-- Output -->
+                        <div class="orch-row">
+                            <div class="orch-node output">
+                                <div class="node-icon">✅</div>
+                                <div class="node-label">Validated Output</div>
+                                <div class="node-sublabel">Findings with confidence scores & citations</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Data Pipeline -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">3</div>
+                <h2 class="section-title">Data Processing Pipeline</h2>
+            </div>
+            <div class="diagram-container">
+                <div class="pipeline-flow">
+                    <div class="pipeline-stage">
+                        <span class="stage-number">1</span>
+                        <div class="stage-content">
+                            <span class="stage-icon">📤</span>
+                            <div class="stage-name">Ingest</div>
+                            <div class="stage-details">User uploads documents or enters company ticker</div>
+                            <div class="stage-tech">
+                                <span class="tech-badge">PDF.js</span>
+                                <span class="tech-badge">Supabase Storage</span>
+                            </div>
+                        </div>
+                        <span class="pipeline-arrow">→</span>
+                    </div>
+
+                    <div class="pipeline-stage">
+                        <span class="stage-number">2</span>
+                        <div class="stage-content">
+                            <span class="stage-icon">🔍</span>
+                            <div class="stage-name">Enrich</div>
+                            <div class="stage-details">Pull real data from SEC, Yahoo Finance, FRED</div>
+                            <div class="stage-tech">
+                                <span class="tech-badge">SEC EDGAR</span>
+                                <span class="tech-badge">Yahoo Finance</span>
+                            </div>
+                        </div>
+                        <span class="pipeline-arrow">→</span>
+                    </div>
+
+                    <div class="pipeline-stage">
+                        <span class="stage-number">3</span>
+                        <div class="stage-content">
+                            <span class="stage-icon">📊</span>
+                            <div class="stage-name">Parse</div>
+                            <div class="stage-details">Extract text, tables, entities from documents</div>
+                            <div class="stage-tech">
+                                <span class="tech-badge">Unstructured.io</span>
+                                <span class="tech-badge">NER</span>
+                            </div>
+                        </div>
+                        <span class="pipeline-arrow">→</span>
+                    </div>
+
+                    <div class="pipeline-stage">
+                        <span class="stage-number">4</span>
+                        <div class="stage-content">
+                            <span class="stage-icon">🧠</span>
+                            <div class="stage-name">Analyze</div>
+                            <div class="stage-details">Multi-model AI analysis with consensus</div>
+                            <div class="stage-tech">
+                                <span class="tech-badge">Claude</span>
+                                <span class="tech-badge">GPT-4</span>
+                                <span class="tech-badge">Gemini</span>
+                            </div>
+                        </div>
+                        <span class="pipeline-arrow">→</span>
+                    </div>
+
+                    <div class="pipeline-stage">
+                        <span class="stage-number">5</span>
+                        <div class="stage-content">
+                            <span class="stage-icon">💾</span>
+                            <div class="stage-name">Store</div>
+                            <div class="stage-details">Save findings, audit trail, user data</div>
+                            <div class="stage-tech">
+                                <span class="tech-badge">Supabase</span>
+                                <span class="tech-badge">PostgreSQL</span>
+                            </div>
+                        </div>
+                        <span class="pipeline-arrow">→</span>
+                    </div>
+
+                    <div class="pipeline-stage">
+                        <span class="stage-number">6</span>
+                        <div class="stage-content">
+                            <span class="stage-icon">🖥️</span>
+                            <div class="stage-name">Display</div>
+                            <div class="stage-details">Interactive dashboards, reports, exports</div>
+                            <div class="stage-tech">
+                                <span class="tech-badge">Next.js</span>
+                                <span class="tech-badge">Recharts</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Screen Components -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">4</div>
+                <h2 class="section-title">Screen Components & Connections</h2>
+            </div>
+            <div class="diagram-container">
+                <div class="screens-grid">
+                    <a href="arch/arch-01-landing-page.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">01</span>
+                            <span class="screen-name">Landing Page</span>
+                        </div>
+                        <div class="screen-desc">Marketing page with value prop and pricing</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ui">Static</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-02-multi-agent-reasoning.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">02</span>
+                            <span class="screen-name">Multi-Agent Reasoning</span>
+                        </div>
+                        <div class="screen-desc">Shows AI agents analyzing in real-time</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">Claude</span>
+                            <span class="connect-badge ai">GPT-4</span>
+                            <span class="connect-badge db">Supabase</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-03-knowledge-graph.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">03</span>
+                            <span class="screen-name">Knowledge Graph</span>
+                        </div>
+                        <div class="screen-desc">Entity relationship visualization</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">Gemini</span>
+                            <span class="connect-badge ui">D3.js</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-04-risk-simulation.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">04</span>
+                            <span class="screen-name">Risk Simulation</span>
+                        </div>
+                        <div class="screen-desc">Monte Carlo simulations on deal outcomes</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">GPT-4</span>
+                            <span class="connect-badge api">Yahoo Fin</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-05-anomaly-detection.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">05</span>
+                            <span class="screen-name">Anomaly Detection</span>
+                        </div>
+                        <div class="screen-desc">AI flags unusual patterns in data</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">Claude</span>
+                            <span class="connect-badge api">SEC EDGAR</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-06-interrogation.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">06</span>
+                            <span class="screen-name">Interrogation</span>
+                        </div>
+                        <div class="screen-desc">Chat interface to query documents</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">Claude</span>
+                            <span class="connect-badge db">Supabase</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-07-deal-simulator.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">07</span>
+                            <span class="screen-name">Deal Simulator</span>
+                        </div>
+                        <div class="screen-desc">What-if scenario modeling</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">GPT-4</span>
+                            <span class="connect-badge ui">Recharts</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-08-dashboard.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">08</span>
+                            <span class="screen-name">Dashboard</span>
+                        </div>
+                        <div class="screen-desc">Central hub with deal overview</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge db">Supabase</span>
+                            <span class="connect-badge ui">Recharts</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-09-document-analysis.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">09</span>
+                            <span class="screen-name">Document Analysis</span>
+                        </div>
+                        <div class="screen-desc">PDF viewer with AI annotations</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">Claude</span>
+                            <span class="connect-badge ui">PDF.js</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-10-pricing.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">10</span>
+                            <span class="screen-name">Pricing</span>
+                        </div>
+                        <div class="screen-desc">Subscription tiers and features</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ui">Static</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-11-agent-debate-arena.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">11</span>
+                            <span class="screen-name">Agent Debate Arena</span>
+                        </div>
+                        <div class="screen-desc">AI agents argue for/against positions</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">Claude</span>
+                            <span class="connect-badge ai">GPT-4</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-12-sensitivity-analysis.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">12</span>
+                            <span class="screen-name">Sensitivity Analysis</span>
+                        </div>
+                        <div class="screen-desc">Tornado diagrams and sensitivity tables</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">GPT-4</span>
+                            <span class="connect-badge ui">Recharts</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-13-precedent-finder.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">13</span>
+                            <span class="screen-name">Precedent Finder</span>
+                        </div>
+                        <div class="screen-desc">Find similar M&A transactions</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">Gemini</span>
+                            <span class="connect-badge api">SEC EDGAR</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-14-agent-builder.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">14</span>
+                            <span class="screen-name">Agent Builder</span>
+                        </div>
+                        <div class="screen-desc">Create custom AI agents</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge db">Supabase</span>
+                            <span class="connect-badge ai">All Models</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-15-report-builder.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">15</span>
+                            <span class="screen-name">Report Builder</span>
+                        </div>
+                        <div class="screen-desc">Generate IC memos and DD reports</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">Claude</span>
+                            <span class="connect-badge ui">PDF Export</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-16-model-orchestration.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">16</span>
+                            <span class="screen-name">Model Orchestration</span>
+                        </div>
+                        <div class="screen-desc">Real-time multi-model pipeline view</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">All Models</span>
+                            <span class="connect-badge api">WebSocket</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-17-confidence-calibration.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">17</span>
+                            <span class="screen-name">Confidence Calibration</span>
+                        </div>
+                        <div class="screen-desc">AI uncertainty quantification</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">All Models</span>
+                            <span class="connect-badge ui">Recharts</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-18-audit-trail.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">18</span>
+                            <span class="screen-name">Audit Trail</span>
+                        </div>
+                        <div class="screen-desc">Complete AI decision log</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge db">Supabase</span>
+                            <span class="connect-badge ui">Timeline</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-19-team-workspace.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">19</span>
+                            <span class="screen-name">Team Workspace</span>
+                        </div>
+                        <div class="screen-desc">Collaboration and approvals</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge db">Supabase</span>
+                            <span class="connect-badge api">Real-time</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-20-reasoning-streams.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">20</span>
+                            <span class="screen-name">Reasoning Streams</span>
+                        </div>
+                        <div class="screen-desc">Live AI thinking visualization</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge ai">All Models</span>
+                            <span class="connect-badge api">Streaming</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-21-api-console.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">21</span>
+                            <span class="screen-name">API Console</span>
+                        </div>
+                        <div class="screen-desc">Developer API playground</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge api">REST API</span>
+                            <span class="connect-badge db">Supabase</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+
+                    <a href="arch/arch-22-data-pipeline.html" class="screen-card">
+                        <div class="screen-header">
+                            <span class="screen-num">22</span>
+                            <span class="screen-name">Data Pipeline</span>
+                        </div>
+                        <div class="screen-desc">Document processing status</div>
+                        <div class="screen-connects">
+                            <span class="connect-badge db">Supabase</span>
+                            <span class="connect-badge ui">Queue</span>
+                        </div>
+                        <div class="click-hint">Click for detailed architecture →</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: API & Data Sources -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">5</div>
+                <h2 class="section-title">APIs & Real Data Sources</h2>
+            </div>
+            <div class="diagram-container">
+                <div class="api-grid">
+                    <!-- AI APIs -->
+                    <div class="api-category">
+                        <div class="api-category-header">
+                            <div class="api-category-icon ai">🧠</div>
+                            <span class="api-category-name">AI Models</span>
+                        </div>
+                        <div class="api-list">
+                            <div class="api-item">
+                                <div class="api-logo claude">C</div>
+                                <div class="api-info">
+                                    <div class="api-name">Claude API</div>
+                                    <div class="api-purpose">Contracts, Risk, Reasoning</div>
+                                </div>
+                                <span class="api-cost paid">~$20/mo</span>
+                            </div>
+                            <div class="api-item">
+                                <div class="api-logo openai">G</div>
+                                <div class="api-info">
+                                    <div class="api-name">OpenAI API</div>
+                                    <div class="api-purpose">Financials, Calculations</div>
+                                </div>
+                                <span class="api-cost paid">~$20/mo</span>
+                            </div>
+                            <div class="api-item">
+                                <div class="api-logo gemini">G</div>
+                                <div class="api-info">
+                                    <div class="api-name">Gemini API</div>
+                                    <div class="api-purpose">Search, Summarization</div>
+                                </div>
+                                <span class="api-cost">FREE tier</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Data -->
+                    <div class="api-category">
+                        <div class="api-category-header">
+                            <div class="api-category-icon financial">📊</div>
+                            <span class="api-category-name">Financial Data</span>
+                        </div>
+                        <div class="api-list">
+                            <div class="api-item">
+                                <div class="api-logo sec">S</div>
+                                <div class="api-info">
+                                    <div class="api-name">SEC EDGAR</div>
+                                    <div class="api-purpose">10-K, 10-Q, M&A Filings</div>
+                                </div>
+                                <span class="api-cost">FREE</span>
+                            </div>
+                            <div class="api-item">
+                                <div class="api-logo yahoo">Y</div>
+                                <div class="api-info">
+                                    <div class="api-name">Yahoo Finance</div>
+                                    <div class="api-purpose">Stock prices, Financials</div>
+                                </div>
+                                <span class="api-cost">FREE</span>
+                            </div>
+                            <div class="api-item">
+                                <div class="api-logo alpha">A</div>
+                                <div class="api-info">
+                                    <div class="api-name">Alpha Vantage</div>
+                                    <div class="api-purpose">Income, Balance, Cash Flow</div>
+                                </div>
+                                <span class="api-cost">FREE 500/day</span>
+                            </div>
+                            <div class="api-item">
+                                <div class="api-logo fred">F</div>
+                                <div class="api-info">
+                                    <div class="api-name">FRED</div>
+                                    <div class="api-purpose">Economic indicators</div>
+                                </div>
+                                <span class="api-cost">FREE</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Infrastructure -->
+                    <div class="api-category">
+                        <div class="api-category-header">
+                            <div class="api-category-icon infra">🏗️</div>
+                            <span class="api-category-name">Infrastructure</span>
+                        </div>
+                        <div class="api-list">
+                            <div class="api-item">
+                                <div class="api-logo supabase">S</div>
+                                <div class="api-info">
+                                    <div class="api-name">Supabase</div>
+                                    <div class="api-purpose">DB, Auth, Storage</div>
+                                </div>
+                                <span class="api-cost">FREE tier</span>
+                            </div>
+                            <div class="api-item">
+                                <div class="api-logo vercel">▲</div>
+                                <div class="api-info">
+                                    <div class="api-name">Vercel</div>
+                                    <div class="api-purpose">Hosting, Edge, CI/CD</div>
+                                </div>
+                                <span class="api-cost">FREE tier</span>
+                            </div>
+                            <div class="api-item">
+                                <div class="api-logo next">N</div>
+                                <div class="api-info">
+                                    <div class="api-name">Next.js 14</div>
+                                    <div class="api-purpose">React Framework</div>
+                                </div>
+                                <span class="api-cost">FREE</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color real"></div>
+                        <span>Real Data (No Mocks)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color ai"></div>
+                        <span>Production AI APIs</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color free"></div>
+                        <span>Free Tier Available</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="arch-footer">
+            <p>Built with <span class="highlight">Real Data</span> • <span class="highlight">Production APIs</span> • <span class="highlight">Multi-Model AI</span></p>
+            <p style="margin-top: 0.5rem;">No mock data. No simulations. Enterprise-ready from day one.</p>
+        </div>
+    </main>
+</body>
+</html>

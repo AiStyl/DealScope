@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture — Data Pipeline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --white: #ffffff; --gray-400: #94a3b8; --gray-500: #64748b; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a; --gray-950: #0a0f1a; --teal: #0d9488; --teal-light: #14b8a6; --amber: #d97706; --green: #16a34a; --blue: #2563eb; --purple: #7c3aed; --red: #dc2626; }
+        body { font-family: 'Inter', sans-serif; background: var(--gray-950); color: #f1f5f9; min-height: 100vh; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; background: var(--gray-900); border-bottom: 1px solid var(--gray-800); }
+        .topbar-left { display: flex; align-items: center; gap: 1.5rem; }
+        .back-link { color: var(--gray-400); text-decoration: none; font-size: 0.9rem; }
+        .back-link:hover { color: var(--teal-light); }
+        .page-title { font-size: 1.1rem; font-weight: 600; color: var(--white); }
+        .screen-badge { background: var(--purple); color: white; padding: 0.4rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
+        .page-header { text-align: center; margin-bottom: 3rem; }
+        .page-header h1 { font-family: 'Fraunces', serif; font-size: 2rem; color: var(--white); margin-bottom: 0.5rem; }
+        .page-header p { color: var(--gray-400); font-size: 1rem; }
+        .section { margin-bottom: 3rem; }
+        .section-title { font-size: 1rem; font-weight: 600; color: var(--teal-light); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .diagram-container { background: var(--gray-900); border: 1px solid var(--gray-800); border-radius: 16px; padding: 2rem; }
+        .pipeline-stages { display: flex; align-items: stretch; gap: 0; }
+        .pipeline-stage { flex: 1; position: relative; }
+        .stage-content { background: var(--gray-800); border: 2px solid var(--gray-700); border-radius: 12px; padding: 1.25rem; height: 100%; text-align: center; transition: all 0.3s; }
+        .stage-content:hover { border-color: var(--teal); }
+        .stage-num { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--teal); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; }
+        .stage-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+        .stage-name { font-weight: 600; color: var(--white); margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .stage-desc { font-size: 0.75rem; color: var(--gray-400); line-height: 1.5; }
+        .stage-tech { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--gray-700); }
+        .tech-tag { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: var(--gray-700); border-radius: 4px; color: var(--teal-light); font-family: 'JetBrains Mono', monospace; margin: 0.25rem; display: inline-block; }
+        .pipeline-arrow { position: absolute; right: -20px; top: 50%; transform: translateY(-50%); color: var(--teal); font-size: 1.5rem; z-index: 2; }
+        .pipeline-stage:last-child .pipeline-arrow { display: none; }
+        .queue-status { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+        .queue-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 10px; padding: 1.25rem; text-align: center; }
+        .queue-value { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 700; }
+        .queue-value.pending { color: var(--amber); }
+        .queue-value.processing { color: var(--blue); }
+        .queue-value.complete { color: var(--green); }
+        .queue-value.failed { color: var(--red); }
+        .queue-label { font-size: 0.75rem; color: var(--gray-400); margin-top: 0.25rem; }
+        .doc-types { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
+        .doc-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 10px; padding: 1rem; text-align: center; }
+        .doc-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .doc-name { font-weight: 600; color: var(--white); font-size: 0.8rem; }
+        .doc-ext { font-size: 0.7rem; color: var(--teal-light); font-family: 'JetBrains Mono', monospace; }
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .info-card { background: var(--gray-800); border: 1px solid var(--gray-700); border-radius: 12px; padding: 1.5rem; }
+        .info-card h3 { font-size: 0.9rem; color: var(--teal-light); margin-bottom: 1rem; }
+        .info-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .info-item { display: flex; justify-content: space-between; font-size: 0.8rem; }
+        .info-item span:first-child { color: var(--gray-400); }
+        .info-item span:last-child { color: var(--white); font-family: 'JetBrains Mono', monospace; }
+        .view-screen-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="../23-architecture.html" class="back-link">← System Architecture</a>
+            <h1 class="page-title">Data Pipeline</h1>
+        </div>
+        <span class="screen-badge">Screen 22</span>
+    </div>
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Data Pipeline Architecture</h1>
+            <p>Document processing queue with real-time status tracking</p>
+        </div>
+
+        <!-- Pipeline Stages -->
+        <div class="section">
+            <h2 class="section-title">Processing Pipeline</h2>
+            <div class="diagram-container">
+                <div class="pipeline-stages">
+                    <div class="pipeline-stage">
+                        <span class="stage-num">1</span>
+                        <div class="stage-content">
+                            <div class="stage-icon">📤</div>
+                            <div class="stage-name">Upload</div>
+                            <div class="stage-desc">User uploads files via drag-drop or API</div>
+                            <div class="stage-tech">
+                                <span class="tech-tag">Supabase Storage</span>
+                            </div>
+                        </div>
+                        <span class="pipeline-arrow">→</span>
+                    </div>
+                    <div class="pipeline-stage">
+                        <span class="stage-num">2</span>
+                        <div class="stage-content">
+                            <div class="stage-icon">🔍</div>
+                            <div class="stage-name">Validate</div>
+                            <div class="stage-desc">Check file type, size, scan for malware</div>
+                            <div class="stage-tech">
+                                <span class="tech-tag">ClamAV</span>
+                            </div>
+                        </div>
+                        <span class="pipeline-arrow">→</span>
+                    </div>
+                    <div class="pipeline-stage">
+                        <span class="stage-num">3</span>
+                        <div class="stage-content">
+                            <div class="stage-icon">📊</div>
+                            <div class="stage-name">Extract</div>
+                            <div class="stage-desc">OCR, parse tables, extract text</div>
+                            <div class="stage-tech">
+                                <span class="tech-tag">PDF.js</span>
+                                <span class="tech-tag">Tesseract</span>
+                            </div>
+                        </div>
+                        <span class="pipeline-arrow">→</span>
+                    </div>
+                    <div class="pipeline-stage">
+                        <span class="stage-num">4</span>
+                        <div class="stage-content">
+                            <div class="stage-icon">🏷️</div>
+                            <div class="stage-name">Classify</div>
+                            <div class="stage-desc">Identify doc type, entities, sections</div>
+                            <div class="stage-tech">
+                                <span class="tech-tag">Gemini</span>
+                                <span class="tech-tag">NER</span>
+                            </div>
+                        </div>
+                        <span class="pipeline-arrow">→</span>
+                    </div>
+                    <div class="pipeline-stage">
+                        <span class="stage-num">5</span>
+                        <div class="stage-content">
+                            <div class="stage-icon">✂️</div>
+                            <div class="stage-name">Chunk</div>
+                            <div class="stage-desc">Split into semantic chunks for AI</div>
+                            <div class="stage-tech">
+                                <span class="tech-tag">LangChain</span>
+                            </div>
+                        </div>
+                        <span class="pipeline-arrow">→</span>
+                    </div>
+                    <div class="pipeline-stage">
+                        <span class="stage-num">6</span>
+                        <div class="stage-content">
+                            <div class="stage-icon">💾</div>
+                            <div class="stage-name">Index</div>
+                            <div class="stage-desc">Store vectors for semantic search</div>
+                            <div class="stage-tech">
+                                <span class="tech-tag">Supabase</span>
+                                <span class="tech-tag">pgvector</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Queue Status -->
+        <div class="section">
+            <h2 class="section-title">Real-Time Queue Status</h2>
+            <div class="diagram-container">
+                <div class="queue-status">
+                    <div class="queue-card">
+                        <div class="queue-value pending">12</div>
+                        <div class="queue-label">Pending</div>
+                    </div>
+                    <div class="queue-card">
+                        <div class="queue-value processing">3</div>
+                        <div class="queue-label">Processing</div>
+                    </div>
+                    <div class="queue-card">
+                        <div class="queue-value complete">847</div>
+                        <div class="queue-label">Complete</div>
+                    </div>
+                    <div class="queue-card">
+                        <div class="queue-value failed">2</div>
+                        <div class="queue-label">Failed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Supported Document Types -->
+        <div class="section">
+            <h2 class="section-title">Supported Document Types</h2>
+            <div class="diagram-container">
+                <div class="doc-types">
+                    <div class="doc-card">
+                        <div class="doc-icon">📄</div>
+                        <div class="doc-name">PDF</div>
+                        <div class="doc-ext">.pdf</div>
+                    </div>
+                    <div class="doc-card">
+                        <div class="doc-icon">📝</div>
+                        <div class="doc-name">Word</div>
+                        <div class="doc-ext">.docx</div>
+                    </div>
+                    <div class="doc-card">
+                        <div class="doc-icon">📊</div>
+                        <div class="doc-name">Excel</div>
+                        <div class="doc-ext">.xlsx</div>
+                    </div>
+                    <div class="doc-card">
+                        <div class="doc-icon">📑</div>
+                        <div class="doc-name">PowerPoint</div>
+                        <div class="doc-ext">.pptx</div>
+                    </div>
+                    <div class="doc-card">
+                        <div class="doc-icon">🖼️</div>
+                        <div class="doc-name">Images</div>
+                        <div class="doc-ext">.png .jpg</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Specs -->
+        <div class="section">
+            <h2 class="section-title">Technical Specifications</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>📦 Queue System</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>Queue Backend</span><span>Supabase</span></div>
+                        <div class="info-item"><span>Worker Pool</span><span>Vercel Functions</span></div>
+                        <div class="info-item"><span>Concurrency</span><span>10 parallel</span></div>
+                        <div class="info-item"><span>Retry Logic</span><span>3 attempts</span></div>
+                        <div class="info-item"><span>Dead Letter</span><span>After 3 fails</span></div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>⚡ Performance</h3>
+                    <div class="info-list">
+                        <div class="info-item"><span>Max File Size</span><span>50MB</span></div>
+                        <div class="info-item"><span>Avg Processing</span><span>30s/doc</span></div>
+                        <div class="info-item"><span>OCR Accuracy</span><span>98%+</span></div>
+                        <div class="info-item"><span>Throughput</span><span>100 docs/hr</span></div>
+                        <div class="info-item"><span>Status Updates</span><span>Real-time</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Example -->
+        <div class="section">
+            <h2 class="section-title">Implementation Example</h2>
+            <div class="diagram-container">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">TypeScript</span>
+                        <span class="code-file">lib/pipeline/processDocument.ts</span>
+                    </div>
+<pre><span class="keyword">async function</span> <span class="function">processDocument</span>(job: QueueJob) {
+  <span class="keyword">await</span> updateStatus(job.id, <span class="string">'processing'</span>);
+
+  <span class="comment">// 1. Extract text from PDF</span>
+  <span class="keyword">const</span> text = <span class="keyword">await</span> pdfjs.extractText(job.fileUrl);
+
+  <span class="comment">// 2. Classify document type</span>
+  <span class="keyword">const</span> docType = <span class="keyword">await</span> gemini.classify(text.slice(0, 2000));
+
+  <span class="comment">// 3. Chunk for embedding</span>
+  <span class="keyword">const</span> chunks = chunkText(text, { size: 500, overlap: 50 });
+
+  <span class="comment">// 4. Generate embeddings & store</span>
+  <span class="keyword">for</span> (<span class="keyword">const</span> chunk <span class="keyword">of</span> chunks) {
+    <span class="keyword">const</span> embedding = <span class="keyword">await</span> openai.embed(chunk);
+    <span class="keyword">await</span> supabase.from(<span class="string">'document_chunks'</span>).insert({
+      document_id: job.documentId,
+      content: chunk,
+      embedding
+    });
+  }
+
+  <span class="keyword">await</span> updateStatus(job.id, <span class="string">'complete'</span>);
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <a href="../22-data-pipeline.html" class="view-screen-btn">View Screen Mockup →</a>
+    </main>
+    <style>
+        .code-block { background: #0d1117; border-radius: 8px; overflow: hidden; }
+        .code-header { display: flex; justify-content: space-between; padding: 0.5rem 1rem; background: #161b22; border-bottom: 1px solid #30363d; }
+        .code-lang { color: #58a6ff; font-size: 0.75rem; font-weight: 600; }
+        .code-file { color: #8b949e; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; }
+        .code-block pre { padding: 1rem; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.6; overflow-x: auto; color: #c9d1d9; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .function { color: #d2a8ff; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .comment { color: #8b949e; }
+    </style>
+</body>
+</html>
