@@ -1,352 +1,473 @@
 'use client'
 
+import { useState, useEffect, useCallback } from 'react'
 import { MainLayout } from '@/components/layout'
 import { Card, Badge, Button, Progress } from '@/components/ui'
-import { MOCK_DEALS, MOCK_METRICS, MOCK_FINDINGS } from '@/lib/ai/mockData'
-import { formatCurrency, formatRelativeTime, cn, getSeverityColor, getStatusColor } from '@/lib/utils'
-import { 
-  TrendingUp, 
-  FileText, 
-  AlertTriangle, 
+import { ModelBadge } from '@/components/ui/ModelBadge'
+import { cn } from '@/lib/utils'
+import Link from 'next/link'
+import {
+  FileText,
+  AlertTriangle,
+  Brain,
+  Shield,
+  TrendingUp,
+  Clock,
   CheckCircle,
   ArrowRight,
-  Brain,
-  Zap,
+  RefreshCw,
+  Loader2,
   BarChart3,
-  Clock,
-  ChevronRight,
-  Sparkles
+  Zap,
+  Activity,
 } from 'lucide-react'
-import Link from 'next/link'
 import { motion } from 'framer-motion'
 
+interface DashboardStats {
+  documents: {
+    total: number
+    analyzed: number
+    pending: number
+    processing: number
+  }
+  findings: {
+    total: number
+    critical: number
+    high: number
+    medium: number
+    low: number
+  }
+  models: {
+    claude: number
+    gpt4: number
+    gemini: number
+  }
+  risk: {
+    average: number
+    high_risk_docs: number
+    medium_risk_docs: number
+    low_risk_docs: number
+  }
+  activity: {
+    recent_documents: number
+    recent_findings: number
+    last_updated: string
+  }
+  recent_activity: Array<{
+    id: string
+    event_type: string
+    action: string
+    details: Record<string, unknown>
+    created_at: string
+  }>
+}
+
 export default function DashboardPage() {
-  const metrics = MOCK_METRICS
-  const deals = MOCK_DEALS
-  const findings = MOCK_FINDINGS.slice(0, 5)
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchStats = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/dashboard')
+      const data = await response.json()
+      
+      if (data.success) {
+        setStats(data.stats)
+      } else {
+        setError(data.error || 'Failed to load dashboard')
+      }
+    } catch (err) {
+      console.error('Failed to fetch stats:', err)
+      setError('Failed to load dashboard data')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchStats()
+  }, [fetchStats])
+
+  if (loading) {
+    return (
+      <MainLayout title="Dashboard" subtitle="Loading...">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+        </div>
+      </MainLayout>
+    )
+  }
+
+  // Default values if no data
+  const docs = stats?.documents || { total: 0, analyzed: 0, pending: 0, processing: 0 }
+  const findings = stats?.findings || { total: 0, critical: 0, high: 0, medium: 0, low: 0 }
+  const models = stats?.models || { claude: 0, gpt4: 0, gemini: 0 }
+  const risk = stats?.risk || { average: 0, high_risk_docs: 0, medium_risk_docs: 0, low_risk_docs: 0 }
+  const activity = stats?.activity || { recent_documents: 0, recent_findings: 0, last_updated: '' }
 
   return (
-    <MainLayout title="Dashboard" subtitle="Overview of all deals and AI analysis">
+    <MainLayout
+      title="Dashboard"
+      subtitle="Multi-model AI due diligence platform overview"
+    >
       <div className="space-y-6">
-        {/* Key Metrics */}
-        <div className="grid grid-cols-4 gap-4">
-          <MetricCard
-            title="Active Deals"
-            value={metrics.activeDeals}
-            subtitle={`${metrics.totalDeals} total`}
-            icon={<FileText className="w-5 h-5" />}
-            trend="+2 this month"
-            color="teal"
-          />
-          <MetricCard
-            title="Critical Risks"
-            value={metrics.criticalRisks}
-            subtitle="Needs attention"
-            icon={<AlertTriangle className="w-5 h-5" />}
-            trend="3 resolved"
-            color="red"
-          />
-          <MetricCard
-            title="AI Confidence"
-            value={`${(metrics.avgConfidence * 100).toFixed(0)}%`}
-            subtitle="Average score"
-            icon={<Brain className="w-5 h-5" />}
-            trend="+5% vs last week"
-            color="purple"
-          />
-          <MetricCard
-            title="Analysis Runs"
-            value={metrics.analysisRuns}
-            subtitle={`${metrics.documentsProcessed} docs`}
-            icon={<Zap className="w-5 h-5" />}
-            trend="12 today"
-            color="amber"
-          />
+        {/* Quick Actions */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Badge variant="info" className="gap-1">
+              <Activity className="w-3 h-3" />
+              Live Data
+            </Badge>
+            {activity.last_updated && (
+              <span className="text-xs text-gray-500">
+                Updated {new Date(activity.last_updated).toLocaleTimeString()}
+              </span>
+            )}
+          </div>
+          <Button variant="secondary" size="sm" onClick={fetchStats}>
+            <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
+            Refresh
+          </Button>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-3 gap-6">
-          {/* Active Deals */}
-          <div className="col-span-2">
-            <Card className="overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-gray-900">Active Deals</h2>
-                  <p className="text-sm text-gray-500">Real-time analysis status</p>
+        {/* Primary Stats */}
+        <div className="grid grid-cols-4 gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0 }}
+          >
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-purple-600" />
                 </div>
-                <Button variant="ghost" size="sm">
-                  View All <ChevronRight className="w-4 h-4" />
-                </Button>
+                <Badge variant="default">{docs.analyzed} analyzed</Badge>
               </div>
-              <div className="divide-y divide-gray-100">
-                {deals.map((deal, index) => (
-                  <motion.div
-                    key={deal.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Link href={`/deals/${deal.id}`} className="block px-6 py-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={cn(
-                            'w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold',
-                            deal.status === 'in_progress' ? 'bg-blue-500' :
-                            deal.status === 'review' ? 'bg-purple-500' : 'bg-gray-400'
-                          )}>
-                            {deal.companyName.slice(0, 2).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-medium text-gray-900">{deal.name}</h3>
-                              <Badge variant={
-                                deal.status === 'in_progress' ? 'info' :
-                                deal.status === 'review' ? 'warning' : 'default'
-                              }>
-                                {deal.status.replace('_', ' ')}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-gray-500">{deal.companyName} • {deal.dealType}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-6">
-                          <div className="text-right">
-                            <p className="font-semibold text-gray-900">
-                              {deal.targetValue ? formatCurrency(deal.targetValue) : 'TBD'}
-                            </p>
-                            <p className="text-xs text-gray-500">{deal.findingsCount} findings</p>
-                          </div>
-                          <div className="w-32">
-                            <div className="flex items-center justify-between text-xs mb-1">
-                              <span className="text-gray-500">Progress</span>
-                              <span className="font-medium text-gray-700">{deal.progress}%</span>
-                            </div>
-                            <Progress value={deal.progress} size="sm" />
-                          </div>
-                          <div className={cn(
-                            'w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold',
-                            deal.riskScore >= 70 ? 'bg-red-100 text-red-700' :
-                            deal.riskScore >= 40 ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-green-100 text-green-700'
-                          )}>
-                            {deal.riskScore}
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
+              <div className="text-3xl font-bold text-gray-900">{docs.total}</div>
+              <div className="text-sm text-gray-500 mt-1">Total Documents</div>
+              {docs.pending > 0 && (
+                <div className="mt-2 text-xs text-amber-600">
+                  {docs.pending} pending analysis
+                </div>
+              )}
             </Card>
-          </div>
+          </motion.div>
 
-          {/* Recent Findings */}
-          <div>
-            <Card className="overflow-hidden h-full">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-gray-900">Recent Findings</h2>
-                  <p className="text-sm text-gray-500">AI-detected insights</p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
                 </div>
-                <Badge variant="consensus">
-                  <Sparkles className="w-3 h-3" />
-                  Live
+                <Badge variant="danger">{findings.critical} critical</Badge>
+              </div>
+              <div className="text-3xl font-bold text-gray-900">{findings.total}</div>
+              <div className="text-sm text-gray-500 mt-1">Total Findings</div>
+              {findings.high > 0 && (
+                <div className="mt-2 text-xs text-orange-600">
+                  {findings.high} high severity
+                </div>
+              )}
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className={cn(
+                  'w-12 h-12 rounded-xl flex items-center justify-center',
+                  risk.average >= 70 ? 'bg-red-100' :
+                  risk.average >= 40 ? 'bg-yellow-100' : 'bg-green-100'
+                )}>
+                  <Shield className={cn(
+                    'w-6 h-6',
+                    risk.average >= 70 ? 'text-red-600' :
+                    risk.average >= 40 ? 'text-yellow-600' : 'text-green-600'
+                  )} />
+                </div>
+                <Badge variant={
+                  risk.average >= 70 ? 'danger' :
+                  risk.average >= 40 ? 'warning' : 'success'
+                }>
+                  {risk.average >= 70 ? 'High' : risk.average >= 40 ? 'Medium' : 'Low'}
                 </Badge>
               </div>
-              <div className="divide-y divide-gray-100">
-                {findings.map((finding, index) => (
-                  <motion.div
-                    key={finding.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={cn(
-                        'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
-                        finding.severity === 'critical' ? 'bg-red-100' :
-                        finding.severity === 'high' ? 'bg-orange-100' :
-                        finding.severity === 'medium' ? 'bg-yellow-100' :
-                        'bg-blue-100'
-                      )}>
-                        {finding.type === 'risk' ? (
-                          <AlertTriangle className={cn(
-                            'w-4 h-4',
-                            finding.severity === 'critical' ? 'text-red-600' :
-                            finding.severity === 'high' ? 'text-orange-600' :
-                            'text-yellow-600'
-                          )} />
-                        ) : finding.type === 'opportunity' ? (
-                          <TrendingUp className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <CheckCircle className="w-4 h-4 text-blue-600" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{finding.title}</p>
-                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{finding.description}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className={cn(
-                            'text-xs px-2 py-0.5 rounded-full font-medium',
-                            getSeverityColor(finding.severity)
-                          )}>
-                            {finding.severity}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            {formatRelativeTime(finding.timestamp)}
-                          </span>
-                          {finding.modelsAgreed && finding.modelsAgreed.length > 1 && (
-                            <span className="text-xs text-purple-600 font-medium">
-                              {finding.modelsAgreed.length} models agree
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+              <div className={cn(
+                'text-3xl font-bold',
+                risk.average >= 70 ? 'text-red-600' :
+                risk.average >= 40 ? 'text-yellow-600' : 'text-green-600'
+              )}>
+                {risk.average}
               </div>
-              <div className="px-6 py-3 bg-gray-50 border-t border-gray-100">
-                <Link href="/findings" className="text-sm text-teal-600 font-medium hover:text-teal-700 flex items-center gap-1">
-                  View all findings <ArrowRight className="w-4 h-4" />
+              <div className="text-sm text-gray-500 mt-1">Avg Risk Score</div>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center">
+                  <Brain className="w-6 h-6 text-teal-600" />
+                </div>
+                <div className="flex -space-x-2">
+                  <ModelBadge model="claude" size="sm" className="ring-2 ring-white" />
+                  <ModelBadge model="gpt-4" size="sm" className="ring-2 ring-white" />
+                  <ModelBadge model="gemini" size="sm" className="ring-2 ring-white" />
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-gray-900">3</div>
+              <div className="text-sm text-gray-500 mt-1">AI Models Active</div>
+              <div className="mt-2 text-xs text-teal-600">
+                Multi-model consensus enabled
+              </div>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Secondary Stats Row */}
+        <div className="grid grid-cols-3 gap-6">
+          {/* Model Attribution */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Brain className="w-4 h-4 text-purple-600" />
+                <h3 className="font-semibold text-gray-900">Model Attribution</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ModelBadge model="claude" size="sm" />
+                    <span className="text-sm text-gray-600">Claude</span>
+                  </div>
+                  <span className="text-sm font-semibold">{models.claude} findings</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ModelBadge model="gpt-4" size="sm" />
+                    <span className="text-sm text-gray-600">GPT-4</span>
+                  </div>
+                  <span className="text-sm font-semibold">{models.gpt4} findings</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ModelBadge model="gemini" size="sm" />
+                    <span className="text-sm text-gray-600">Gemini</span>
+                  </div>
+                  <span className="text-sm font-semibold">{models.gemini} findings</span>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Findings by Severity */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="w-4 h-4 text-red-600" />
+                <h3 className="font-semibold text-gray-900">Findings by Severity</h3>
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-red-600 font-medium">Critical</span>
+                    <span>{findings.critical}</span>
+                  </div>
+                  <Progress value={findings.total > 0 ? (findings.critical / findings.total) * 100 : 0} variant="danger" size="sm" />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-orange-600 font-medium">High</span>
+                    <span>{findings.high}</span>
+                  </div>
+                  <Progress value={findings.total > 0 ? (findings.high / findings.total) * 100 : 0} variant="warning" size="sm" />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-yellow-600 font-medium">Medium</span>
+                    <span>{findings.medium}</span>
+                  </div>
+                  <Progress value={findings.total > 0 ? (findings.medium / findings.total) * 100 : 0} variant="info" size="sm" />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-gray-600 font-medium">Low</span>
+                    <span>{findings.low}</span>
+                  </div>
+                  <Progress value={findings.total > 0 ? (findings.low / findings.total) * 100 : 0} variant="default" size="sm" />
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Risk Distribution */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Shield className="w-4 h-4 text-teal-600" />
+                <h3 className="font-semibold text-gray-900">Risk Distribution</h3>
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="p-3 bg-red-50 rounded-lg">
+                  <div className="text-2xl font-bold text-red-600">{risk.high_risk_docs}</div>
+                  <div className="text-xs text-red-600">High Risk</div>
+                </div>
+                <div className="p-3 bg-yellow-50 rounded-lg">
+                  <div className="text-2xl font-bold text-yellow-600">{risk.medium_risk_docs}</div>
+                  <div className="text-xs text-yellow-600">Medium</div>
+                </div>
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{risk.low_risk_docs}</div>
+                  <div className="text-xs text-green-600">Low Risk</div>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Quick Actions & Recent Activity */}
+        <div className="grid grid-cols-2 gap-6">
+          {/* Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <Card className="p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <Link href="/documents">
+                  <Button variant="secondary" className="w-full justify-start gap-2">
+                    <FileText className="w-4 h-4" />
+                    Upload Document
+                  </Button>
+                </Link>
+                <Link href="/debate">
+                  <Button variant="secondary" className="w-full justify-start gap-2">
+                    <Zap className="w-4 h-4" />
+                    Start Debate
+                  </Button>
+                </Link>
+                <Link href="/interrogation">
+                  <Button variant="secondary" className="w-full justify-start gap-2">
+                    <Brain className="w-4 h-4" />
+                    Interrogate Doc
+                  </Button>
+                </Link>
+                <Link href="/reports">
+                  <Button variant="secondary" className="w-full justify-start gap-2">
+                    <BarChart3 className="w-4 h-4" />
+                    Generate Report
+                  </Button>
                 </Link>
               </div>
             </Card>
-          </div>
+          </motion.div>
+
+          {/* Recent Activity */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+          >
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900">Recent Activity</h3>
+                <Link href="/audit-trail" className="text-sm text-teal-600 hover:text-teal-700">
+                  View All
+                </Link>
+              </div>
+              {stats?.recent_activity && stats.recent_activity.length > 0 ? (
+                <div className="space-y-3">
+                  {stats.recent_activity.slice(0, 5).map((log) => (
+                    <div key={log.id} className="flex items-center gap-3 text-sm">
+                      <div className={cn(
+                        'w-8 h-8 rounded-full flex items-center justify-center',
+                        log.action === 'upload' ? 'bg-purple-100' :
+                        log.action === 'multi_model_analysis' ? 'bg-teal-100' :
+                        log.action === 'question_asked' ? 'bg-blue-100' :
+                        'bg-gray-100'
+                      )}>
+                        {log.action === 'upload' ? <FileText className="w-4 h-4 text-purple-600" /> :
+                         log.action === 'multi_model_analysis' ? <Brain className="w-4 h-4 text-teal-600" /> :
+                         log.action === 'question_asked' ? <Zap className="w-4 h-4 text-blue-600" /> :
+                         <Activity className="w-4 h-4 text-gray-600" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-gray-900 capitalize">{log.action.replace(/_/g, ' ')}</span>
+                        <span className="text-gray-400 text-xs ml-2">
+                          {new Date(log.created_at).toLocaleTimeString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Clock className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm">No recent activity</p>
+                  <p className="text-xs">Upload a document to get started</p>
+                </div>
+              )}
+            </Card>
+          </motion.div>
         </div>
 
-        {/* AI Model Status */}
-        <Card className="overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">AI Model Orchestration</h2>
-            <p className="text-sm text-gray-500">Real-time status of multi-model analysis engine</p>
-          </div>
-          <div className="p-6 grid grid-cols-3 gap-6">
-            <ModelStatusCard
-              name="Claude"
-              model="claude"
-              status="active"
-              requestsToday={34}
-              avgLatency={2.1}
-              specialty="Contract Analysis & Risk Assessment"
-            />
-            <ModelStatusCard
-              name="GPT-4"
-              model="gpt-4"
-              status="active"
-              requestsToday={28}
-              avgLatency={2.8}
-              specialty="Financial Modeling & Calculations"
-            />
-            <ModelStatusCard
-              name="Gemini"
-              model="gemini"
-              status="active"
-              requestsToday={22}
-              avgLatency={1.6}
-              specialty="Document Search & Market Research"
-            />
-          </div>
-        </Card>
+        {/* Platform Status */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
+        >
+          <Card className="p-4 bg-gradient-to-r from-teal-50 to-emerald-50 border-teal-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-teal-900">Multi-Model Consensus Active</h3>
+                  <p className="text-sm text-teal-700">
+                    Claude + GPT-4 + Gemini analyzing documents in parallel
+                  </p>
+                </div>
+              </div>
+              <Link href="/how-it-works">
+                <Button variant="secondary" size="sm" className="gap-1">
+                  Learn More
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        </motion.div>
       </div>
     </MainLayout>
-  )
-}
-
-// Metric Card Component
-function MetricCard({ 
-  title, 
-  value, 
-  subtitle, 
-  icon, 
-  trend, 
-  color 
-}: { 
-  title: string
-  value: string | number
-  subtitle: string
-  icon: React.ReactNode
-  trend: string
-  color: 'teal' | 'red' | 'purple' | 'amber'
-}) {
-  const colors = {
-    teal: 'bg-teal-50 text-teal-600 border-teal-100',
-    red: 'bg-red-50 text-red-600 border-red-100',
-    purple: 'bg-purple-50 text-purple-600 border-purple-100',
-    amber: 'bg-amber-50 text-amber-600 border-amber-100',
-  }
-
-  return (
-    <Card className="p-6">
-      <div className="flex items-start justify-between">
-        <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', colors[color])}>
-          {icon}
-        </div>
-        <span className="text-xs text-gray-500 flex items-center gap-1">
-          <TrendingUp className="w-3 h-3 text-green-500" />
-          {trend}
-        </span>
-      </div>
-      <div className="mt-4">
-        <p className="text-3xl font-bold text-gray-900">{value}</p>
-        <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
-      </div>
-    </Card>
-  )
-}
-
-// Model Status Card
-function ModelStatusCard({
-  name,
-  model,
-  status,
-  requestsToday,
-  avgLatency,
-  specialty,
-}: {
-  name: string
-  model: 'claude' | 'gpt-4' | 'gemini'
-  status: 'active' | 'idle' | 'error'
-  requestsToday: number
-  avgLatency: number
-  specialty: string
-}) {
-  const colors = {
-    claude: 'from-amber-500 to-orange-500',
-    'gpt-4': 'from-emerald-500 to-green-500',
-    gemini: 'from-blue-500 to-indigo-500',
-  }
-
-  return (
-    <div className="rounded-xl border border-gray-200 overflow-hidden">
-      <div className={cn('h-2 bg-gradient-to-r', colors[model])} />
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Brain className="w-5 h-5 text-gray-600" />
-            <span className="font-semibold text-gray-900">{name}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className={cn(
-              'w-2 h-2 rounded-full',
-              status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-gray-300'
-            )} />
-            <span className="text-xs text-gray-500 capitalize">{status}</span>
-          </div>
-        </div>
-        <p className="text-xs text-gray-500 mb-4">{specialty}</p>
-        <div className="grid grid-cols-2 gap-4 text-center">
-          <div>
-            <p className="text-lg font-bold text-gray-900">{requestsToday}</p>
-            <p className="text-xs text-gray-500">Requests today</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900">{avgLatency}s</p>
-            <p className="text-xs text-gray-500">Avg latency</p>
-          </div>
-        </div>
-      </div>
-    </div>
   )
 }
