@@ -8,18 +8,16 @@ import {
   Zap,
   FileSearch,
   MessageSquare,
-  Swords,
+  Scale,
   ArrowRight,
   CheckCircle,
   BarChart3,
   Lock,
   Clock,
   Users,
+  TrendingUp,
+  GitCompare,
 } from 'lucide-react'
-
-// This is a STANDALONE landing page
-// To use: rename to page.tsx and place in src/app/ (replacing existing root page)
-// OR: keep the existing dashboard as root and add this as src/app/landing/page.tsx
 
 export default function LandingPage() {
   return (
@@ -54,17 +52,17 @@ export default function LandingPage() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-full text-emerald-700 text-sm font-medium mb-6">
               <Brain className="w-4 h-4" />
-              Multi-Model AI Consensus
+              Multi-Model Consensus Architecture
             </div>
             
             <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
               M&A Due Diligence
-              <span className="block text-emerald-600">Powered by AI Consensus</span>
+              <span className="block text-emerald-600">Validated by AI Consensus</span>
             </h1>
             
             <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
-              Three AI models analyze every document in parallel. When Claude, GPT-4, and Gemini agree, 
-              you know the finding is solid. When they disagree, you know where to focus human review.
+              Three AI models analyze every document in parallel. Statistical consensus scoring 
+              identifies where models agree—and flags disagreements for human review.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -86,36 +84,36 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Not An API Wrapper Section */}
+      {/* Value Proposition Section - More Professional */}
       <section className="py-20 px-6 bg-slate-900 text-white">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">This Is Not Another API Wrapper</h2>
+            <h2 className="text-3xl font-bold mb-4">Multi-Model Validation Architecture</h2>
             <p className="text-slate-400 max-w-2xl mx-auto">
-              We don't just call an API and show you the result. We orchestrate multiple AI models 
-              with specialized prompts, calculate statistical consensus, and let them debate each other.
+              Enterprise-grade AI orchestration that leverages the unique strengths of Claude, GPT-4, 
+              and Gemini—with statistical consensus to ensure accuracy.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                icon: Brain,
-                title: 'Multi-Model Consensus',
-                description: 'Claude, GPT-4, and Gemini analyze simultaneously. We measure agreement with standard deviation and flag when models disagree.',
-                stat: '3 Models in Parallel',
+                icon: GitCompare,
+                title: 'Statistical Consensus',
+                description: 'Standard deviation scoring across model outputs. When variance is low, confidence is high. When models disagree, human review is triggered.',
+                stat: 'σ-Based Scoring',
               },
               {
-                icon: Swords,
-                title: 'Adversarial Debate',
-                description: 'Claude argues FOR a position. GPT-4 sees that argument and argues AGAINST. Gemini judges. Real debate, not scripted.',
-                stat: 'Sequential Response',
+                icon: Scale,
+                title: 'Adversarial Validation',
+                description: 'Models argue opposing positions on deal risks. Sequential debate where each model responds to the other\'s arguments. Independent judgment.',
+                stat: 'Debate Protocol',
               },
               {
                 icon: Shield,
-                title: 'Transparent Reasoning',
-                description: 'See exactly which model found each risk and why. Full audit trail. No black boxes. SOC 2 ready architecture.',
-                stat: '100% Traceable',
+                title: 'Full Audit Trail',
+                description: 'Every finding attributed to its source model. Complete reasoning transparency. SOC 2 ready architecture with compliance logging.',
+                stat: 'Model Attribution',
               },
             ].map((feature, i) => (
               <motion.div
@@ -143,16 +141,16 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">How Multi-Model Analysis Works</h2>
             <p className="text-slate-600 max-w-2xl mx-auto">
-              Upload a document. Watch three AI models analyze it in parallel. See where they agree and disagree.
+              Upload a document. Three AI models analyze in parallel. Consensus metrics reveal confidence levels.
             </p>
           </div>
 
           <div className="grid md:grid-cols-4 gap-4">
             {[
               { step: '1', title: 'Upload', desc: 'PDF, DOCX, or TXT', icon: FileSearch },
-              { step: '2', title: 'Analyze', desc: '3 models in parallel', icon: Brain },
-              { step: '3', title: 'Consensus', desc: 'Statistical agreement', icon: BarChart3 },
-              { step: '4', title: 'Review', desc: 'Findings with attribution', icon: CheckCircle },
+              { step: '2', title: 'Parallel Analysis', desc: 'Claude + GPT-4 + Gemini', icon: Brain },
+              { step: '3', title: 'Consensus Scoring', desc: 'Statistical validation', icon: BarChart3 },
+              { step: '4', title: 'Attributed Findings', desc: 'Model-tagged results', icon: CheckCircle },
             ].map((item, i) => (
               <motion.div
                 key={item.step}
@@ -173,21 +171,24 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* Technical Differentiators */}
       <section className="py-20 px-6 bg-slate-50">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">Enterprise-Grade Features</h2>
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">Enterprise-Grade AI Orchestration</h2>
+            <p className="text-slate-600 max-w-2xl mx-auto">
+              Purpose-built for institutional due diligence with security, compliance, and transparency at the core.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: MessageSquare, title: 'Document Interrogation', desc: 'Ask questions, get cited answers from your documents' },
-              { icon: Swords, title: 'Agent Debate Arena', desc: 'Watch AI models argue opposing positions on deal risks' },
-              { icon: Brain, title: 'Reasoning Streams', desc: 'See exactly how each AI reaches its conclusions' },
-              { icon: Lock, title: 'Private Storage', desc: 'AES-256 encrypted, signed URLs, never public' },
-              { icon: Clock, title: 'Audit Trail', desc: 'Complete activity log for SOC 2 compliance' },
-              { icon: Users, title: 'Team Workspace', desc: 'Collaborate with your deal team securely' },
+              { icon: MessageSquare, title: 'RAG Interrogation', desc: 'Ask questions, get cited answers with exact document references' },
+              { icon: Scale, title: 'Agent Debate Arena', desc: 'Watch AI models argue opposing positions with independent judgment' },
+              { icon: Brain, title: 'Reasoning Transparency', desc: 'See exactly how each model reaches its conclusions' },
+              { icon: Lock, title: 'Private Storage', desc: 'AES-256 encrypted, signed URLs, SOC 2 compliant architecture' },
+              { icon: Clock, title: 'Complete Audit Trail', desc: 'Every action logged with timestamps for compliance' },
+              { icon: Users, title: 'Team Collaboration', desc: 'Secure workspaces for deal teams with role-based access' },
             ].map((feature, i) => (
               <motion.div
                 key={feature.title}
@@ -205,27 +206,56 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Model Badges */}
+      {/* Model Specialization */}
       <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">Powered By The Best AI Models</h2>
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">Specialized Model Orchestration</h2>
           <p className="text-slate-600 mb-12 max-w-2xl mx-auto">
-            Each model has specialized prompts leveraging their unique strengths
+            Each model receives domain-specific prompts optimized for their documented strengths
           </p>
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { name: 'Claude', company: 'Anthropic', focus: 'Legal & Contract Analysis', bgColor: 'bg-amber-100', textColor: 'text-amber-600' },
-              { name: 'GPT-4', company: 'OpenAI', focus: 'Financial & Valuation', bgColor: 'bg-emerald-100', textColor: 'text-emerald-600' },
-              { name: 'Gemini', company: 'Google', focus: 'Research & Context', bgColor: 'bg-blue-100', textColor: 'text-blue-600' },
+              { 
+                name: 'Claude', 
+                company: 'Anthropic', 
+                focus: 'Legal & Contract Analysis', 
+                bgColor: 'bg-amber-100', 
+                textColor: 'text-amber-600',
+                specialties: ['MAC clauses', 'Termination rights', 'Indemnification', 'Reps & warranties']
+              },
+              { 
+                name: 'GPT-4', 
+                company: 'OpenAI', 
+                focus: 'Financial & Valuation', 
+                bgColor: 'bg-emerald-100', 
+                textColor: 'text-emerald-600',
+                specialties: ['Purchase price', 'Earnouts', 'Working capital', 'Deal multiples']
+              },
+              { 
+                name: 'Gemini', 
+                company: 'Google', 
+                focus: 'Research & Context', 
+                bgColor: 'bg-blue-100', 
+                textColor: 'text-blue-600',
+                specialties: ['Industry dynamics', 'Precedent deals', 'Regulatory landscape', 'Market context']
+              },
             ].map((model) => (
-              <div key={model.name} className="p-6 bg-white rounded-xl border border-slate-200">
-                <div className={`w-12 h-12 ${model.bgColor} rounded-xl flex items-center justify-center mx-auto mb-4`}>
+              <div key={model.name} className="p-6 bg-white rounded-xl border border-slate-200 text-left">
+                <div className={`w-12 h-12 ${model.bgColor} rounded-xl flex items-center justify-center mb-4`}>
                   <span className={`${model.textColor} font-bold text-lg`}>{model.name[0]}</span>
                 </div>
                 <h3 className="font-semibold text-slate-900">{model.name}</h3>
                 <p className="text-slate-400 text-sm mb-2">{model.company}</p>
-                <p className="text-emerald-600 text-sm font-medium">{model.focus}</p>
+                <p className="text-emerald-600 text-sm font-medium mb-3">{model.focus}</p>
+                <ul className="space-y-1">
+                  {model.specialties.map(s => (
+                    <li key={s} className="text-slate-500 text-xs flex items-center gap-2">
+                      <CheckCircle className="w-3 h-3 text-emerald-500" />
+                      {s}
+                    </li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
@@ -237,7 +267,7 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Due Diligence?</h2>
           <p className="text-emerald-100 mb-8 text-lg">
-            Upload your first document and see multi-model AI consensus in action.
+            Upload your first document and see multi-model consensus in action.
           </p>
           <Link
             href="/dashboard"

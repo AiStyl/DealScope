@@ -1,503 +1,479 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { MainLayout } from '@/components/layout'
 import { Card, Badge, Button } from '@/components/ui'
+import { ModelBadge } from '@/components/ui/ModelBadge'
 import { cn } from '@/lib/utils'
 import {
-  Send,
-  Brain,
-  FileText,
-  Sparkles,
-  ThumbsUp,
-  ThumbsDown,
-  Copy,
-  RotateCcw,
-  ChevronRight,
-  Lightbulb,
-  BookOpen,
   MessageSquare,
-  Zap,
-  Clock,
-  CheckCircle,
-  AlertCircle,
+  Send,
+  FileText,
+  Loader2,
+  AlertTriangle,
+  Quote,
+  Lightbulb,
+  ChevronDown,
+  RefreshCw,
+  X,
+  Brain,
+  BookOpen,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-type ModelType = 'claude' | 'gpt-4' | 'gemini' | 'consensus'
+interface Document {
+  id: string
+  name: string
+  status: string
+  created_at: string
+}
 
 interface Citation {
-  id: string
-  document: string
-  page: number
   text: string
-  relevance: number
+  section?: string
+  confidence: number
 }
 
 interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
-  model?: ModelType
   citations?: Citation[]
-  reasoning?: string[]
+  follow_up_questions?: string[]
+  risk_flags?: string[]
   timestamp: Date
-  confidence?: number
-  processingTime?: number
 }
 
-// Mock conversation
-const INITIAL_MESSAGES: Message[] = [
-  {
-    id: '1',
-    role: 'user',
-    content: 'What are the key termination triggers in the merger agreement?',
-    timestamp: new Date(Date.now() - 300000),
-  },
-  {
-    id: '2',
-    role: 'assistant',
-    content: `Based on my analysis of the Merger Agreement, I've identified **5 key termination triggers**:
-
-1. **Material Adverse Change (MAC)** - Either party may terminate if a MAC occurs affecting the target company. The definition on page 12 is notably broad and missing standard carve-outs for market conditions.
-
-2. **Regulatory Disapproval** - Termination permitted if antitrust approval is denied or conditioned on unacceptable divestitures (Section 7.1.b).
-
-3. **Breach of Representations** - Material breach of reps & warranties that isn't cured within 30 days allows termination with $15M breakup fee.
-
-4. **Financing Failure** - If buyer fails to secure committed financing by closing date, seller may terminate and retain $25M deposit.
-
-5. **Outside Date** - Automatic termination if closing doesn't occur by March 31, 2025, subject to 60-day extension for regulatory delays.
-
-⚠️ **Risk Flag**: The MAC clause definition is unusually broad. I recommend negotiating additional carve-outs before signing.`,
-    model: 'claude',
-    citations: [
-      { id: 'c1', document: 'Merger Agreement', page: 12, text: 'Material Adverse Change shall mean any event...', relevance: 0.96 },
-      { id: 'c2', document: 'Merger Agreement', page: 45, text: 'Section 7.1 Termination Rights...', relevance: 0.94 },
-      { id: 'c3', document: 'Merger Agreement', page: 52, text: 'Breakup Fee and Deposit Terms...', relevance: 0.89 },
-    ],
-    reasoning: [
-      'Searching document_chunks for "termination" and "terminate"...',
-      'Found 23 relevant sections across 127 pages',
-      'Clustering by termination type: MAC, regulatory, breach, financing, date',
-      'Cross-referencing with standard M&A termination provisions',
-      'Flagging MAC clause as non-standard based on missing carve-outs',
-    ],
-    timestamp: new Date(Date.now() - 290000),
-    confidence: 0.94,
-    processingTime: 3.2,
-  },
-]
-
-const SUGGESTED_QUESTIONS = [
-  'What is the total consideration and how is it structured?',
-  'Are there any change of control provisions that could trigger debt acceleration?',
-  'What are the key conditions to closing?',
-  'Summarize the indemnification provisions',
-  'What intellectual property is being transferred?',
-]
-
 export default function InterrogationPage() {
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES)
+  const [documents, setDocuments] = useState<Document[]>([])
+  const [selectedDoc, setSelectedDoc] = useState<string | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
-  const [isTyping, setIsTyping] = useState(false)
-  const [selectedModel, setSelectedModel] = useState<ModelType>('claude')
-  const [showReasoning, setShowReasoning] = useState(true)
-  const [expandedCitations, setExpandedCitations] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [loadingDocs, setLoadingDocs] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  // Fetch documents
+  const fetchDocuments = useCallback(async () => {
+    try {
+      setLoadingDocs(true)
+      const response = await fetch('/api/upload')
+      const data = await response.json()
+      if (data.documents) {
+        setDocuments(data.documents.filter((d: Document) => d.status === 'analyzed'))
+      }
+    } catch (err) {
+      console.error('Failed to fetch documents:', err)
+    } finally {
+      setLoadingDocs(false)
+    }
+  }, [])
+
+  // Fetch suggested questions when document selected
+  const fetchSuggestions = useCallback(async (docId: string) => {
+    try {
+      const response = await fetch(`/api/interrogate?documentId=${docId}`)
+      const data = await response.json()
+      if (data.suggested_questions) {
+        setSuggestedQuestions(data.suggested_questions)
+      }
+    } catch (err) {
+      console.error('Failed to fetch suggestions:', err)
+    }
+  }, [])
 
   useEffect(() => {
-    scrollToBottom()
+    fetchDocuments()
+  }, [fetchDocuments])
+
+  useEffect(() => {
+    if (selectedDoc) {
+      fetchSuggestions(selectedDoc)
+      setMessages([])
+    }
+  }, [selectedDoc, fetchSuggestions])
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = async () => {
-    if (!input.trim()) return
+  // Send message
+  const sendMessage = async (question?: string) => {
+    const messageText = question || input.trim()
+    if (!messageText || !selectedDoc) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input,
+      content: messageText,
       timestamp: new Date(),
     }
 
-    setMessages(prev => [...prev, userMessage])
+    setMessages((prev) => [...prev, userMessage])
     setInput('')
-    setIsTyping(true)
+    setLoading(true)
+    setError(null)
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `I've analyzed the relevant documents to answer your question about "${input}".
+    try {
+      // Build conversation history
+      const conversationHistory = messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }))
 
-Based on my review of the merger agreement and supporting documents, here's what I found:
+      const response = await fetch('/api/interrogate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          documentId: selectedDoc,
+          question: messageText,
+          conversationHistory,
+        }),
+      })
 
-**Key Finding**: The documents contain relevant provisions that address your query. I've identified 3 primary sections and 2 supporting clauses that are directly applicable.
+      const data = await response.json()
 
-The analysis suggests a moderate level of risk in this area. I recommend reviewing the cited sections in detail with legal counsel before proceeding.
-
-Would you like me to elaborate on any specific aspect of this analysis?`,
-        model: selectedModel,
-        citations: [
-          { id: 'cx1', document: 'Merger Agreement', page: 34, text: 'Relevant clause text...', relevance: 0.92 },
-          { id: 'cx2', document: 'Financial Statements', page: 12, text: 'Supporting financial data...', relevance: 0.87 },
-        ],
-        reasoning: [
-          `Query embedding generated using text-embedding-3`,
-          `Searching ${Math.floor(Math.random() * 500 + 200)} document chunks...`,
-          `Retrieved top 5 relevant passages (similarity > 0.85)`,
-          `Generating response with ${selectedModel}...`,
-          `Cross-validating findings against financial data`,
-        ],
-        timestamp: new Date(),
-        confidence: 0.89,
-        processingTime: 2.8,
+      if (data.success) {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.response.answer,
+          citations: data.response.citations,
+          follow_up_questions: data.response.follow_up_questions,
+          risk_flags: data.response.risk_flags,
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, assistantMessage])
+      } else {
+        setError(data.error || 'Failed to get response')
       }
-
-      setMessages(prev => [...prev, aiMessage])
-      setIsTyping(false)
-    }, 3000)
+    } catch (err) {
+      console.error('Interrogation error:', err)
+      setError('Failed to send message. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
+    }
+  }
+
+  const selectedDocument = documents.find((d) => d.id === selectedDoc)
 
   return (
     <MainLayout
-      title="Deal Interrogation"
-      subtitle="Ask questions about your deal documents using natural language — powered by RAG"
+      title="Document Interrogation"
+      subtitle="Ask questions about your documents and get cited answers"
     >
-      <div className="h-[calc(100vh-180px)] flex gap-6">
-        {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {/* Model Selector */}
-          <Card className="p-3 mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Brain className="w-4 h-4 text-teal-600" />
-                <span className="text-sm font-medium text-gray-700">Response Model:</span>
-                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                  {(['claude', 'gpt-4', 'gemini', 'consensus'] as ModelType[]).map((model) => (
-                    <button
-                      key={model}
-                      onClick={() => setSelectedModel(model)}
-                      className={cn(
-                        'px-3 py-1 text-xs font-medium rounded-md transition-all',
-                        selectedModel === model
-                          ? model === 'claude' ? 'bg-amber-100 text-amber-700' :
-                            model === 'gpt-4' ? 'bg-emerald-100 text-emerald-700' :
-                            model === 'gemini' ? 'bg-blue-100 text-blue-700' :
-                            'bg-purple-100 text-purple-700'
-                          : 'text-gray-500 hover:bg-gray-200'
-                      )}
-                    >
-                      {model === 'consensus' ? '✨ Consensus' : model}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showReasoning}
-                    onChange={(e) => setShowReasoning(e.target.checked)}
-                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                  />
-                  Show reasoning
-                </label>
-              </div>
+      <div className="grid grid-cols-4 gap-6 h-[calc(100vh-12rem)]">
+        {/* Document Selector */}
+        <div className="col-span-1 space-y-4">
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Documents</h3>
+              <Button variant="secondary" size="sm" onClick={fetchDocuments}>
+                <RefreshCw className={cn('w-3 h-3', loadingDocs && 'animate-spin')} />
+              </Button>
             </div>
-          </Card>
 
-          {/* Messages */}
-          <Card className="flex-1 overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
-              {messages.map((message, index) => (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={cn(
-                    'flex gap-4',
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  )}
-                >
-                  {message.role === 'assistant' && (
-                    <div className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
-                      message.model === 'claude' ? 'bg-amber-100' :
-                      message.model === 'gpt-4' ? 'bg-emerald-100' :
-                      message.model === 'gemini' ? 'bg-blue-100' :
-                      'bg-purple-100'
-                    )}>
-                      <Brain className={cn(
-                        'w-5 h-5',
-                        message.model === 'claude' ? 'text-amber-600' :
-                        message.model === 'gpt-4' ? 'text-emerald-600' :
-                        message.model === 'gemini' ? 'text-blue-600' :
-                        'text-purple-600'
+            {loadingDocs ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
+              </div>
+            ) : documents.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">No analyzed documents</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Upload and analyze a document first
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {documents.map((doc) => (
+                  <button
+                    key={doc.id}
+                    onClick={() => setSelectedDoc(doc.id)}
+                    className={cn(
+                      'w-full p-3 rounded-lg text-left transition',
+                      selectedDoc === doc.id
+                        ? 'bg-teal-50 border-2 border-teal-500'
+                        : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
+                    )}
+                  >
+                    <div className="flex items-start gap-2">
+                      <FileText className={cn(
+                        'w-4 h-4 mt-0.5',
+                        selectedDoc === doc.id ? 'text-teal-600' : 'text-gray-400'
                       )} />
-                    </div>
-                  )}
-                  
-                  <div className={cn(
-                    'max-w-[80%] space-y-3',
-                    message.role === 'user' ? 'items-end' : 'items-start'
-                  )}>
-                    {/* Message Content */}
-                    <div className={cn(
-                      'rounded-2xl px-4 py-3',
-                      message.role === 'user'
-                        ? 'bg-teal-600 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    )}>
-                      <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                        {message.content}
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          'text-sm font-medium truncate',
+                          selectedDoc === doc.id ? 'text-teal-900' : 'text-gray-900'
+                        )}>
+                          {doc.name}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {new Date(doc.created_at).toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </Card>
 
-                    {/* Assistant metadata */}
-                    {message.role === 'assistant' && (
-                      <>
-                        {/* Reasoning Steps */}
-                        {showReasoning && message.reasoning && (
-                          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Zap className="w-3 h-3 text-teal-600" />
-                              <span className="text-xs font-medium text-gray-600">Reasoning Steps</span>
+          {/* Suggested Questions */}
+          {selectedDoc && suggestedQuestions.length > 0 && (
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Lightbulb className="w-4 h-4 text-amber-500" />
+                <h4 className="text-sm font-semibold text-gray-900">Suggested Questions</h4>
+              </div>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {suggestedQuestions.slice(0, 6).map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => sendMessage(q)}
+                    disabled={loading}
+                    className="w-full p-2 text-left text-xs bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg transition disabled:opacity-50"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
+
+        {/* Chat Area */}
+        <div className="col-span-3 flex flex-col">
+          <Card className="flex-1 flex flex-col overflow-hidden">
+            {/* Chat Header */}
+            {selectedDocument && (
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-teal-600" />
+                  <span className="font-medium text-gray-900">
+                    Interrogating: {selectedDocument.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ModelBadge model="claude" size="sm" showLabel />
+                </div>
+              </div>
+            )}
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {!selectedDoc ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <BookOpen className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                    <h3 className="font-medium text-gray-900 mb-2">Select a Document</h3>
+                    <p className="text-sm text-gray-500 max-w-sm">
+                      Choose an analyzed document from the left panel to start asking questions.
+                      AI will provide answers with exact citations from the document.
+                    </p>
+                  </div>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <MessageSquare className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                    <h3 className="font-medium text-gray-900 mb-2">Start Interrogating</h3>
+                    <p className="text-sm text-gray-500 max-w-sm">
+                      Ask any question about this document. Claude will analyze the content
+                      and provide answers with exact citations.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {messages.map((message) => (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={cn(
+                        'flex',
+                        message.role === 'user' ? 'justify-end' : 'justify-start'
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          'max-w-[80%] rounded-2xl px-4 py-3',
+                          message.role === 'user'
+                            ? 'bg-teal-600 text-white'
+                            : 'bg-gray-100 text-gray-900'
+                        )}
+                      >
+                        {message.role === 'assistant' && (
+                          <div className="flex items-center gap-2 mb-2">
+                            <ModelBadge model="claude" size="sm" />
+                            <span className="text-xs text-gray-500">Claude</span>
+                          </div>
+                        )}
+
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+
+                        {/* Citations */}
+                        {message.citations && message.citations.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Quote className="w-3 h-3" />
+                              Citations
+                            </div>
+                            {message.citations.map((citation, i) => (
+                              <div
+                                key={i}
+                                className="p-2 bg-white rounded-lg text-xs border border-gray-200"
+                              >
+                                <p className="text-gray-700 italic">"{citation.text}"</p>
+                                <div className="flex items-center gap-2 mt-1 text-gray-500">
+                                  {citation.section && <span>{citation.section}</span>}
+                                  <span>Confidence: {(citation.confidence * 100).toFixed(0)}%</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Risk Flags */}
+                        {message.risk_flags && message.risk_flags.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <div className="flex items-center gap-1 text-xs text-red-600 mb-2">
+                              <AlertTriangle className="w-3 h-3" />
+                              Risk Flags
                             </div>
                             <div className="space-y-1">
-                              {message.reasoning.map((step, i) => (
-                                <div key={i} className="flex items-start gap-2 text-xs text-gray-500">
-                                  <CheckCircle className="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" />
-                                  <span>{step}</span>
+                              {message.risk_flags.map((flag, i) => (
+                                <div
+                                  key={i}
+                                  className="p-2 bg-red-50 rounded text-xs text-red-700"
+                                >
+                                  {flag}
                                 </div>
                               ))}
                             </div>
                           </div>
                         )}
 
-                        {/* Citations */}
-                        {message.citations && message.citations.length > 0 && (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <BookOpen className="w-3 h-3 text-gray-500" />
-                              <span className="text-xs font-medium text-gray-600">
-                                {message.citations.length} Citations
-                              </span>
-                            </div>
+                        {/* Follow-up Questions */}
+                        {message.follow_up_questions && message.follow_up_questions.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <div className="text-xs text-gray-500 mb-2">Follow-up questions:</div>
                             <div className="flex flex-wrap gap-2">
-                              {message.citations.map((citation) => (
+                              {message.follow_up_questions.slice(0, 3).map((q, i) => (
                                 <button
-                                  key={citation.id}
-                                  onClick={() => setExpandedCitations(
-                                    expandedCitations === citation.id ? null : citation.id
-                                  )}
-                                  className={cn(
-                                    'px-2 py-1 rounded text-xs transition-colors',
-                                    expandedCitations === citation.id
-                                      ? 'bg-teal-100 text-teal-700'
-                                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                  )}
+                                  key={i}
+                                  onClick={() => sendMessage(q)}
+                                  disabled={loading}
+                                  className="px-2 py-1 text-xs bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-full transition disabled:opacity-50"
                                 >
-                                  📄 {citation.document}, p.{citation.page}
+                                  {q.length > 40 ? q.slice(0, 40) + '...' : q}
                                 </button>
                               ))}
                             </div>
-                            <AnimatePresence>
-                              {expandedCitations && (
-                                <motion.div
-                                  initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: 'auto' }}
-                                  exit={{ opacity: 0, height: 0 }}
-                                  className="bg-blue-50 rounded-lg p-3 border border-blue-200"
-                                >
-                                  <p className="text-xs text-blue-800 italic">
-                                    "{message.citations.find(c => c.id === expandedCitations)?.text}"
-                                  </p>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
                           </div>
                         )}
 
-                        {/* Meta info */}
-                        <div className="flex items-center gap-4 text-xs text-gray-400">
-                          <Badge variant={message.model === 'claude' ? 'claude' : message.model === 'gpt-4' ? 'gpt4' : 'gemini'}>
-                            {message.model}
-                          </Badge>
-                          {message.confidence && (
-                            <span>Confidence: {(message.confidence * 100).toFixed(0)}%</span>
-                          )}
-                          {message.processingTime && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {message.processingTime}s
-                            </span>
-                          )}
-                          <button className="hover:text-gray-600">
-                            <Copy className="w-3 h-3" />
-                          </button>
-                          <button className="hover:text-green-600">
-                            <ThumbsUp className="w-3 h-3" />
-                          </button>
-                          <button className="hover:text-red-600">
-                            <ThumbsDown className="w-3 h-3" />
-                          </button>
+                        <div className="mt-2 text-xs opacity-50">
+                          {message.timestamp.toLocaleTimeString()}
                         </div>
-                      </>
-                    )}
-                  </div>
-
-                  {message.role === 'user' && (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white font-medium flex-shrink-0">
-                      JJ
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-
-              {/* Typing Indicator */}
-              {isTyping && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex items-center gap-4"
-                >
-                  <div className={cn(
-                    'w-10 h-10 rounded-full flex items-center justify-center',
-                    selectedModel === 'claude' ? 'bg-amber-100' :
-                    selectedModel === 'gpt-4' ? 'bg-emerald-100' :
-                    selectedModel === 'gemini' ? 'bg-blue-100' :
-                    'bg-purple-100'
-                  )}>
-                    <Brain className={cn(
-                      'w-5 h-5 animate-pulse',
-                      selectedModel === 'claude' ? 'text-amber-600' :
-                      selectedModel === 'gpt-4' ? 'text-emerald-600' :
-                      selectedModel === 'gemini' ? 'text-blue-600' :
-                      'text-purple-600'
-                    )} />
-                  </div>
-                  <div className="bg-gray-100 rounded-2xl px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-1">
-                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
-                      <span className="text-sm text-gray-500">
-                        {selectedModel === 'consensus' ? 'Querying all models...' : `${selectedModel} is analyzing...`}
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                    </motion.div>
+                  ))}
 
-              <div ref={messagesEndRef} />
+                  {loading && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex justify-start"
+                    >
+                      <div className="bg-gray-100 rounded-2xl px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <ModelBadge model="claude" size="sm" />
+                          <div className="flex gap-1">
+                            {[0, 1, 2].map((i) => (
+                              <div
+                                key={i}
+                                className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
+                                style={{ animationDelay: `${i * 0.2}s` }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  <div ref={messagesEndRef} />
+                </>
+              )}
             </div>
 
-            {/* Input Area */}
-            <div className="p-4 border-t border-gray-200">
+            {/* Error */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="mx-4 mb-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2 text-red-700 text-sm">
+                    <AlertTriangle className="w-4 h-4" />
+                    {error}
+                  </div>
+                  <button onClick={() => setError(null)}>
+                    <X className="w-4 h-4 text-red-500" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Input */}
+            <div className="p-4 border-t border-gray-100">
               <div className="flex items-end gap-3">
                 <div className="flex-1 relative">
                   <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        handleSend()
-                      }
-                    }}
-                    placeholder="Ask anything about your deal documents..."
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all"
+                    onKeyPress={handleKeyPress}
+                    placeholder={
+                      selectedDoc
+                        ? 'Ask a question about this document...'
+                        : 'Select a document first...'
+                    }
+                    disabled={!selectedDoc || loading}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
                     rows={2}
                   />
                 </div>
                 <Button
-                  onClick={handleSend}
-                  disabled={!input.trim() || isTyping}
+                  onClick={() => sendMessage()}
+                  disabled={!selectedDoc || !input.trim() || loading}
                   className="h-12 w-12 rounded-xl"
                 >
-                  <Send className="w-5 h-5" />
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5" />
+                  )}
                 </Button>
               </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Sidebar */}
-        <div className="w-80 space-y-4">
-          {/* Document Context */}
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <FileText className="w-4 h-4 text-teal-600" />
-              <h3 className="font-semibold text-gray-900 text-sm">Active Documents</h3>
-            </div>
-            <div className="space-y-2">
-              {['Merger Agreement', 'Q3 Financials', 'DD Checklist'].map((doc) => (
-                <div key={doc} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                  <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-sm text-gray-700 truncate">{doc}</span>
-                </div>
-              ))}
-            </div>
-            <Button variant="ghost" size="sm" className="w-full mt-3">
-              + Add Documents
-            </Button>
-          </Card>
-
-          {/* Suggested Questions */}
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Lightbulb className="w-4 h-4 text-yellow-500" />
-              <h3 className="font-semibold text-gray-900 text-sm">Suggested Questions</h3>
-            </div>
-            <div className="space-y-2">
-              {SUGGESTED_QUESTIONS.map((question, i) => (
-                <button
-                  key={i}
-                  onClick={() => setInput(question)}
-                  className="w-full text-left p-2 text-xs text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors line-clamp-2"
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
-          </Card>
-
-          {/* RAG Pipeline Status */}
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-4 h-4 text-purple-500" />
-              <h3 className="font-semibold text-gray-900 text-sm">RAG Pipeline</h3>
-            </div>
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500">Documents Indexed</span>
-                <span className="font-medium text-gray-900">3</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500">Total Chunks</span>
-                <span className="font-medium text-gray-900">847</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500">Embedding Model</span>
-                <span className="font-mono text-gray-900">text-embedding-3</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500">Vector Store</span>
-                <span className="font-mono text-gray-900">pgvector</span>
-              </div>
-              <div className="flex items-center gap-1 text-green-600 mt-2">
-                <CheckCircle className="w-3 h-3" />
-                <span>Pipeline healthy</span>
-              </div>
+              <p className="text-xs text-gray-400 mt-2 text-center">
+                Answers are grounded in document content with exact citations
+              </p>
             </div>
           </Card>
         </div>
