@@ -155,7 +155,7 @@ export default function KnowledgeGraphPage() {
 
         <div className="grid grid-cols-4 gap-6">
           {/* Graph Visualization */}
-          <Card className="col-span-3 p-0 overflow-hidden" style={{ height: '600px' }}>
+          <Card className="col-span-3 p-0 overflow-hidden h-[600px]">
             <div
               className="relative w-full h-full bg-gradient-to-br from-gray-50 to-gray-100"
               style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'center' }}
