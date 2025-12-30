@@ -116,7 +116,7 @@ export default function DashboardPage() {
         {/* Quick Actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Badge variant="info" className="gap-1">
+            <Badge variant="default" className="gap-1">
               <Activity className="w-3 h-3" />
               Live Data
             </Badge>
@@ -309,7 +309,7 @@ export default function DashboardPage() {
                     <span className="text-yellow-600 font-medium">Medium</span>
                     <span>{findings.medium}</span>
                   </div>
-                  <Progress value={findings.total > 0 ? (findings.medium / findings.total) * 100 : 0} variant="info" size="sm" />
+                  <Progress value={findings.total > 0 ? (findings.medium / findings.total) * 100 : 0} variant="warning" size="sm" />
                 </div>
                 <div>
                   <div className="flex items-center justify-between text-sm mb-1">

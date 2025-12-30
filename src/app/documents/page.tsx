@@ -596,7 +596,7 @@ export default function DocumentsPage() {
                                 <Badge variant={
                                   finding.severity === 'critical' ? 'danger' :
                                   finding.severity === 'high' ? 'warning' :
-                                  finding.severity === 'medium' ? 'info' : 'default'
+                                  finding.severity === 'medium' ? 'warning' : 'default'
                                 }>
                                   {finding.severity}
                                 </Badge>
