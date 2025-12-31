@@ -142,11 +142,16 @@ export default function TimelinePage() {
   const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null)
   const [filterCategory, setFilterCategory] = useState<string | null>(null)
   const [isAddingNew, setIsAddingNew] = useState(false)
-  const [newMilestone, setNewMilestone] = useState({
+  const [newMilestone, setNewMilestone] = useState<{
+    name: string
+    description: string
+    date: string
+    category: Milestone['category']
+  }>({
     name: '',
     description: '',
     date: '',
-    category: 'operational' as const,
+    category: 'operational',
   })
 
   // FIXED: Use useMemo to properly sort milestones by date
